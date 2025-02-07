@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using EFT;
 using EFT.Ballistics;
+using EFT.Particles;
 using JetBrains.Annotations;
 using Systems.Effects;
 using UnityEngine;
@@ -41,7 +43,7 @@ namespace HollywoodFX
         All = ~0
     }
 
-    internal static class EmitUtility
+    internal static class EffectUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Emit(Effects effects, EmissionContext context, Effects.Effect effect)
@@ -50,6 +52,20 @@ namespace HollywoodFX
                 effect, context.Position, context.Normal, context.Collider, false, context.Volume,
                 context.IsKnife, true, false, context.Pov
             );
+        }
+
+        public static void ScaleMediator(BasicParticleSystemMediator mediator, float scaling)
+        {
+            var particleSystemsField = typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
+            var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
+            
+            if (particleSystems == null)
+                return;
+
+            foreach (var particleSystem in particleSystems)
+            {
+                particleSystem.transform.localScale *= scaling;
+            }
         }
     }
 
@@ -101,7 +117,7 @@ namespace HollywoodFX
 
                 if (Random.Range(0f, 1f) < forceGeneric)
                 {
-                    EmitUtility.Emit(effects, context, genericEffect);
+                    EffectUtils.Emit(effects, context, genericEffect);
                     return;
                 }
             }
@@ -115,17 +131,17 @@ namespace HollywoodFX
 
                 var effect = impact.Effects[Random.Range(0, impact.Effects.Length)];
 
-                EmitUtility.Emit(effects, context, effect);
+                EffectUtils.Emit(effects, context, effect);
 
                 hasEmitted = true;
             }
 
             if (hasEmitted || genericEffect == null) return;
 
-            EmitUtility.Emit(effects, context, genericEffect);
+            EffectUtils.Emit(effects, context, genericEffect);
         }
     }
-    
+
     internal class ImpactEffectsController
     {
         public static readonly ImpactEffectsController Instance = new();
@@ -484,27 +500,56 @@ namespace HollywoodFX
                 )
             };
 
-            var bodyImpact = new List<ImpactSystem>
+            List<ImpactSystem> bodyImpact = null;
+
+            if (Plugin.BloodEnabled.Value)
             {
-                new(
-                    directional:
-                    [
+                List<DirectionalImpact> directionalImpacts = [];
+
+                if (Plugin.BloodPuffsEnabled.Value)
+                {
+                    directionalImpacts.Add(
                         new DirectionalImpact([
                             effectMap["Blood_Puff_Vert_1"], effectMap["Blood_Puff_Vert_2"],
                             effectMap["Blood_Puff_Vert_3"], effectMap["Blood_Puff_Vert_4"]
-                        ], camDir: CamDir.Angled),
+                        ], camDir: CamDir.Angled)
+                    );
+
+                    directionalImpacts.Add(
                         new DirectionalImpact([
                             effectMap["Blood_Puff_Front_1"], effectMap["Blood_Puff_Front_2"], effectMap["Blood_Puff_Front_3"],
                             effectMap["Blood_Puff_Front_4"], effectMap["Blood_Puff_Front_5"]
-                        ]),
-                        new DirectionalImpact([effectMap["Debris_Blood_Splash_1"], effectMap["Debris_Blood_Splash_2"]]),
-                        new DirectionalImpact([effectMap["Blood_Splash_Spurt_1"], effectMap["Blood_Splash_Spurt_2"]], chance: 0.5f),
+                        ])
+                    );
+                }
+
+                if (Plugin.BloodSplatterEnabled.Value)
+                {
+                    directionalImpacts.Add(
+                        new DirectionalImpact([effectMap["Blood_Splash_Spurt_1"], effectMap["Blood_Splash_Spurt_2"]], chance: 0.5f)
+                    );
+                    directionalImpacts.Add(
                         new DirectionalImpact([
                             effectMap["Blood_Splash_Front_1"], effectMap["Blood_Splash_Front_2"], effectMap["Blood_Splash_Front_3"]
-                        ], chance: 1f),
-                    ]
-                )
-            };
+                        ], chance: 1f)
+                    );
+                }
+                
+                if (Plugin.BloodSplatterFineEnabled.Value)
+                {
+                    directionalImpacts.Add(new DirectionalImpact([effectMap["Debris_Blood_Splash_1"], effectMap["Debris_Blood_Splash_2"]]));
+                }
+
+                foreach (var directionalImpact in directionalImpacts)
+                {
+                    foreach (var effect in directionalImpact.Effects)
+                    {
+                        EffectUtils.ScaleMediator(effect.BasicParticleSystemMediator, Plugin.BloodEffectSize.Value);
+                    }
+                }
+
+                bodyImpact = [new ImpactSystem(directional: directionalImpacts.ToArray())];
+            }
 
             // Assign impact systems to materials
             _coreImpactSystems[(int)MaterialType.Asphalt] = softRockImpact;
