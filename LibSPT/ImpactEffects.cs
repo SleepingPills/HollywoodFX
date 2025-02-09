@@ -55,10 +55,34 @@ namespace HollywoodFX
             );
         }
 
+        public static Dictionary<string, Effects.Effect> LoadEffects(Effects cannedEffects, GameObject impactsPrefab)
+        {
+            Plugin.Log.LogInfo("Instantiating Impact Effects Prefab");
+            var impactInstance = Object.Instantiate(impactsPrefab);
+            Plugin.Log.LogInfo("Getting Effects Component");
+            var impactEffects = impactInstance.GetComponent<Effects>();
+            Plugin.Log.LogInfo($"Loaded {impactEffects.EffectsArray.Length} extra effects");
+
+            Plugin.Log.LogInfo("Replacing transform parent with internal effects instance");
+            foreach (var child in impactInstance.transform.GetChildren())
+            {
+                child.parent = cannedEffects.transform;
+            }
+
+            Plugin.Log.LogInfo("Adding new effects to the internal effects instance");
+            List<Effects.Effect> customEffectsList = [];
+            customEffectsList.AddRange(cannedEffects.EffectsArray);
+            customEffectsList.AddRange(impactEffects.EffectsArray);
+
+            cannedEffects.EffectsArray = [.. customEffectsList];
+
+            return impactEffects.EffectsArray.ToDictionary(x => x.Name, x => x);
+        }
+
         public static void ScaleEffect(Effects.Effect effect, float sizeScaling, float emissionScaling)
         {
             var mediator = effect.BasicParticleSystemMediator;
-            
+
             var particleSystemsField =
                 typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
             var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
@@ -76,14 +100,14 @@ namespace HollywoodFX
             }
 
             if (Mathf.Approximately(emissionScaling, 1f)) return;
-            
+
             foreach (var particleSystem in particleSystems)
             {
                 Plugin.Log.LogInfo($"Scaling emission for {effect.Name} particle system {particleSystem.name}");
 
                 var main = particleSystem.main;
                 main.maxParticles = (int)(main.maxParticles * emissionScaling);
-                
+
                 // We skip the rateOver[X]Multiplier as these have natural scaling over distance, no need to increase the density
                 var emission = particleSystem.emission;
 
@@ -97,14 +121,14 @@ namespace HollywoodFX
             }
         }
 
-        private static short CalcBurstCount(short count, float scaling)
+        public static short CalcBurstCount(short count, float scaling)
         {
             // Don't try to scale single particle emissions
             if (count < 2)
             {
                 return count;
             }
-            
+
             // Clip the lower value to 1
             return (short)Mathf.Max(count * scaling, 1f);
         }
@@ -182,24 +206,158 @@ namespace HollywoodFX
             EffectUtils.Emit(effects, context, genericEffect);
         }
     }
-
-    internal class BattleAmbience
+    
+    internal class ImpactController
     {
-        
-    }
+        public static readonly ImpactController Instance = new();
 
-    internal class ImpactEffectsController
-    {
-        public static readonly ImpactEffectsController Instance = new();
-
-        private List<ImpactSystem>[] _smallCaliberImpacts = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
-        private List<ImpactSystem>[] _midCaliberImpacts = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
-        private List<ImpactSystem>[] _chonkCaliberImpacts = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
+        private BattleAmbience _battleAmbience;
+        private ImpactEffects _impactEffects;
 
         [CanBeNull] public EftBulletClass BulletInfo = null;
         [CanBeNull] public ShotInfoClass PlayerHitInfo = null;
+
+        public void Emit(Effects effects, EmissionContext context, ref bool isHitPointVisible)
+        {
+            var distance = Vector3.Distance(CameraClass.Instance.Camera.transform.position, context.Position);
+
+            // Render things closer than 3 meters but further than 1 of the camera even if the impact location is not directly in the viewport
+            if (distance is <= 3f and >= 1f)
+            {
+                isHitPointVisible = true;
+            }
+            
+            var kineticEnergy = float.NaN;
+            if (BulletInfo != null)
+            {
+                // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
+                kineticEnergy = BulletInfo.BulletMassGram * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
+            }
+            
+            // Battle ambience is simulated even if not currently visible, as long as it's within the configured range
+            if (Plugin.BattleAmbienceEnabled.Value && (isHitPointVisible || distance < Plugin.AmbientSimulationRange.Value))
+                _battleAmbience.Emit(effects, context, kineticEnergy);
+
+            if (!isHitPointVisible)
+                return;
+
+            _impactEffects.Emit(effects, context, kineticEnergy);
+        }
+
+        public void Setup(Effects cannedEffects)
+        {
+            Plugin.Log.LogInfo("Loading Impacts Prefab");
+            var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
+            var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
+
+            _battleAmbience = new BattleAmbience(cannedEffects, ambiencePrefab);
+            _impactEffects = new ImpactEffects(cannedEffects, impactsPrefab);
+        }
+    }
+
+    internal class BattleAmbience
+    {
+        private readonly Effects.Effect[] _cloudSmoke;
+        private readonly Effects.Effect[] _suspendedDust;
+        private readonly float _kineticEnergyNormFactor;
+
+        public BattleAmbience(Effects cannedEffects, GameObject prefab)
+        {
+            Plugin.Log.LogInfo("Building Battle Ambience Effects");
+            
+            var effectMap = EffectUtils.LoadEffects(cannedEffects, prefab);
+            
+            foreach (var effect in effectMap.Values)
+            {
+                Plugin.Log.LogInfo($"Effect {effect.Name} emission scaling: {Plugin.AmbientEffectDensity.Value}");
+
+                ScaleEffect(effect, Plugin.AmbientParticleLifetime.Value, Plugin.AmbientParticleLimit.Value, Plugin.AmbientEffectDensity.Value);
+            }
+
+            _cloudSmoke = [effectMap["Cloud_Smoke_1"]];
+            _suspendedDust = [effectMap["Suspended_Dust_1"], effectMap["Suspended_Glitter_1"]];
+            _kineticEnergyNormFactor = Plugin.ChonkEffectEnergy.Value;
+        }
+
+        public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
+        {
+            var emissionChance = 0.67 * (kineticEnergy / _kineticEnergyNormFactor);
+
+            if (Random.Range(0f, 1f) < emissionChance)
+            {
+                var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
+                EffectUtils.Emit(effects, context, smokeEffect);
+            }
+
+            if (!(Random.Range(0f, 1f) < emissionChance)) return;
+            
+            var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
+            EffectUtils.Emit(effects, context, dustEffect);
+        }
         
-        public void Emit(Effects effects, EmissionContext context)
+        private static void ScaleEffect(Effects.Effect effect, float lifetimeScaling, float limitScaling, float emissionScaling)
+        {
+            var mediator = effect.BasicParticleSystemMediator;
+
+            var particleSystemsField =
+                typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
+            var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
+
+            if (particleSystems == null)
+                return;
+
+            if (Mathf.Approximately(emissionScaling, 1f)) return;
+
+            foreach (var particleSystem in particleSystems)
+            {
+                var main = particleSystem.main;
+
+                if (!Mathf.Approximately(limitScaling, 1))
+                {
+                    main.maxParticles = (int)(main.maxParticles * limitScaling);                    
+                }
+                
+                if (!Mathf.Approximately(lifetimeScaling, 1))
+                {
+                    var lifetime = main.startLifetime;
+                    lifetime.constant *= lifetimeScaling;
+                    lifetime.constantMin *= lifetimeScaling;
+                    lifetime.constantMax *= lifetimeScaling;
+                    lifetime.curveMultiplier = lifetimeScaling;                    
+                }
+
+                if (!Mathf.Approximately(emissionScaling, 1))
+                {
+                    var emission = particleSystem.emission;
+
+                    for (var i = 0; i < emission.burstCount; i++)
+                    {
+                        var burst = emission.GetBurst(i);
+                        burst.minCount = EffectUtils.CalcBurstCount(burst.minCount, emissionScaling);
+                        burst.maxCount = EffectUtils.CalcBurstCount(burst.maxCount, emissionScaling);
+                        emission.SetBurst(i, burst);
+                    }
+                }
+            }
+        }
+    }
+
+    internal class ImpactEffects
+    {
+        private readonly List<ImpactSystem>[] _smallCaliberImpacts;
+        private readonly List<ImpactSystem>[] _midCaliberImpacts;
+        private readonly List<ImpactSystem>[] _chonkCaliberImpacts;
+
+        public ImpactEffects(Effects cannedEffects, GameObject prefab)
+        {
+            _midCaliberImpacts = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
+            
+            _smallCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.SmallEffectSize.Value);
+            _midCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.MediumEffectSize.Value);
+            _chonkCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.ChonkEffectSize.Value);
+        }
+        
+        public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
         {
             var camera = CameraClass.Instance.Camera;
             var worldAngle = Vector3.Angle(Vector3.down, context.Normal);
@@ -249,19 +407,13 @@ namespace HollywoodFX
 
             var impactChoice = _midCaliberImpacts;
 
-            if (BulletInfo != null)
+            if (kineticEnergy <= Plugin.SmallEffectEnergy.Value)
             {
-                // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
-                var kineticEnergy = BulletInfo.BulletMassGram * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
-                
-                if (kineticEnergy <= Plugin.SmallEffectEnergy.Value)
-                {
-                    impactChoice = _smallCaliberImpacts;
-                }
-                else if (kineticEnergy >= Plugin.ChonkEffectEnergy.Value)
-                {
-                    impactChoice = _chonkCaliberImpacts;
-                }
+                impactChoice = _smallCaliberImpacts;
+            }
+            else if (kineticEnergy >= Plugin.ChonkEffectEnergy.Value)
+            {
+                impactChoice = _chonkCaliberImpacts;
             }
 
             var currentSystems = impactChoice[(int)context.Material];
@@ -274,28 +426,18 @@ namespace HollywoodFX
                 impactSystem.Emit(effects, context, camOrientation, worldOrientation);
             }
         }
-
-        public void Setup(Effects cannedEffects)
-        {
-            Plugin.Log.LogInfo("Loading Impacts Prefab");
-            var impactsPrefab = AssetRegistry.ImpactsBundle.LoadAsset<GameObject>("HFX Impacts");
-
-            _smallCaliberImpacts = BuildCoreImpactSystems(cannedEffects, impactsPrefab, Plugin.SmallEffectSize.Value);
-            _midCaliberImpacts = BuildCoreImpactSystems(cannedEffects, impactsPrefab, Plugin.MediumEffectSize.Value);
-            _chonkCaliberImpacts = BuildCoreImpactSystems(cannedEffects, impactsPrefab, Plugin.ChonkEffectSize.Value);
-        }
-
+        
         private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects cannedEffects, GameObject impactsPrefab, float scaling)
         {
-            var effectMap = LoadEffects(cannedEffects, impactsPrefab);
+            var effectMap = EffectUtils.LoadEffects(cannedEffects, impactsPrefab);
 
             // Debris chance has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
             // things too much for smaller ones.
             var debrisChanceScale = scaling < 1f ? scaling : Mathf.Pow(scaling, 2f);
-            
+
             // Emissions only scale up, and that's as square root to avoid generating too much noise
             var emissionScaling = Mathf.Max(Mathf.Sqrt(scaling), 1);
-            
+
             foreach (var effect in effectMap.Values)
             {
                 var sizeScaling = scaling;
@@ -309,9 +451,9 @@ namespace HollywoodFX
                 {
                     sizeScaling = sizeScaling < 1f ? sizeScaling : Mathf.Sqrt(sizeScaling);
                 }
-                
+
                 Plugin.Log.LogInfo($"Effect {effect.Name} size scaling: {sizeScaling}, emission scaling: {emissionScaling}");
-                
+
                 EffectUtils.ScaleEffect(effect, sizeScaling, emissionScaling);
             }
 
@@ -321,7 +463,7 @@ namespace HollywoodFX
         private static List<ImpactSystem>[] DefineImpactSystems(Dictionary<string, Effects.Effect> effectMap, float debrisChanceScale)
         {
             Plugin.Log.LogInfo("Constructing impact systems");
-            
+
             // Define major building blocks for systems
             Plugin.Log.LogInfo("Building generic puffs");
             var puffGeneric = new[]
@@ -352,7 +494,7 @@ namespace HollywoodFX
                 effectMap["Flash_Sparks_1"], effectMap["Flash_Sparks_1"], effectMap["Flash_Sparks_1"], effectMap["Flash_Sparks_2"],
                 effectMap["Flash_Sparks_3"],
             };
-            
+
             Plugin.Log.LogInfo("Building horizontal puffs");
             var puffGenericHorRight = new[]
             {
@@ -451,8 +593,10 @@ namespace HollywoodFX
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.3f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
-                        new DirectionalImpact(splashDirtHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal, chance: 0.4f * debrisChanceScale),
-                        new DirectionalImpact(splashDirtHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal, chance: 0.4f * debrisChanceScale),
+                        new DirectionalImpact(splashDirtHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal,
+                            chance: 0.4f * debrisChanceScale),
+                        new DirectionalImpact(splashDirtHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal,
+                            chance: 0.4f * debrisChanceScale),
                     ]
                 )
             };
@@ -701,30 +845,6 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.Body] = bodyImpact;
 
             return impactSystems;
-        }
-
-        private static Dictionary<string, Effects.Effect> LoadEffects(Effects cannedEffects, GameObject impactsPrefab)
-        {
-            Plugin.Log.LogInfo("Instantiating Impact Effects Prefab");
-            var impactInstance = Object.Instantiate(impactsPrefab);
-            Plugin.Log.LogInfo("Getting Effects Component");
-            var impactEffects = impactInstance.GetComponent<Effects>();
-            Plugin.Log.LogInfo($"Loaded {impactEffects.EffectsArray.Length} extra effects");
-
-            Plugin.Log.LogInfo("Replacing transform parent with internal effects instance");
-            foreach (var child in impactInstance.transform.GetChildren())
-            {
-                child.parent = cannedEffects.transform;
-            }
-
-            Plugin.Log.LogInfo("Adding new effects to the internal effects instance");
-            List<Effects.Effect> customEffectsList = [];
-            customEffectsList.AddRange(cannedEffects.EffectsArray);
-            customEffectsList.AddRange(impactEffects.EffectsArray);
-
-            cannedEffects.EffectsArray = [.. customEffectsList];
-
-            return impactEffects.EffectsArray.ToDictionary(x => x.Name, x => x);
         }
     }
 }

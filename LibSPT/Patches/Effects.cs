@@ -4,6 +4,7 @@ using System.Reflection;
 using Comfort.Common;
 using EFT;
 using EFT.Ballistics;
+using EFT.UI;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 using UnityEngine;
@@ -24,10 +25,10 @@ namespace HollywoodFX.Patches
         {
             var effectsInstance = Singleton<Effects>.Instance;
             // SetBloodDecals(effectsInstance);
-            
-            ImpactEffectsController.Instance.Setup(effectsInstance);
+
+            ImpactController.Instance.Setup(effectsInstance);
         }
-        
+
         private static void SetBloodDecals(Effects effects)
         {
             var painter = effects.TexDecals;
@@ -86,7 +87,7 @@ namespace HollywoodFX.Patches
 
             Logger.LogWarning($"Setting max dynamic decals to 2048");
             maxDynamicDecalsField.SetValue(decalRenderer, 2048);
-            
+
             var maxConcurrentParticles = typeof(Effects).GetField("int_0", BindingFlags.NonPublic | BindingFlags.Static);
 
             if (maxConcurrentParticles != null)
@@ -100,7 +101,7 @@ namespace HollywoodFX.Patches
                     maxConcurrentParticles.SetValue(null, 100);
                 }
             }
-            
+
             HashSet<MaterialType> materialsTypes =
             [
                 MaterialType.Chainfence,
@@ -164,21 +165,8 @@ namespace HollywoodFX.Patches
         public static void Prefix(Effects __instance, MaterialType material, BallisticCollider hitCollider,
             Vector3 position, Vector3 normal, float volume, bool isKnife, ref bool isHitPointVisible, EPointOfView pov)
         {
-            // Render things closer than 3 meters but further than 1 of the camera even if the impact location is not directly in the viewport
-            if (!isHitPointVisible)
-            {
-                
-                var distance = Vector3.Distance(CameraClass.Instance.Camera.transform.position, position);
-                if (distance is > 3f or < 1f)
-                {
-                    return;
-                }
-
-                isHitPointVisible = true;
-            }
-
             var context = new EmissionContext(material, hitCollider, position, normal, volume, isKnife, pov);
-            ImpactEffectsController.Instance.Emit(__instance, context);
+            ImpactController.Instance.Emit(__instance, context, ref isHitPointVisible);
         }
     }
 }

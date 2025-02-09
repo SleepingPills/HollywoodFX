@@ -14,8 +14,8 @@ namespace HollywoodFX.Patches
         [PatchPrefix]
         public static void Prefix(EftBulletClass info, ShotInfoClass playerHitInfo)
         {
-            ImpactEffectsController.Instance.BulletInfo = info;
-            ImpactEffectsController.Instance.PlayerHitInfo = playerHitInfo;
+            ImpactController.Instance.BulletInfo = info;
+            ImpactController.Instance.PlayerHitInfo = playerHitInfo;
         }
     }
 }
