@@ -1,32 +1,65 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
-using Comfort.Common;
 using EFT;
 using EFT.Ballistics;
-using EFT.UI;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Patches
 {
-    public class OnGameStartedPatch : ModulePatch
+    public class GameWorldAwakePrefixPatch : ModulePatch
+    {
+        public static bool IsHideout;
+
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(GameWorld).GetMethod(nameof(GameWorld.Awake));
+        }
+
+        [PatchPrefix]
+        // ReSharper disable once InconsistentNaming
+        public static void Prefix(GameWorld __instance)
+        {
+            IsHideout = __instance is HideoutGameWorld;
+            Plugin.Log.LogInfo($"Game World Awake Patch: Game world is {__instance}, hideout flag: {IsHideout}");
+        }
+    }
+
+    public class EffectsAwakePrefixPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GameWorld).GetMethod(nameof(GameWorld.OnGameStarted));
+            return typeof(Effects).GetMethod(nameof(Effects.Awake));
         }
 
-        [PatchPostfix]
+        [PatchPrefix]
         // ReSharper disable once InconsistentNaming
-        public static void Postfix(GameWorld __instance)
+        public static void Prefix(Effects __instance)
         {
-            var effectsInstance = Singleton<Effects>.Instance;
-            // SetBloodDecals(effectsInstance);
+            if (__instance.name.Contains("HFX"))
+            {
+                Plugin.Log.LogInfo($"Skipping EffectsAwakePrefixPatch Reentrancy for HFX effects {__instance.name}");
+                return;
+            }
 
-            ImpactController.Instance.Setup(effectsInstance);
+            if (GameWorldAwakePrefixPatch.IsHideout)
+            {
+                Plugin.Log.LogInfo("Skipping EffectsAwakePrefixPatch for the Hideout");
+                return;
+            }
+
+            try
+            {
+                SetDecalLimits(__instance);
+                WipeDefaultParticles(__instance);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogError($"EffectsAwakePrefixPatch Exception: {e}");
+                throw;
+            }
         }
 
         private static void SetBloodDecals(Effects effects)
@@ -41,26 +74,23 @@ namespace HollywoodFX.Patches
             if (bloodDecals == null)
                 return;
 
-            Logger.LogInfo($"Overriding blood decal textures");
+            Plugin.Log.LogInfo("Overriding blood decal textures");
             vestDecalField?.SetValue(painter, bloodDecals);
             backDecalField?.SetValue(painter, bloodDecals);
         }
-    }
 
-    public class EffectsAwakePatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
+        private static void SetDecalLimits(Effects effects)
         {
-            return typeof(Effects).GetMethod(nameof(Effects.Awake));
-        }
+            if (!Plugin.MiscDecalsEnabled.Value)
+                return;
 
-        [PatchPrefix]
-        // ReSharper disable once InconsistentNaming
-        public static void Prefix(Effects __instance)
-        {
-            var decalRenderer = __instance.DeferredDecals;
+            Plugin.Log.LogInfo("Adjusting decal limits");
+
+            var decalRenderer = effects.DeferredDecals;
 
             if (decalRenderer == null) return;
+
+            var newDecalLimit = Plugin.MiscMaxDecalCount.Value;
 
             var maxStaticDecalsField = decalRenderer.GetType().GetField("_maxDecals", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -68,39 +98,43 @@ namespace HollywoodFX.Patches
             {
                 var maxStaticDecalsValue = (int)maxStaticDecalsField.GetValue(decalRenderer);
 
-                Logger.LogWarning($"Current static decals limit is: {maxStaticDecalsValue}");
-                if (maxStaticDecalsValue < 2048)
+                Plugin.Log.LogWarning($"Current static decals limit is: {maxStaticDecalsValue}");
+                if (maxStaticDecalsValue < newDecalLimit)
                 {
-                    Logger.LogWarning($"Setting max static decals to 2048");
-                    maxStaticDecalsField.SetValue(decalRenderer, 2048);
+                    Plugin.Log.LogWarning($"Setting max static decals to {newDecalLimit}");
+                    maxStaticDecalsField.SetValue(decalRenderer, newDecalLimit);
                 }
             }
 
             var maxDynamicDecalsField = decalRenderer.GetType().GetField("_maxDynamicDecals", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            if (maxDynamicDecalsField == null) return;
+            if (maxDynamicDecalsField != null)
+            {
+                var maxDynamicDecalsValue = (int)maxDynamicDecalsField.GetValue(decalRenderer);
 
-            var maxDynamicDecalsValue = (int)maxDynamicDecalsField.GetValue(decalRenderer);
-
-            Logger.LogWarning($"Current dynamic decals limit is: {maxDynamicDecalsValue}");
-            if (maxDynamicDecalsValue >= 2048) return;
-
-            Logger.LogWarning($"Setting max dynamic decals to 2048");
-            maxDynamicDecalsField.SetValue(decalRenderer, 2048);
+                Plugin.Log.LogWarning($"Current dynamic decals limit is: {maxDynamicDecalsValue}");
+                if (maxDynamicDecalsValue < newDecalLimit)
+                {
+                    Plugin.Log.LogWarning($"Setting max dynamic decals to {newDecalLimit}");
+                    maxDynamicDecalsField.SetValue(decalRenderer, newDecalLimit);
+                }
+            }
 
             var maxConcurrentParticles = typeof(Effects).GetField("int_0", BindingFlags.NonPublic | BindingFlags.Static);
 
-            if (maxConcurrentParticles != null)
-            {
-                var maxConcurrentParticlesValue = (int)maxConcurrentParticles.GetValue(null);
+            if (maxConcurrentParticles == null) return;
+            var maxConcurrentParticlesValue = (int)maxConcurrentParticles.GetValue(null);
 
-                Logger.LogWarning($"Current concurrent particle system limit is: {maxConcurrentParticlesValue}");
-                if (maxConcurrentParticlesValue < 100)
-                {
-                    Logger.LogWarning($"Setting max concurrent particle system limit to 100");
-                    maxConcurrentParticles.SetValue(null, 100);
-                }
-            }
+            Plugin.Log.LogWarning($"Current concurrent particle system limit is: {maxConcurrentParticlesValue}");
+            if (maxConcurrentParticlesValue >= Plugin.MiscMaxConcurrentParticleSys.Value) return;
+
+            Plugin.Log.LogWarning($"Setting max concurrent particle system limit to {Plugin.MiscMaxConcurrentParticleSys.Value}");
+            maxConcurrentParticles.SetValue(null, Plugin.MiscMaxConcurrentParticleSys.Value);
+        }
+
+        private static void WipeDefaultParticles(Effects effects)
+        {
+            Plugin.Log.LogInfo("Dropping various default particle effects");
 
             HashSet<MaterialType> materialsTypes =
             [
@@ -114,9 +148,9 @@ namespace HollywoodFX.Patches
                 MaterialType.Stone
             ];
 
-            foreach (var effect in __instance.EffectsArray)
+            foreach (var effect in effects.EffectsArray)
             {
-                Logger.LogInfo($"Processing {effect.Name}");
+                Plugin.Log.LogInfo($"Processing {effect.Name}");
                 foreach (var materialType in effect.MaterialTypes)
                 {
                     if (!materialsTypes.Contains(materialType)) continue;
@@ -127,15 +161,15 @@ namespace HollywoodFX.Patches
                     {
                         if (particle.Particle.name.Contains("Spark"))
                         {
-                            Logger.LogInfo($"Dropping {particle.Particle.name}");
+                            Plugin.Log.LogInfo($"Dropping {particle.Particle.name}");
                             continue;
                         }
 
-                        Logger.LogInfo($"Keeping {particle.Particle.name}");
+                        Plugin.Log.LogInfo($"Keeping {particle.Particle.name}");
                         filteredParticles.Add(particle);
                     }
 
-                    Logger.LogInfo(
+                    Plugin.Log.LogInfo(
                         $"Clearing out particles for {effect.Name} material {materialType}: {effect.Particles}, {effect.Flash}, {effect.FlareID}"
                     );
 
@@ -144,6 +178,41 @@ namespace HollywoodFX.Patches
                     effect.FlareID = 0;
                     break;
                 }
+            }
+        }
+    }
+
+    public class EffectsAwakePostfixPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Effects).GetMethod(nameof(Effects.Awake));
+        }
+
+        [PatchPostfix]
+        // ReSharper disable once InconsistentNaming
+        public static void Prefix(Effects __instance)
+        {
+            if (__instance.name.Contains("HFX"))
+            {
+                Plugin.Log.LogInfo($"Skipping EffectsAwakePostfixPatch Reentrancy for HFX effects {__instance.name}");
+                return;
+            }
+
+            if (GameWorldAwakePrefixPatch.IsHideout)
+            {
+                Plugin.Log.LogInfo("Skipping EffectsAwakePostfixPatch for the Hideout");
+                return;
+            }
+
+            try
+            {
+                ImpactController.Instance.Setup(__instance);
+            }
+            catch (Exception e)
+            {
+                Plugin.Log.LogError($"EffectsAwakePostfixPatch Exception: {e}");
+                throw;
             }
         }
     }
@@ -165,6 +234,9 @@ namespace HollywoodFX.Patches
         public static void Prefix(Effects __instance, MaterialType material, BallisticCollider hitCollider,
             Vector3 position, Vector3 normal, float volume, bool isKnife, ref bool isHitPointVisible, EPointOfView pov)
         {
+            if (GameWorldAwakePrefixPatch.IsHideout)
+                return;
+
             var context = new EmissionContext(material, hitCollider, position, normal, volume, isKnife, pov);
             ImpactController.Instance.Emit(__instance, context, ref isHitPointVisible);
         }

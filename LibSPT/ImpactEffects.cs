@@ -281,7 +281,13 @@ namespace HollywoodFX
 
         public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
         {
-            var emissionChance = 0.67 * (kineticEnergy / _kineticEnergyNormFactor);
+            // Don't generate ambient effects on body hits
+            if (context.Material is MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet)
+            {
+                return;
+            }
+            
+            var emissionChance = 0.5 * (kineticEnergy / _kineticEnergyNormFactor);
 
             if (Random.Range(0f, 1f) < emissionChance)
             {
@@ -326,17 +332,16 @@ namespace HollywoodFX
                     lifetime.curveMultiplier = lifetimeScaling;                    
                 }
 
-                if (!Mathf.Approximately(emissionScaling, 1))
-                {
-                    var emission = particleSystem.emission;
+                if (Mathf.Approximately(emissionScaling, 1)) continue;
+                
+                var emission = particleSystem.emission;
 
-                    for (var i = 0; i < emission.burstCount; i++)
-                    {
-                        var burst = emission.GetBurst(i);
-                        burst.minCount = EffectUtils.CalcBurstCount(burst.minCount, emissionScaling);
-                        burst.maxCount = EffectUtils.CalcBurstCount(burst.maxCount, emissionScaling);
-                        emission.SetBurst(i, burst);
-                    }
+                for (var i = 0; i < emission.burstCount; i++)
+                {
+                    var burst = emission.GetBurst(i);
+                    burst.minCount = EffectUtils.CalcBurstCount(burst.minCount, emissionScaling);
+                    burst.maxCount = EffectUtils.CalcBurstCount(burst.maxCount, emissionScaling);
+                    emission.SetBurst(i, burst);
                 }
             }
         }

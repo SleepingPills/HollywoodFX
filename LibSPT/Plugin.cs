@@ -6,7 +6,7 @@ using HollywoodFX.Patches;
 
 namespace HollywoodFX
 {
-    [BepInPlugin("com.janky.hollywoodfx", "Janky's HollywoodFX", "1.0.0")]
+    [BepInPlugin("com.janky.hollywoodfx", "Janky's HollywoodFX", "1.0.2")]
     [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
     public class Plugin : BaseUnityPlugin
     {
@@ -29,6 +29,10 @@ namespace HollywoodFX
         public static ConfigEntry<bool> BloodSplatterFineEnabled;
         public static ConfigEntry<bool> BloodPuffsEnabled;
         public static ConfigEntry<float> BloodEffectSize;
+        
+        public static ConfigEntry<bool> MiscDecalsEnabled;
+        public static ConfigEntry<int> MiscMaxDecalCount;
+        public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
 
         private void Awake()
         {
@@ -38,8 +42,9 @@ namespace HollywoodFX
 
             AssetRegistry.LoadBundles();
 
-            new EffectsAwakePatch().Enable();
-            new OnGameStartedPatch().Enable();
+            new GameWorldAwakePrefixPatch().Enable();
+            new EffectsAwakePrefixPatch().Enable();
+            new EffectsAwakePostfixPatch().Enable();
             new BulletImpactPatch().Enable();
             new EffectsEmitPatch().Enable();
 
@@ -51,6 +56,7 @@ namespace HollywoodFX
             const string effectSize = "1. Effect Size (Changes have no effect in-Raid)";
             const string battleAmbience = "2. Ambient Battle Effects (Changes have no effect in-Raid)";
             const string bloodGore = "3. Blood/Gore Settings (Changes have no effect in-Raid)";
+            const string misc = "4. Miscellaneous Flotsam (Changes have no effect in-Raid)";
 
             /*
              * Effect sizing
@@ -94,7 +100,7 @@ namespace HollywoodFX
                 new ConfigurationManagerAttributes { Order = 20 }
             ));
 
-            AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 50f, new ConfigDescription(
+            AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 25f, new ConfigDescription(
                 "Ambient battle effects are simulated in this range around the player, even if not immediately visible. Helps create ambience from bot fights.",
                 new AcceptableValueRange<float>(0, 250f),
                 new ConfigurationManagerAttributes { Order = 19 }
@@ -149,6 +155,27 @@ namespace HollywoodFX
                 "Adjusts the size (not the quantity or quality) of blood effects. Multiplicative with the general effect scaling!",
                 new AcceptableValueRange<float>(0f, 5f),
                 new ConfigurationManagerAttributes { Order = 7 }
+            ));
+            
+            /*
+             * Misc
+             */
+            MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment", true, new ConfigDescription(
+                "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
+                null,
+                new ConfigurationManagerAttributes { Order = 5 }
+            ));
+            
+            MiscMaxDecalCount = Config.Bind(misc, "Decal Limits", 2048, new ConfigDescription(
+                "Adjusts the maximum number of decals that the game will render. The vanilla number is a puny 200.",
+                new AcceptableValueRange<int>(1, 2048),
+                new ConfigurationManagerAttributes { Order = 4 }
+            ));
+            
+            MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame", 100, new ConfigDescription(
+                "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
+                new AcceptableValueRange<int>(10, 1000),
+                new ConfigurationManagerAttributes { Order = 3 }
             ));
         }
     }
