@@ -34,6 +34,8 @@ namespace HollywoodFX
         public static ConfigEntry<int> MiscMaxDecalCount;
         public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
 
+        public static ConfigEntry<bool> LoggingEnabled;
+
         private void Awake()
         {
             Log = Logger;
@@ -48,7 +50,15 @@ namespace HollywoodFX
             new BulletImpactPatch().Enable();
             new EffectsEmitPatch().Enable();
 
-            Logger.LogInfo("HollywoodFX Loaded, praise the destruction!");
+            if (LoggingEnabled.Value)
+            {
+                Log.LogInfo("Logging enabled");
+            }
+            else
+            {
+                Log.LogInfo("Logging disabled");
+                BepInEx.Logging.Logger.Sources.Remove(Log);
+            }
         }
 
         private void SetupConfig()
@@ -176,6 +186,15 @@ namespace HollywoodFX
                 "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
                 new AcceptableValueRange<int>(10, 1000),
                 new ConfigurationManagerAttributes { Order = 3 }
+            ));
+            
+            /*
+             * Deboog
+             */
+            LoggingEnabled = Config.Bind(misc, "Enable Debug Logging", false, new ConfigDescription(
+                "Duh. Requires restarting the game to take effect.",
+                null,
+                new ConfigurationManagerAttributes { Order = 0 }
             ));
         }
     }

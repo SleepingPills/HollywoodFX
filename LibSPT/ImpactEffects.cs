@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Comfort.Common;
 using EFT;
 using EFT.Ballistics;
 using EFT.Particles;
@@ -83,9 +84,7 @@ namespace HollywoodFX
         {
             var mediator = effect.BasicParticleSystemMediator;
 
-            var particleSystemsField =
-                typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
-            var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
+            var particleSystems = GetMediatorParticleSystems(mediator);
 
             if (particleSystems == null)
                 return;
@@ -119,6 +118,13 @@ namespace HollywoodFX
                     emission.SetBurst(i, burst);
                 }
             }
+        }
+
+        public static ParticleSystem[] GetMediatorParticleSystems(BasicParticleSystemMediator mediator)
+        {
+            var particleSystemsField = typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
+            var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
+            return particleSystems;
         }
 
         public static short CalcBurstCount(short count, float scaling)
@@ -206,7 +212,7 @@ namespace HollywoodFX
             EffectUtils.Emit(effects, context, genericEffect);
         }
     }
-    
+
     internal class ImpactController
     {
         public static readonly ImpactController Instance = new();
@@ -226,14 +232,14 @@ namespace HollywoodFX
             {
                 isHitPointVisible = true;
             }
-            
+
             var kineticEnergy = float.NaN;
             if (BulletInfo != null)
             {
                 // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
                 kineticEnergy = BulletInfo.BulletMassGram * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
             }
-            
+
             // Battle ambience is simulated even if not currently visible, as long as it's within the configured range
             if (Plugin.BattleAmbienceEnabled.Value && (isHitPointVisible || distance < Plugin.AmbientSimulationRange.Value))
                 _battleAmbience.Emit(effects, context, kineticEnergy);
@@ -264,9 +270,9 @@ namespace HollywoodFX
         public BattleAmbience(Effects cannedEffects, GameObject prefab)
         {
             Plugin.Log.LogInfo("Building Battle Ambience Effects");
-            
+
             var effectMap = EffectUtils.LoadEffects(cannedEffects, prefab);
-            
+
             foreach (var effect in effectMap.Values)
             {
                 Plugin.Log.LogInfo($"Effect {effect.Name} emission scaling: {Plugin.AmbientEffectDensity.Value}");
@@ -286,7 +292,7 @@ namespace HollywoodFX
             {
                 return;
             }
-            
+
             var emissionChance = 0.5 * (kineticEnergy / _kineticEnergyNormFactor);
 
             if (Random.Range(0f, 1f) < emissionChance)
@@ -296,11 +302,11 @@ namespace HollywoodFX
             }
 
             if (!(Random.Range(0f, 1f) < emissionChance)) return;
-            
+
             var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
             EffectUtils.Emit(effects, context, dustEffect);
         }
-        
+
         private static void ScaleEffect(Effects.Effect effect, float lifetimeScaling, float limitScaling, float emissionScaling)
         {
             var mediator = effect.BasicParticleSystemMediator;
@@ -320,20 +326,20 @@ namespace HollywoodFX
 
                 if (!Mathf.Approximately(limitScaling, 1))
                 {
-                    main.maxParticles = (int)(main.maxParticles * limitScaling);                    
+                    main.maxParticles = (int)(main.maxParticles * limitScaling);
                 }
-                
+
                 if (!Mathf.Approximately(lifetimeScaling, 1))
                 {
                     var lifetime = main.startLifetime;
                     lifetime.constant *= lifetimeScaling;
                     lifetime.constantMin *= lifetimeScaling;
                     lifetime.constantMax *= lifetimeScaling;
-                    lifetime.curveMultiplier = lifetimeScaling;                    
+                    lifetime.curveMultiplier = lifetimeScaling;
                 }
 
                 if (Mathf.Approximately(emissionScaling, 1)) continue;
-                
+
                 var emission = particleSystem.emission;
 
                 for (var i = 0; i < emission.burstCount; i++)
@@ -356,12 +362,12 @@ namespace HollywoodFX
         public ImpactEffects(Effects cannedEffects, GameObject prefab)
         {
             _midCaliberImpacts = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
-            
+
             _smallCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.SmallEffectSize.Value);
             _midCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.MediumEffectSize.Value);
             _chonkCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.ChonkEffectSize.Value);
         }
-        
+
         public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
         {
             var camera = CameraClass.Instance.Camera;
@@ -431,7 +437,7 @@ namespace HollywoodFX
                 impactSystem.Emit(effects, context, camOrientation, worldOrientation);
             }
         }
-        
+
         private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects cannedEffects, GameObject impactsPrefab, float scaling)
         {
             var effectMap = EffectUtils.LoadEffects(cannedEffects, impactsPrefab);
@@ -470,27 +476,15 @@ namespace HollywoodFX
             Plugin.Log.LogInfo("Constructing impact systems");
 
             // Define major building blocks for systems
-            Plugin.Log.LogInfo("Building generic puffs");
-            var puffGeneric = new[]
-            {
-                effectMap["Puff_Generic_1"], effectMap["Puff_Generic_2"], effectMap["Puff_Generic_2"], effectMap["Puff_Generic_2"],
-                effectMap["Puff_Generic_2"], effectMap["Puff_Generic_3"], effectMap["Puff_Generic_4"]
-            };
-
-            Plugin.Log.LogInfo("Building dusty puffs");
-            var puffGenericDusty = new[]
-            {
-                effectMap["Puff_Dusty_1"], effectMap["Puff_Dusty_2"], effectMap["Puff_Dusty_3"], effectMap["Puff_Dusty_4"],
-                effectMap["Puff_Dusty_1"], effectMap["Puff_Dusty_2"], effectMap["Puff_Dusty_3"], effectMap["Puff_Dusty_4"],
-                effectMap["Puff_Dusty_Wide_1"], effectMap["Puff_Dusty_Wide_2"], effectMap["Puff_Dusty_Wide_3"],
-                effectMap["Puff_Dusty_Wide_4"], effectMap["Puff_Dusty_Wide_5"], effectMap["Puff_Dusty_Wide_6"]
-            };
-
             Plugin.Log.LogInfo("Building frontal puffs");
             var puffFront = new[]
             {
-                effectMap["Puff_Front_1"], effectMap["Puff_Front_2"], effectMap["Puff_Front_3"],
-                effectMap["Puff_Front_4"], effectMap["Puff_Front_5"]
+                effectMap["Puff_Front_1"], effectMap["Puff_Front_2"], effectMap["Puff_Front_3"]
+            };
+            
+            var puffFrontDusty = new[]
+            {
+                effectMap["Puff_Dusty_Front_1"], effectMap["Puff_Dusty_Front_2"], effectMap["Puff_Dusty_Front_3"]
             };
 
             Plugin.Log.LogInfo("Building flash sparks");
@@ -500,34 +494,21 @@ namespace HollywoodFX
                 effectMap["Flash_Sparks_3"],
             };
 
+            Plugin.Log.LogInfo("Building generic puffs");
+            var puffGeneric = new[]
+            {
+                effectMap["Puff_1"], effectMap["Puff_2"], effectMap["Puff_3"], effectMap["Puff_4"]
+            };
+            
             Plugin.Log.LogInfo("Building horizontal puffs");
             var puffGenericHorRight = new[]
             {
-                effectMap["Puff_Generic_Hor_Right_1"], effectMap["Puff_Generic_Hor_Right_2"], effectMap["Puff_Generic_Hor_Right_3"],
-                effectMap["Puff_Generic_Hor_Right_4"], effectMap["Puff_Generic_Hor_Right_5"]
+                effectMap["Puff_Dusty_Hor_Right_1"], effectMap["Puff_Dusty_Hor_Right_2"]
             };
 
             var puffGenericHorLeft = new[]
             {
-                effectMap["Puff_Generic_Hor_Left_1"], effectMap["Puff_Generic_Hor_Left_2"], effectMap["Puff_Generic_Hor_Left_3"],
-                effectMap["Puff_Generic_Hor_Left_4"], effectMap["Puff_Generic_Hor_Left_5"]
-            };
-
-            Plugin.Log.LogInfo("Building horizontal dirt splashes");
-            var splashDirtHorRight = new[]
-            {
-                effectMap["Splash_Dirt_Hor_Right_1"], effectMap["Splash_Dirt_Hor_Right_2"], effectMap["Splash_Dirt_Hor_Right_3"],
-                effectMap["Splash_Dirt_Hor_Right_4"], effectMap["Splash_Dirt_Hor_Right_5"], effectMap["Splash_Dirt_Hor_Right_6"],
-                effectMap["Splash_Dirt_Hor_Right_7"], effectMap["Splash_Dirt_Hor_Right_8"], effectMap["Splash_Dirt_Hor_Right_9"],
-                effectMap["Splash_Dirt_Hor_Right_10"]
-            };
-
-            var splashDirtHorLeft = new[]
-            {
-                effectMap["Splash_Dirt_Hor_Left_1"], effectMap["Splash_Dirt_Hor_Left_2"], effectMap["Splash_Dirt_Hor_Left_3"],
-                effectMap["Splash_Dirt_Hor_Left_4"], effectMap["Splash_Dirt_Hor_Left_5"], effectMap["Splash_Dirt_Hor_Left_6"],
-                effectMap["Splash_Dirt_Hor_Left_7"], effectMap["Splash_Dirt_Hor_Left_8"], effectMap["Splash_Dirt_Hor_Left_9"],
-                effectMap["Splash_Dirt_Hor_Left_10"]
+                effectMap["Puff_Dusty_Hor_Left_1"], effectMap["Puff_Dusty_Hor_Left_2"]
             };
 
             Plugin.Log.LogInfo("Building mud debris");
@@ -586,22 +567,18 @@ namespace HollywoodFX
                         new DirectionalImpact(puffGenericHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
                         new DirectionalImpact(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
-                    generic: puffGenericDusty.Concat(puffGeneric).ToArray(),
+                    generic: puffGeneric,
                     forceGeneric: 0.33f
                 ),
                 // Various debris and splashes
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront),
+                        new DirectionalImpact(puffFront.Concat(puffFrontDusty).ToArray()),
                         new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.3f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
-                        new DirectionalImpact(splashDirtHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal,
-                            chance: 0.4f * debrisChanceScale),
-                        new DirectionalImpact(splashDirtHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal,
-                            chance: 0.4f * debrisChanceScale),
                     ]
                 )
             };
@@ -622,7 +599,7 @@ namespace HollywoodFX
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront),
+                        new DirectionalImpact(puffFront.Concat(puffFrontDusty).ToArray()),
                         new DirectionalImpact(debrisSparksLight, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.3f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.3f * debrisChanceScale),
@@ -640,19 +617,17 @@ namespace HollywoodFX
                         new DirectionalImpact(puffGenericHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
                         new DirectionalImpact(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
-                    generic: puffGenericDusty,
+                    generic: puffGeneric,
                     forceGeneric: 0.33f
                 ),
                 // Various debris and splashes
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront),
+                        new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up),
-                        new DirectionalImpact(splashDirtHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal, chance: 0.4f),
-                        new DirectionalImpact(splashDirtHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal, chance: 0.4f),
+                        new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up)
                     ]
                 )
             };
@@ -666,19 +641,17 @@ namespace HollywoodFX
                         new DirectionalImpact(puffGenericHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
                         new DirectionalImpact(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
-                    generic: puffGenericDusty,
+                    generic: puffGeneric,
                     forceGeneric: 0.33f
                 ),
                 // Various debris and splashes
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront),
+                        new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Grass_1"]], chance: 0.4f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up),
-                        new DirectionalImpact(splashDirtHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal, chance: 0.4f),
-                        new DirectionalImpact(splashDirtHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal, chance: 0.4f),
                     ]
                 )
             };
@@ -714,7 +687,7 @@ namespace HollywoodFX
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront),
+                        new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Wood_1"]], chance: 0.45f * debrisChanceScale),
@@ -737,80 +710,6 @@ namespace HollywoodFX
                     ]
                 )
             };
-
-            var bodyArmorImpact = new List<ImpactSystem>
-            {
-                new(
-                    directional:
-                    [
-                        new DirectionalImpact(puffFront, chance: 0.5f),
-                        new DirectionalImpact(debrisDust, chance: 0.4f * debrisChanceScale),
-                        new DirectionalImpact([effectMap["Debris_Armor_Fabric_1"]], chance: 0.4f * debrisChanceScale)
-                    ]
-                )
-            };
-
-            var helmetImpact = new List<ImpactSystem>
-            {
-                new(
-                    directional:
-                    [
-                        new DirectionalImpact(puffFront, chance: 0.5f),
-                        new DirectionalImpact(debrisSparksLight, chance: 0.4f * debrisChanceScale),
-                        new DirectionalImpact([effectMap["Debris_Armor_Metal_1"]], chance: 0.4f * debrisChanceScale)
-                    ]
-                )
-            };
-
-            List<ImpactSystem> bodyImpact = null;
-
-            if (Plugin.BloodEnabled.Value)
-            {
-                Plugin.Log.LogInfo("Defining body impact");
-                List<DirectionalImpact> directionalImpacts = [];
-
-                if (Plugin.BloodPuffsEnabled.Value)
-                {
-                    directionalImpacts.Add(
-                        new DirectionalImpact([
-                            effectMap["Puff_Blood_1"], effectMap["Puff_Blood_2"],
-                            effectMap["Puff_Blood_3"], effectMap["Puff_Blood_4"]
-                        ], camDir: CamDir.Angled)
-                    );
-
-                    directionalImpacts.Add(
-                        new DirectionalImpact([
-                            effectMap["Puff_Blood_Front_1"], effectMap["Puff_Blood_Front_2"], effectMap["Puff_Blood_Front_3"],
-                            effectMap["Puff_Blood_Front_4"], effectMap["Puff_Blood_Front_5"]
-                        ])
-                    );
-                }
-
-                if (Plugin.BloodSplatterEnabled.Value)
-                {
-                    directionalImpacts.Add(
-                        new DirectionalImpact([effectMap["Squirt_Blood_1"], effectMap["Squirt_Blood_2"]],
-                            chance: 0.5f * debrisChanceScale)
-                    );
-                    directionalImpacts.Add(
-                        new DirectionalImpact([
-                            effectMap["Splash_Blood_Front_1"], effectMap["Splash_Blood_Front_2"], effectMap["Splash_Blood_Front_3"]
-                        ], chance: 0.5f * debrisChanceScale)
-                    );
-                }
-
-                if (Plugin.BloodSplatterFineEnabled.Value)
-                {
-                    directionalImpacts.Add(new DirectionalImpact([effectMap["Fine_Blood_1"], effectMap["Fine_Blood_2"]]));
-                }
-
-                foreach (var effect in directionalImpacts.SelectMany(directionalImpact => directionalImpact.Effects))
-                {
-                    EffectUtils.ScaleEffect(effect, Plugin.BloodEffectSize.Value, 1);
-                }
-
-                bodyImpact = [new ImpactSystem(directional: directionalImpacts.ToArray())];
-            }
 
             var impactSystems = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
 
@@ -844,12 +743,139 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.Rubber] = softGenericImpact;
             impactSystems[(int)MaterialType.GenericHard] = hardGenericImpact;
             impactSystems[(int)MaterialType.MetalNoDecal] = metalImpact;
+
+            DefineBodyImpactSystems(effectMap, impactSystems, puffFront, debrisDust, debrisSparksLight, debrisChanceScale);
+
+            return impactSystems;
+        }
+
+        private static void DefineBodyImpactSystems(Dictionary<string, Effects.Effect> effectMap, List<ImpactSystem>[] impactSystems,
+            Effects.Effect[] puffFront, Effects.Effect[] debrisDust, Effects.Effect[] debrisSparksLight,
+            float debrisChanceScale)
+        {
+            List<DirectionalImpact> bodyArmorImpacts =
+            [
+                new(puffFront, chance: 0.5f),
+                new(debrisDust, chance: 0.4f * debrisChanceScale),
+                new([effectMap["Debris_Armor_Fabric_1"]], chance: 0.4f * debrisChanceScale)
+            ];
+
+            List<ImpactSystem> bodyImpact = null;
+
+            if (Plugin.BloodEnabled.Value)
+            {
+                Plugin.Log.LogInfo("Defining body impact");
+                List<DirectionalImpact> bodyImpacts = [];
+
+                if (Plugin.BloodPuffsEnabled.Value)
+                {
+                    Effects.Effect[] puffBloodVert =
+                    [
+                        effectMap["Puff_Blood_1"], effectMap["Puff_Blood_2"],
+                        effectMap["Puff_Blood_3"], effectMap["Puff_Blood_4"]
+                    ];
+
+                    bodyImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled));
+                    bodyArmorImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled, chance: 0.5f * debrisChanceScale));
+
+                    Effects.Effect[] puffBloodFront =
+                    [
+                        effectMap["Puff_Blood_Front_1"], effectMap["Puff_Blood_Front_2"], effectMap["Puff_Blood_Front_3"],
+                        effectMap["Puff_Blood_Front_4"], effectMap["Puff_Blood_Front_5"]
+                    ];
+                    bodyImpacts.Add(new DirectionalImpact(puffBloodFront));
+                    bodyArmorImpacts.Add(new DirectionalImpact(puffBloodFront, chance: 0.5f * debrisChanceScale));
+                }
+
+                if (Plugin.BloodSplatterEnabled.Value)
+                {
+                    Effects.Effect[] squirts = [effectMap["Squirt_Blood_1"], effectMap["Squirt_Blood_2"], effectMap["Squirt_Blood_3"]];
+
+                    foreach (var squirt in squirts)
+                    {
+                        var squirtParticles = EffectUtils.GetMediatorParticleSystems(squirt.BasicParticleSystemMediator);
+
+                        foreach (var particleSystem in squirtParticles)
+                        {
+                            particleSystem.gameObject.AddComponent<BloodSquirtCollisionHandler>();
+                        }                        
+                    }
+                    
+                    bodyImpacts.Add(
+                        new DirectionalImpact(squirts,
+                            chance: 0.5f * debrisChanceScale)
+                    );
+                    bodyImpacts.Add(
+                        new DirectionalImpact([
+                            effectMap["Splash_Blood_Front_1"], effectMap["Splash_Blood_Front_2"], effectMap["Splash_Blood_Front_3"]
+                        ], chance: 0.5f * debrisChanceScale)
+                    );
+                }
+
+                if (Plugin.BloodSplatterFineEnabled.Value)
+                {
+                    bodyImpacts.Add(new DirectionalImpact([effectMap["Fine_Blood_1"], effectMap["Fine_Blood_2"]]));
+                    bodyArmorImpacts.Add(new DirectionalImpact([effectMap["Fine_Blood_1"], effectMap["Fine_Blood_2"]],
+                        chance: 0.25f * debrisChanceScale));
+                }
+
+                foreach (var effect in bodyImpacts.SelectMany(directionalImpact => directionalImpact.Effects))
+                {
+                    EffectUtils.ScaleEffect(effect, Plugin.BloodEffectSize.Value, 1);
+                }
+
+                bodyImpact = [new ImpactSystem(directional: bodyImpacts.ToArray())];
+            }
+
+            var bodyArmorImpact = new List<ImpactSystem> { new(directional: bodyArmorImpacts.ToArray()) };
+
+            var helmetImpact = new List<ImpactSystem>
+            {
+                new(
+                    directional:
+                    [
+                        new DirectionalImpact(puffFront, chance: 0.5f),
+                        new DirectionalImpact(debrisSparksLight, chance: 0.4f * debrisChanceScale),
+                        new DirectionalImpact([effectMap["Debris_Armor_Metal_1"]], chance: 0.4f * debrisChanceScale)
+                    ]
+                )
+            };
+
             impactSystems[(int)MaterialType.BodyArmor] = bodyArmorImpact;
             impactSystems[(int)MaterialType.Helmet] = helmetImpact;
             impactSystems[(int)MaterialType.GlassVisor] = helmetImpact;
             impactSystems[(int)MaterialType.Body] = bodyImpact;
+        }
+    }
+    
+    public class BloodSquirtCollisionHandler : MonoBehaviour
+    {
+        private Effects _effects;
+        private ParticleSystem _particleSystem;
+        private List<ParticleCollisionEvent> _collisionEvents;
 
-            return impactSystems;
+        public void Start()
+        {
+            _effects = Singleton<Effects>.Instance;
+            _particleSystem = GetComponent<ParticleSystem>();
+            _collisionEvents = [];
+            Plugin.Log.LogInfo("Starting collision handler");
+        }
+
+        public void OnParticleCollision(GameObject other)
+        {
+            if(other == null)
+                return;
+            
+            var numEvents = _particleSystem.GetCollisionEvents(other, _collisionEvents);
+
+            for (var i = 0; i < numEvents; i++)
+            {
+                var hitPos = _collisionEvents[i].intersection;
+                var hitNormal = _collisionEvents[i].normal;
+
+                _effects.EmitBleeding(hitPos, hitNormal);
+            }
         }
     }
 }

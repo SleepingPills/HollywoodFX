@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DeferredDecals;
 using EFT;
 using EFT.Ballistics;
 using SPT.Reflection.Patching;
@@ -53,6 +54,7 @@ namespace HollywoodFX.Patches
             try
             {
                 SetDecalLimits(__instance);
+                SetDecalsProps(__instance);
                 WipeDefaultParticles(__instance);
             }
             catch (Exception e)
@@ -62,21 +64,44 @@ namespace HollywoodFX.Patches
             }
         }
 
-        private static void SetBloodDecals(Effects effects)
+        private static void SetDecalsProps(Effects effects)
         {
-            var painter = effects.TexDecals;
+            var texDecalsPainter = effects.TexDecals;
             var bloodDecalTexField = typeof(TextureDecalsPainter).GetField("_bloodDecalTexture", BindingFlags.NonPublic | BindingFlags.Instance);
             var vestDecalField = typeof(TextureDecalsPainter).GetField("_vestDecalTexture", BindingFlags.NonPublic | BindingFlags.Instance);
             var backDecalField = typeof(TextureDecalsPainter).GetField("_backDecalTexture", BindingFlags.NonPublic | BindingFlags.Instance);
+            var decalSizeField = typeof(TextureDecalsPainter).GetField("_decalSize", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            var bloodDecals = bloodDecalTexField?.GetValue(painter);
+            var bloodDecals = bloodDecalTexField?.GetValue(texDecalsPainter);
 
-            if (bloodDecals == null)
-                return;
+            if (bloodDecals != null)
+            {
+                Plugin.Log.LogInfo("Overriding blood decal textures");
+                vestDecalField?.SetValue(texDecalsPainter, bloodDecals);
+                backDecalField?.SetValue(texDecalsPainter, bloodDecals);
+                decalSizeField?.SetValue(texDecalsPainter, new Vector2(0.25f, 0.25f));
+            }
 
-            Plugin.Log.LogInfo("Overriding blood decal textures");
-            vestDecalField?.SetValue(painter, bloodDecals);
-            backDecalField?.SetValue(painter, bloodDecals);
+            var decalRenderer = effects.DeferredDecals;
+
+            if (decalRenderer == null) return;
+            
+            var decalsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
+            Plugin.Log.LogInfo("Instantiating Decal Effects Prefab");
+            var decalsInstance = UnityEngine.Object.Instantiate(decalsPrefab);
+            Plugin.Log.LogInfo("Getting Effects Component");
+            var decalsEffects = decalsInstance.GetComponent<Effects>();
+
+            var bleedingDecalOrig =
+                ReflectionUtils.GetFieldValue<DeferredDecalRenderer, DeferredDecalRenderer.SingleDecal>(
+                    decalRenderer, "_bleedingDecal");
+
+            var bleedingDecalNew =
+                ReflectionUtils.GetFieldValue<DeferredDecalRenderer, DeferredDecalRenderer.SingleDecal>(
+                    decalsEffects.DeferredDecals, "_bleedingDecal");
+
+            bleedingDecalOrig.DecalMaterial = bleedingDecalNew.DecalMaterial;
+            bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
         }
 
         private static void SetDecalLimits(Effects effects)
