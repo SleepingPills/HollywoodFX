@@ -6,7 +6,7 @@ using HollywoodFX.Patches;
 
 namespace HollywoodFX
 {
-    [BepInPlugin("com.janky.hollywoodfx", "Janky's HollywoodFX", "1.0.2")]
+    [BepInPlugin("com.janky.hollywoodfx", "Janky's HollywoodFX", "1.1.0")]
     [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
     public class Plugin : BaseUnityPlugin
     {
@@ -34,7 +34,7 @@ namespace HollywoodFX
         public static ConfigEntry<int> MiscMaxDecalCount;
         public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
 
-        public static ConfigEntry<bool> LoggingEnabled;
+        private static ConfigEntry<bool> _loggingEnabled;
 
         private void Awake()
         {
@@ -50,7 +50,7 @@ namespace HollywoodFX
             new BulletImpactPatch().Enable();
             new EffectsEmitPatch().Enable();
 
-            if (LoggingEnabled.Value)
+            if (_loggingEnabled.Value)
             {
                 Log.LogInfo("Logging enabled");
             }
@@ -191,7 +191,7 @@ namespace HollywoodFX
             /*
              * Deboog
              */
-            LoggingEnabled = Config.Bind(misc, "Enable Debug Logging", false, new ConfigDescription(
+            _loggingEnabled = Config.Bind(misc, "Enable Debug Logging", false, new ConfigDescription(
                 "Duh. Requires restarting the game to take effect.",
                 null,
                 new ConfigurationManagerAttributes { Order = 0 }
