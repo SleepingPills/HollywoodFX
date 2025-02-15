@@ -7,6 +7,7 @@ using Comfort.Common;
 using EFT;
 using EFT.Ballistics;
 using EFT.Particles;
+using HarmonyLib;
 using JetBrains.Annotations;
 using Systems.Effects;
 using UnityEngine;
@@ -122,10 +123,7 @@ namespace HollywoodFX
 
         public static ParticleSystem[] GetMediatorParticleSystems(BasicParticleSystemMediator mediator)
         {
-            var particleSystemsField =
-                typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
-            var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
-            return particleSystems;
+            return Traverse.Create(mediator).Field("_particleSystems").GetValue<ParticleSystem[]>();
         }
 
         public static short CalcBurstCount(short count, float scaling)
@@ -218,6 +216,7 @@ namespace HollywoodFX
     {
         public static readonly ImpactController Instance = new();
 
+        private RagdollEffects _ragdollEffects;
         private BattleAmbience _battleAmbience;
         private ImpactEffects _impactEffects;
 
@@ -249,6 +248,7 @@ namespace HollywoodFX
                 return;
 
             _impactEffects.Emit(effects, context, kineticEnergy);
+            RagdollEffects.Apply(kineticEnergy);
         }
 
         public void Setup(Effects cannedEffects)
@@ -257,8 +257,41 @@ namespace HollywoodFX
             var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
             var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
 
+            _ragdollEffects = new RagdollEffects();
             _battleAmbience = new BattleAmbience(cannedEffects, ambiencePrefab);
             _impactEffects = new ImpactEffects(cannedEffects, impactsPrefab);
+        }
+    }
+
+    internal class RagdollEffects
+    {
+        public static void Apply(float kineticEnergy)
+        {
+            if (!Plugin.RagdollEnabled.Value) return;
+            
+            var bulletInfo = ImpactController.Instance.BulletInfo;
+            
+            if (bulletInfo == null) return;
+            
+            var attachedRigidbody = bulletInfo.HitCollider.attachedRigidbody;
+            
+            if (attachedRigidbody == null)
+                return;
+            
+            const float scalingBase = 0.0325f;
+
+            var penetrationFactor = 0.5f;
+                
+            if (ImpactController.Instance.BulletInfo != null)
+            {
+                penetrationFactor = (0.3f + 0.7f * Mathf.InverseLerp(50f, 20f, ImpactController.Instance.BulletInfo.PenetrationPower));
+            }
+
+            var bulletForce = scalingBase * kineticEnergy;
+
+            var impactImpulse = penetrationFactor * bulletForce * Plugin.RagdollForceMultiplier.Value;
+            
+            attachedRigidbody.AddForceAtPosition(bulletInfo.Direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
         }
     }
 
@@ -310,11 +343,7 @@ namespace HollywoodFX
 
         private static void ScaleEffect(Effects.Effect effect, float lifetimeScaling, float limitScaling, float emissionScaling)
         {
-            var mediator = effect.BasicParticleSystemMediator;
-
-            var particleSystemsField =
-                typeof(BasicParticleSystemMediator).GetField("_particleSystems", BindingFlags.NonPublic | BindingFlags.Instance);
-            var particleSystems = (ParticleSystem[])particleSystemsField?.GetValue(mediator);
+            var particleSystems = EffectUtils.GetMediatorParticleSystems(effect.BasicParticleSystemMediator);
 
             if (particleSystems == null)
                 return;
@@ -752,6 +781,7 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.Rubber] = softGenericImpact;
             impactSystems[(int)MaterialType.GenericHard] = hardGenericImpact;
             impactSystems[(int)MaterialType.MetalNoDecal] = metalImpact;
+            impactSystems[(int)MaterialType.None] = hardGenericImpact;
 
             DefineBodyImpactSystems(effectMap, impactSystems, puffFront, debrisDust, debrisSparksLight, debrisChanceScale);
 

@@ -2,18 +2,17 @@
 using System.Reflection;
 using UnityEngine;
 
-namespace HollywoodFX
-{
-    internal static class AssetRegistry
-    {
-        public static AssetBundle AssetBundle;
+namespace HollywoodFX;
 
-        public static void LoadBundles()
-        {
-            var bundleDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var assetBundlePath = $"{bundleDirectory}\\hollywoodfx";
-            Plugin.Log.LogInfo($"Loading Impacts Bundle: {assetBundlePath}");
-            AssetBundle = AssetBundle.LoadFromFile(assetBundlePath);
-        }
+internal static class AssetRegistry
+{
+    public static AssetBundle AssetBundle;
+
+    public static void LoadBundles()
+    {
+        var bundleDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        var assetBundlePath = $"{bundleDirectory}\\hollywoodfx";
+        Plugin.Log.LogInfo($"Loading Impacts Bundle: {assetBundlePath}");
+        AssetBundle = AssetBundle.LoadFromFile(assetBundlePath);
     }
 }
