@@ -46,6 +46,8 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> MiscDecalsEnabled;
     public static ConfigEntry<int> MiscMaxDecalCount;
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
+    public static ConfigEntry<float> MiscShellLifetime;
+    public static ConfigEntry<float> MiscShellSize;
 
     private static ConfigEntry<bool> _loggingEnabled;
 
@@ -78,6 +80,7 @@ public class Plugin : BaseUnityPlugin
         new EffectsAwakePostfixPatch().Enable();
         new BulletImpactPatch().Enable();
         new EffectsEmitPatch().Enable();
+        new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
@@ -223,24 +226,23 @@ public class Plugin : BaseUnityPlugin
         /*
          * Ragdolls
          */
-
         bool[] ragdollAcceptableValues = visceralCombatDetected ? [false] : [false, true];
         RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (requires game restart)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 12 }
+            new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
         ));
 
         RagdollLifetime = Config.Bind(ragdoll, "Ragdoll Lifetime (seconds)", 15f, new ConfigDescription(
             "Determines how long will ragdolls stay active for. Setting this to a very large number will likely cause increasing CPU load as more corpses pile up.",
             new AcceptableValueRange<float>(0f, 500f),
-            new ConfigurationManagerAttributes { Order = 11 }
+            new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected}
         ));
 
         RagdollForceMultiplier = Config.Bind(ragdoll, "Ragdoll Force Multiplier", 1f, new ConfigDescription(
             "Multiplies the force that is applied to ragdolls when enemies die.",
             new AcceptableValueRange<float>(0f, 100f),
-            new ConfigurationManagerAttributes { Order = 10 }
+            new ConfigurationManagerAttributes { Order = 10, ReadOnly = visceralCombatDetected }
         ));
 
         /*
@@ -249,20 +251,33 @@ public class Plugin : BaseUnityPlugin
         MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment", true, new ConfigDescription(
             "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
             null,
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 9 }
         ));
 
         MiscMaxDecalCount = Config.Bind(misc, "Decal Limits", 2048, new ConfigDescription(
             "Adjusts the maximum number of decals that the game will render. The vanilla number is a puny 200.",
             new AcceptableValueRange<int>(1, 2048),
-            new ConfigurationManagerAttributes { Order = 3 }
+            new ConfigurationManagerAttributes { Order = 8 }
         ));
 
         MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
-            new ConfigurationManagerAttributes { Order = 2 }
+            new ConfigurationManagerAttributes { Order = 7 }
         ));
+
+        MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
+            "How long do spent shells stay on the ground before despawning (game default is 1 second).",
+            new AcceptableValueRange<float>(0f, 3600f),
+            new ConfigurationManagerAttributes { Order = 6 }
+        ));
+        
+        MiscShellSize = Config.Bind(misc, "Spent Shells Size", 1.5f, new ConfigDescription(
+            "Adjusts the size of spent shells multiplicatively (2 means 2x the size).",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 5 }
+        ));
+        MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
 
         /*
          * Deboog

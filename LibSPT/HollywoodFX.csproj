@@ -90,6 +90,7 @@
     <Compile Include="AssetRegistry.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="ImpactEffects.cs" />
+    <Compile Include="Patches\AmmoPoolObject.cs" />
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Effects.cs" />
     <Compile Include="Patches\GameWorld.cs" />
