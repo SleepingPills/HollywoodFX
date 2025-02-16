@@ -46,17 +46,3 @@ internal class AttachWeaponPostfixPatch : ModulePatch
         weaponRigidbody.gameObject.SetActive(false);
     }
 }
-
-public class LootItemIsRigidBodyDonePrefixPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        return typeof(LootItem).GetMethod("IsRigidbodyDone", BindingFlags.Instance | BindingFlags.Public, null, [], null);
-    }
-
-    [PatchPrefix]
-    private static void Prefix(LootItem __instance)
-    {
-        __instance.gameObject.layer = LayerMask.NameToLayer("Deadbody");
-    }
-}

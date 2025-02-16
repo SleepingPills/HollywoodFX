@@ -15,7 +15,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.2.0";
+    public const string HollywoodFXVersion = "1.2.1";
 
     public static ManualLogSource Log;
 
@@ -83,7 +83,6 @@ public class Plugin : BaseUnityPlugin
         {
             new RagdollStartPrefixPatch().Enable();
             new AttachWeaponPostfixPatch().Enable();
-            new LootItemIsRigidBodyDonePrefixPatch().Enable();
             
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
@@ -232,7 +231,7 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 12 }
         ));
 
-        RagdollLifetime = Config.Bind(ragdoll, "Ragdoll Lifetime", 15f, new ConfigDescription(
+        RagdollLifetime = Config.Bind(ragdoll, "Ragdoll Lifetime (seconds)", 15f, new ConfigDescription(
             "Determines how long will ragdolls stay active for. Setting this to a very large number will likely cause increasing CPU load as more corpses pile up.",
             new AcceptableValueRange<float>(0f, 500f),
             new ConfigurationManagerAttributes { Order = 11 }
