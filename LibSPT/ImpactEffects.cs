@@ -6,7 +6,6 @@ using Comfort.Common;
 using EFT;
 using EFT.Ballistics;
 using EFT.Particles;
-using EFT.UI;
 using HarmonyLib;
 using JetBrains.Annotations;
 using Systems.Effects;
