@@ -9,10 +9,11 @@ public class AmmoPoolObjectAutoDestroyPostfixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(AmmoPoolObject).GetMethod("StartAutoDestroyCountDown", BindingFlags.Instance | BindingFlags.Public);
+        return typeof(AmmoPoolObject).GetMethod(nameof(AmmoPoolObject.StartAutoDestroyCountDown));
     }
 
     [PatchPostfix]
+    // ReSharper disable once InconsistentNaming
     private static void Prefix(AmmoPoolObject __instance)
     {
         Traverse.Create(__instance).Field("float_0").SetValue(Plugin.MiscShellLifetime.Value);

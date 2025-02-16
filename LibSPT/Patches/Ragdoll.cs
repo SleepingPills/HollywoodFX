@@ -31,7 +31,7 @@ internal class AttachWeaponPostfixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(RagdollClass).GetMethod("AttachWeapon", BindingFlags.Instance | BindingFlags.Public);
+        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.AttachWeapon));
     }
 
     [PatchPostfix]
@@ -44,5 +44,24 @@ internal class AttachWeaponPostfixPatch : ModulePatch
             return;
         }
         weaponRigidbody.gameObject.SetActive(false);
+    }
+}
+
+public class LootItemIsRigidBodyDonePrefixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(LootItem).GetMethod(nameof(LootItem.IsRigidbodyDone));
+    }
+
+    [PatchPrefix]
+    private static bool Prefix(LootItem __instance, ref bool __result, float ____currentPhysicsTime)
+    {
+        if (__instance.RigidBody.IsSleeping())
+            __result = true;
+        
+        __result = ____currentPhysicsTime >= Plugin.RagdollLifetime.Value;
+        
+        return false;
     }
 }

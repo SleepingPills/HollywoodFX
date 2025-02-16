@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using Comfort.Common;
 using EFT;
 using EFT.Ballistics;
 using EFT.Particles;
+using EFT.UI;
 using HarmonyLib;
 using JetBrains.Annotations;
 using Systems.Effects;
@@ -216,7 +216,6 @@ namespace HollywoodFX
     {
         public static readonly ImpactController Instance = new();
 
-        private RagdollEffects _ragdollEffects;
         private BattleAmbience _battleAmbience;
         private ImpactEffects _impactEffects;
 
@@ -248,7 +247,7 @@ namespace HollywoodFX
                 return;
 
             _impactEffects.Emit(effects, context, kineticEnergy);
-            RagdollEffects.Apply(kineticEnergy);
+            RagdollEffects.Apply(context.Material, kineticEnergy);
         }
 
         public void Setup(Effects cannedEffects)
@@ -257,31 +256,34 @@ namespace HollywoodFX
             var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
             var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
 
-            _ragdollEffects = new RagdollEffects();
             _battleAmbience = new BattleAmbience(cannedEffects, ambiencePrefab);
             _impactEffects = new ImpactEffects(cannedEffects, impactsPrefab);
         }
     }
 
-    internal class RagdollEffects
+    internal static class RagdollEffects
     {
-        public static void Apply(float kineticEnergy)
+        public static void Apply(MaterialType material, float kineticEnergy)
         {
             if (!Plugin.RagdollEnabled.Value) return;
-            
+
             var bulletInfo = ImpactController.Instance.BulletInfo;
-            
+
             if (bulletInfo == null) return;
-            
+
             var attachedRigidbody = bulletInfo.HitCollider.attachedRigidbody;
-            
+
             if (attachedRigidbody == null)
                 return;
-            
-            const float scalingBase = 0.0325f;
+
+            var scalingBase = 0.0325f;
+
+            // These are generally the loot items like guns on the ground, decrease the force to avoid yeeting them to the stratosphere
+            if (material == MaterialType.None)
+                scalingBase *= 0.2f;
 
             var penetrationFactor = 0.5f;
-                
+
             if (ImpactController.Instance.BulletInfo != null)
             {
                 penetrationFactor = (0.3f + 0.7f * Mathf.InverseLerp(50f, 20f, ImpactController.Instance.BulletInfo.PenetrationPower));
@@ -290,7 +292,7 @@ namespace HollywoodFX
             var bulletForce = scalingBase * kineticEnergy;
 
             var impactImpulse = penetrationFactor * bulletForce * Plugin.RagdollForceMultiplier.Value;
-            
+
             attachedRigidbody.AddForceAtPosition(bulletInfo.Direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
         }
     }
@@ -471,7 +473,7 @@ namespace HollywoodFX
         private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects cannedEffects, GameObject impactsPrefab, float scaling)
         {
             var effectMap = EffectUtils.LoadEffects(cannedEffects, impactsPrefab);
-
+            
             // Debris chance has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
             // things too much for smaller ones.
             var debrisChanceScale = scaling < 1f ? scaling : Mathf.Pow(scaling, 2f);
@@ -585,7 +587,7 @@ namespace HollywoodFX
             {
                 effectMap["Debris_Sparks_Drip_1"]
             };
-            
+
             var fallingDust = new[]
             {
                 effectMap["Falling_Dust_1"]
