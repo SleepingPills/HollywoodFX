@@ -231,11 +231,13 @@ namespace HollywoodFX
                 isHitPointVisible = true;
             }
 
-            var kineticEnergy = float.NaN;
+            var kineticEnergy = 500f;
+            
             if (BulletInfo != null)
             {
                 // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
-                kineticEnergy = BulletInfo.BulletMassGram * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
+                // NB: We floor the bullet weight for KE calculations as BSG specified that buckshot pellets weigh 0.1g for example. IRL it's 3.5g
+                kineticEnergy = Mathf.Max(BulletInfo.BulletMassGram, 3.5f) * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
             }
 
             // Battle ambience is simulated even if not currently visible, as long as it's within the configured range
@@ -275,11 +277,11 @@ namespace HollywoodFX
             if (attachedRigidbody == null)
                 return;
 
-            var scalingBase = 0.0325f;
+            var scalingBase = 0.05f;
 
             // These are generally the loot items like guns on the ground, decrease the force to avoid yeeting them to the stratosphere
             if (material == MaterialType.None)
-                scalingBase *= 0.2f;
+                scalingBase *= 0.1f;
 
             var penetrationFactor = 0.5f;
 
@@ -291,8 +293,8 @@ namespace HollywoodFX
             var bulletForce = scalingBase * kineticEnergy;
 
             var impactImpulse = penetrationFactor * bulletForce * Plugin.RagdollForceMultiplier.Value;
-
-            attachedRigidbody.AddForceAtPosition(bulletInfo.Direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
+            
+            attachedRigidbody.AddForceAtPosition((bulletInfo.Direction + Vector3.up).normalized * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
         }
     }
 
@@ -311,8 +313,8 @@ namespace HollywoodFX
             foreach (var effect in effectMap.Values)
             {
                 Plugin.Log.LogInfo($"Effect {effect.Name} emission scaling: {Plugin.AmbientEffectDensity.Value}");
-
                 ScaleEffect(effect, Plugin.AmbientParticleLifetime.Value, Plugin.AmbientParticleLimit.Value, Plugin.AmbientEffectDensity.Value);
+                Singleton<LitMaterialRegistry>.Instance.Register(effect, false);
             }
 
             _cloudSmoke = [effectMap["Cloud_Smoke_1"]];
@@ -328,7 +330,7 @@ namespace HollywoodFX
                 return;
             }
 
-            var emissionChance = 0.5 * (kineticEnergy / _kineticEnergyNormFactor);
+            var emissionChance = 0.4 * (kineticEnergy / _kineticEnergyNormFactor);
 
             if (Random.Range(0f, 1f) < emissionChance)
             {
@@ -472,7 +474,15 @@ namespace HollywoodFX
         private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects cannedEffects, GameObject impactsPrefab, float scaling)
         {
             var effectMap = EffectUtils.LoadEffects(cannedEffects, impactsPrefab);
-            
+
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var effect in effectMap.Values)
+            {
+                // Don't molest blood effects
+                if (effect.Name.ToLower().Contains("blood")) continue;
+                Singleton<LitMaterialRegistry>.Instance.Register(effect, true);
+            }
+
             // Debris chance has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
             // things too much for smaller ones.
             var debrisChanceScale = scaling < 1f ? scaling : Mathf.Pow(scaling, 2f);
@@ -562,7 +572,8 @@ namespace HollywoodFX
             Plugin.Log.LogInfo("Building fine spark");
             var debrisSparksLight = new[]
             {
-                effectMap["Fine_Sparks_Light_1"], effectMap["Fine_Dust_1"], effectMap["Fine_Dust_1"]
+                effectMap["Fine_Sparks_Light_1"], effectMap["Fine_Dust_1"], effectMap["Fine_Dust_1"], effectMap["Fine_Dust_1"],
+                effectMap["Fine_Dust_1"]
             };
 
             var debrisSparksMetal = new[]
@@ -795,7 +806,7 @@ namespace HollywoodFX
         {
             List<DirectionalImpact> bodyArmorImpacts =
             [
-                new(puffFront, chance: 0.5f),
+                new(puffFront, chance: 0.3f),
                 new(debrisDust, chance: 0.4f * debrisChanceScale),
                 new([effectMap["Debris_Armor_Fabric_1"]], chance: 0.4f * debrisChanceScale)
             ];
@@ -879,7 +890,7 @@ namespace HollywoodFX
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront, chance: 0.5f),
+                        new DirectionalImpact(puffFront, chance: 0.3f),
                         new DirectionalImpact(debrisSparksLight, chance: 0.4f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Armor_Metal_1"]], chance: 0.4f * debrisChanceScale)
                     ]

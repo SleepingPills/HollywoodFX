@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Comfort.Common;
 using EFT;
 using SPT.Reflection.Patching;
 
@@ -18,6 +19,33 @@ public class GameWorldAwakePrefixPatch : ModulePatch
     public static void Prefix(GameWorld __instance)
     {
         IsHideout = __instance is HideoutGameWorld;
-        Plugin.Log.LogInfo($"Game World Awake Patch: Game world is {__instance}, hideout flag: {IsHideout}");
+        Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
+        Plugin.Log.LogInfo($"Game world hideout flag: {IsHideout}");
+    }
+}
+
+public class GameWorldStartedPostfixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(GameWorld).GetMethod(nameof(GameWorld.OnGameStarted));
+    }
+
+    [PatchPostfix]
+    // ReSharper disable once InconsistentNaming
+    public static void Postfix(GameWorld __instance)
+    {
+        if (GameWorldAwakePrefixPatch.IsHideout)
+            return;
+        
+        if (__instance.LocationId.Contains("factory"))
+        {
+            Plugin.Log.LogInfo($"Factory location detected, applying static lighting");
+            StaticMaterialAmbientLighting.AdjustLighting(__instance.LocationId);
+        }
+        else
+        {
+            __instance.gameObject.AddComponent<DynamicMaterialAmbientLighting>();
+        }
     }
 }

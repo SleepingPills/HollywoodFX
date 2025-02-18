@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
@@ -76,6 +74,8 @@ public class Plugin : BaseUnityPlugin
         SetupConfig(visceralCombatDetected);
 
         new GameWorldAwakePrefixPatch().Enable();
+        new GameWorldStartedPostfixPatch().Enable();
+        
         new EffectsAwakePrefixPatch().Enable();
         new EffectsAwakePostfixPatch().Enable();
         new BulletImpactPatch().Enable();
@@ -84,8 +84,10 @@ public class Plugin : BaseUnityPlugin
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
+            new PlayerPoolObjectRoleModelPostfixPatch().Enable();
             new RagdollStartPrefixPatch().Enable();
             new AttachWeaponPostfixPatch().Enable();
+            new LootItemIsRigidBodyDonePrefixPatch().Enable();
             
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
