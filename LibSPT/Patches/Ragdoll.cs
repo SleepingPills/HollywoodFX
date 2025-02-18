@@ -9,6 +9,16 @@ using UnityEngine;
 
 namespace HollywoodFX.Patches;
 
+/*
+        // { "HumanLCalf", 1.25f },
+        // { "HumanRCalf", 1.25f },
+        // { "HumanLThigh1", 1.5f },
+        // { "HumanRThigh1", 1.5f },
+        { "HumanPelvis", 2.0f },
+        { "HumanSpine2", 1.5f },
+        { "HumanSpine3", 1.25f },
+ */
+
 internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
 {
     private static readonly Dictionary<string, float> DragOverrides = new()
@@ -17,10 +27,19 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
         { "HumanRCalf", 1.25f },
         { "HumanLThigh1", 1.5f },
         { "HumanRThigh1", 1.5f },
-        { "HumanPelvis", 2.0f },
-        { "HumanSpine2", 1.5f },
-        { "HumanSpine3", 1.25f },
+        { "HumanPelvis", 1.75f },
+        { "HumanSpine3", 0.75f },
+        { "HumanHead", 0.5f },
     };
+    
+    private static readonly Dictionary<string, float> MassFactors = new()
+    {
+        { "HumanPelvis", 1.25f },
+        { "HumanSpine2", 1.5f },
+        { "HumanSpine3", 1.75f },
+        { "HumanHead", 1.75f },
+    };
+
     
     protected override MethodBase GetTargetMethod()
     {
@@ -40,8 +59,12 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
             if (!DragOverrides.TryGetValue(spawner.name, out var drag))
                 drag = 1f;
             
+            if (!MassFactors.TryGetValue(spawner.name, out var mass))
+                mass = 1f;
+            
             spawner.drag = drag;
             spawner.angularDrag = 0f;
+            spawner.mass *= mass;
         }
     }
 }

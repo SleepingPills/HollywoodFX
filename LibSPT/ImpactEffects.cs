@@ -232,7 +232,7 @@ namespace HollywoodFX
             }
 
             var kineticEnergy = 500f;
-            
+
             if (BulletInfo != null)
             {
                 // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
@@ -240,15 +240,27 @@ namespace HollywoodFX
                 kineticEnergy = Mathf.Max(BulletInfo.BulletMassGram, 3.5f) * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
             }
 
-            // Battle ambience is simulated even if not currently visible, as long as it's within the configured range
-            if (Plugin.BattleAmbienceEnabled.Value && (isHitPointVisible || distance < Plugin.AmbientSimulationRange.Value))
-                _battleAmbience.Emit(effects, context, kineticEnergy);
+            var isBodyShot = (context.Material is
+                MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet or MaterialType.None);
 
-            if (!isHitPointVisible)
-                return;
+            if (isHitPointVisible)
+            {
+                _impactEffects.Emit(effects, context, kineticEnergy);
 
-            _impactEffects.Emit(effects, context, kineticEnergy);
-            RagdollEffects.Apply(context.Material, kineticEnergy);
+                if (isBodyShot)
+                {
+                    RagdollEffects.Apply(context.Material, kineticEnergy);
+                }
+                else if (Plugin.BattleAmbienceEnabled.Value)
+                {
+                    _battleAmbience.Emit(effects, context, kineticEnergy);
+                }
+            }
+            else
+            {
+                if (!isBodyShot && Plugin.BattleAmbienceEnabled.Value && distance < Plugin.AmbientSimulationRange.Value)
+                    _battleAmbience.Emit(effects, context, kineticEnergy);
+            }
         }
 
         public void Setup(Effects cannedEffects)
@@ -277,13 +289,17 @@ namespace HollywoodFX
             if (attachedRigidbody == null)
                 return;
 
+            // Kinematic means it's not physics controlled
+            if (attachedRigidbody.isKinematic)
+                return;
+
             var scalingBase = 0.05f;
 
             // These are generally the loot items like guns on the ground, decrease the force to avoid yeeting them to the stratosphere
             if (material == MaterialType.None)
                 scalingBase *= 0.1f;
 
-            var penetrationFactor = 0.5f;
+            var penetrationFactor = 0.6f;
 
             if (ImpactController.Instance.BulletInfo != null)
             {
@@ -291,10 +307,23 @@ namespace HollywoodFX
             }
 
             var bulletForce = scalingBase * kineticEnergy;
-
             var impactImpulse = penetrationFactor * bulletForce * Plugin.RagdollForceMultiplier.Value;
-            
-            attachedRigidbody.AddForceAtPosition((bulletInfo.Direction + Vector3.up).normalized * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
+
+            // Find the root transform
+            var cur = attachedRigidbody.transform;
+            while (cur.parent != null)
+            {
+                cur = cur.parent;
+            }
+
+            // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
+            // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
+            var upThrust = (bulletInfo.HitPoint - cur.position);
+            upThrust.y = Mathf.InverseLerp(0.8f, 1.6f, upThrust.y);
+
+            var direction = (bulletInfo.Direction + upThrust).normalized;
+            attachedRigidbody.AddForceAtPosition(direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
+            attachedRigidbody.AddTorque(upThrust * impactImpulse, ForceMode.VelocityChange);
         }
     }
 
@@ -324,12 +353,6 @@ namespace HollywoodFX
 
         public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
         {
-            // Don't generate ambient effects on body hits
-            if (context.Material is MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet)
-            {
-                return;
-            }
-
             var emissionChance = 0.4 * (kineticEnergy / _kineticEnergyNormFactor);
 
             if (Random.Range(0f, 1f) < emissionChance)
@@ -521,6 +544,11 @@ namespace HollywoodFX
             var puffFront = new[]
             {
                 effectMap["Puff_Front_1"], effectMap["Puff_Front_2"]
+            };
+
+            var puffFrontBody = new[]
+            {
+                effectMap["Puff_Body_Front_1"], effectMap["Puff_Body_Front_2"]
             };
 
             var puffFrontDusty = new[]
@@ -795,7 +823,8 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.MetalNoDecal] = metalImpact;
             impactSystems[(int)MaterialType.None] = hardGenericImpact;
 
-            DefineBodyImpactSystems(effectMap, impactSystems, puffFront, debrisDust, debrisSparksLight, debrisChanceScale);
+            DefineBodyImpactSystems(effectMap, impactSystems, puffFrontDusty.Concat(puffFrontBody).ToArray(), debrisDust, debrisSparksLight,
+                debrisChanceScale);
 
             return impactSystems;
         }
@@ -890,7 +919,7 @@ namespace HollywoodFX
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFront, chance: 0.3f),
+                        new DirectionalImpact(puffFront, chance: 0.55f),
                         new DirectionalImpact(debrisSparksLight, chance: 0.4f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Armor_Metal_1"]], chance: 0.4f * debrisChanceScale)
                     ]
