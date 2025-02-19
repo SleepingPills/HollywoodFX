@@ -501,8 +501,6 @@ namespace HollywoodFX
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var effect in effectMap.Values)
             {
-                // Don't molest blood effects
-                if (effect.Name.ToLower().Contains("blood")) continue;
                 Singleton<LitMaterialRegistry>.Instance.Register(effect, true);
             }
 

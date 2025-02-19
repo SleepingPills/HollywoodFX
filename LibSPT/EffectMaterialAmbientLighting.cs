@@ -9,90 +9,89 @@ using UnityEngine;
 
 namespace HollywoodFX;
 
-internal static class MaterialFinder
-{
-    public static IEnumerable<Material> FindEffectMaterials()
-    {
-        foreach (var effect in Singleton<Effects>.Instance.EffectsArray)
-        {
-            if (effect.BasicParticleSystemMediator == null)
-                continue;
-            
-            var particleSystems = Traverse.Create(effect.BasicParticleSystemMediator).Field("_particleSystems").GetValue<ParticleSystem[]>();
-            
-            foreach (var system in particleSystems)
-            {
-                foreach (var renderer in system.GetComponentsInChildren<ParticleSystemRenderer>())
-                {
-                    if (renderer == null || renderer.material == null) continue;
-                    yield return renderer.material;
-                }
-            }
-        }
-    }
-}
-
-public class DynamicMaterialAmbientLighting : Component
+public class DynamicMaterialAmbientLighting : MonoBehaviour
 {
     private List<Material> _materials;
-    private List<Vector4> _tintColors;
     private List<Vector4> _ambientLightColors;
 
     private GameWorld _gameWorld;
+    private WeatherController _weatherController;
     private IWeatherCurve _weatherCurve;
 
-    private int tintColorId;
-    private int ambientLightColorId;
+    private int _tintColorId;
+    private int _ambientLightColorId;
 
-    private const float LightIntensityThreshold = 0.25f;
-    private float _lightIntensity;
+    private const float MaxLightingBoost = 0.25f;
+    private const float AlphaFactor = 1.5f;
+
+    private const float FactorChangeThreshold = 0.25f;
+    private float _lightingFactor;
+
 
     private const float RepeatRate = 5f;
     private float _timer;
 
     public void Awake()
     {
+        _tintColorId = Shader.PropertyToID("_TintColor");
+        _ambientLightColorId = Shader.PropertyToID("_LocalMinimalAmbientLight");
+        
         _materials = [];
 
-        foreach (var material in MaterialFinder.FindEffectMaterials())
+        foreach (var material in Singleton<LitMaterialRegistry>.Instance.DynamicAlpha)
         {
-            if (material.shader.name == "Global Fog/Alpha Blended Lighted")
+            // Pre-multiply Alpha for non-blood effects
+            if (!material.name.ToLower().Contains("blood"))
             {
-                _materials.Add(material);
+                var tintColor = Vector4.Scale(material.GetVector(_tintColorId), new Vector4(1f, 1f, 1f, AlphaFactor));
+                material.SetVector(_tintColorId, tintColor);
             }
+            _materials.Add(material);
         }
 
-        tintColorId = Shader.PropertyToID("_TintColor");
-        ambientLightColorId = Shader.PropertyToID("_LocalMinimalAmbientLight");
+        foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
+        {
+            _materials.Add(material);
+        }
 
         Plugin.Log.LogInfo($"Found {_materials.Count} materials with ambient lighting parameters");
 
-        _tintColors = new List<Vector4>(_materials.Count);
         _ambientLightColors = new List<Vector4>(_materials.Count);
 
         foreach (var material in _materials)
         {
-            _tintColors.Add(material.GetVector(tintColorId));
-            _ambientLightColors.Add(material.GetVector(ambientLightColorId));
+            _ambientLightColors.Add(material.GetVector(_ambientLightColorId));
         }
 
         _gameWorld = Singleton<GameWorld>.Instance;
+        _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
+        _weatherCurve = _weatherController.WeatherCurve;
 
-        var weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
-        _weatherCurve = weatherController.WeatherCurve;
+        _lightingFactor = CalculateLightingFactor();
+        UpdateMaterials();
+        Plugin.Log.LogInfo($"Initialized lighting factor to {_lightingFactor}");
     }
 
     public void Update()
     {
         if (_timer <= 0)
         {
-            ConsoleScreen.Log($"Cloudiness: {_weatherCurve.Cloudiness} {_gameWorld.GameDateTime.DateTime_0} {_gameWorld.GameDateTime.DateTime_1}");
+            ConsoleScreen.Log(
+                $"Cloudiness: {_weatherCurve.Cloudiness} Sunheight: {_weatherController.SunHeight} DT: {_gameWorld.GameDateTime.DateTime_0} {_gameWorld.GameDateTime.DateTime_1}");
 
-            var currentLightIntensity = CalculateAmbientLightIntensity();
-            if (Mathf.Abs(currentLightIntensity - _lightIntensity) > LightIntensityThreshold)
+            var currentLightingFactor = CalculateLightingFactor();
+
+            if (Mathf.Abs(currentLightingFactor - _lightingFactor) > FactorChangeThreshold)
             {
-                // TODO Update materials
-                _lightIntensity = currentLightIntensity;
+                ConsoleScreen.Log($"Lighting factor threshold breached: {_lightingFactor} -> {currentLightingFactor}");
+
+                // Average out changes to smooth transitions until we get past the threshold
+                _lightingFactor = (_lightingFactor + currentLightingFactor) / 2f;
+                UpdateMaterials();
+            }
+            else
+            {
+                ConsoleScreen.Log($"Lighting factor within threshold: {_lightingFactor} -> {currentLightingFactor}");
             }
 
             _timer = RepeatRate;
@@ -101,9 +100,29 @@ public class DynamicMaterialAmbientLighting : Component
         _timer -= Time.deltaTime;
     }
 
-    private float CalculateAmbientLightIntensity()
+    private float CalculateLightingFactor()
     {
-        return 4f;
+        var dayLight = Mathf.Sqrt(Mathf.Max(_weatherController.SunHeight, 0f));
+        // Clouds will really only factor into the equation during daytime. At night, the cloud factor is 0.
+        var cloudFactor = dayLight * Mathf.Max(_weatherCurve.Cloudiness, 0f);
+        // Full night will add a half-strength factor at most, to avoid full bright effects when it's pitch black. 
+        var dayLightFactor = 0.5f * (1 - dayLight);
+
+        return Mathf.Min(cloudFactor + dayLightFactor, 1f);
+    }
+
+    private void UpdateMaterials()
+    {
+        var lightingBoost = MaxLightingBoost * _lightingFactor;
+
+        for (var i = 0; i < _materials.Count; i++)
+        {
+            var material = _materials[i];
+            var ambientLightColor = _ambientLightColors[i] + new Vector4(lightingBoost, lightingBoost, lightingBoost, 0f);
+            material.SetVector(_ambientLightColorId, ambientLightColor);
+            Plugin.Log.LogInfo(
+                $"Adjusting material: {material.name} Ambient: {ambientLightColor}");
+        }
     }
 }
 
@@ -117,11 +136,11 @@ public static class StaticMaterialAmbientLighting
         switch (location)
         {
             case "factory4_day":
-                tintColorFactor = new Vector4(0.6f, 0.6f, 0.6f, 1.75f);
+                tintColorFactor = new Vector4(0.6f, 0.6f, 0.6f, 1f);
                 ambientLightFactor = new Vector4(0f, 0f, 0f, 1f);
                 break;
             case "factory4_night":
-                tintColorFactor = new Vector4(0.5f, 0.5f, 0.5f, 1.75f);
+                tintColorFactor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
                 ambientLightFactor = new Vector4(1.5f, 1.5f, 1.5f, 1f);
                 break;
             default:
@@ -131,6 +150,8 @@ public static class StaticMaterialAmbientLighting
 
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.DynamicAlpha)
         {
+            // Don't molest blood on factory
+            if (material.name.ToLower().Contains("blood")) continue;
             ApplyScaling(material, tintColorFactor, ambientLightFactor);
         }
 
@@ -152,6 +173,7 @@ public static class StaticMaterialAmbientLighting
 
         material.SetVector("_TintColor", newTintColor);
         material.SetVector("_LocalMinimalAmbientLight", newAmbientLightColor);
-        Plugin.Log.LogInfo($"Adjusting material: {material.name} Tint: {tintColor} -> {newTintColor} Ambient: {ambientLightColor} -> {newAmbientLightColor}");
+        Plugin.Log.LogInfo(
+            $"Adjusting material: {material.name} Tint: {tintColor} -> {newTintColor} Ambient: {ambientLightColor} -> {newAmbientLightColor}");
     }
 }
