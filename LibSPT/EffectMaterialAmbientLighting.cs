@@ -131,7 +131,7 @@ public static class StaticMaterialAmbientLighting
         switch (location)
         {
             case "factory4_day":
-                tintColorFactor = new Vector4(0.7f, 0.65f, 0.6f, 1f);
+                tintColorFactor = new Vector4(0.7f, 0.65f, 0.6f, 0.9f);
                 ambientLightFactor = new Vector4(0f, 0f, 0f, 1f);
                 break;
             case "factory4_night":
