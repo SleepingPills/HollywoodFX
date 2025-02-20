@@ -135,7 +135,7 @@ public static class StaticMaterialAmbientLighting
                 ambientLightFactor = new Vector4(0f, 0f, 0f, 1f);
                 break;
             case "factory4_night":
-                tintColorFactor = new Vector4(0.65f, 0.65f, 0.65f, 1f);
+                tintColorFactor = new Vector4(0.7f, 0.65f, 0.6f, 1f);
                 ambientLightFactor = new Vector4(1.5f, 1.5f, 1.5f, 1f);
                 break;
             default:
