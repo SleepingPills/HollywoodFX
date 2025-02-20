@@ -1,10 +1,6 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
-using EFT;
-using EFT.UI;
 using EFT.Weather;
-using HarmonyLib;
-using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX;
@@ -12,19 +8,22 @@ namespace HollywoodFX;
 public class DynamicMaterialAmbientLighting : MonoBehaviour
 {
     private List<Material> _materials;
+
     private List<Vector4> _ambientLightColors;
+    private List<Vector4> _tintColors;
+    private List<float> _tintAlphaFactors;
 
-    private GameWorld _gameWorld;
     private WeatherController _weatherController;
-    private IWeatherCurve _weatherCurve;
 
-    private int _tintColorId;
-    private int _ambientLightColorId;
+    private const float MaxLightingBoost = 2f;
+    
+    private const float MinTintColorFactor = 0.8f;
+    private const float MaxTintColorFactor = 1f;
+    
+    private const float MinTintAlphaFactor = -0.1f;
+    private const float MaxTintAlphaFactor = 0.1f;
 
-    private const float MaxLightingBoost = 0.25f;
-    private const float AlphaFactor = 1.5f;
-
-    private const float FactorChangeThreshold = 0.25f;
+    private const float FactorChangeThreshold = 0.1f;
     private float _lightingFactor;
 
 
@@ -33,42 +32,40 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
     public void Awake()
     {
-        _tintColorId = Shader.PropertyToID("_TintColor");
-        _ambientLightColorId = Shader.PropertyToID("_LocalMinimalAmbientLight");
-        
         _materials = [];
+        _tintAlphaFactors = [];
 
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.DynamicAlpha)
         {
-            // Pre-multiply Alpha for non-blood effects
-            if (!material.name.ToLower().Contains("blood"))
-            {
-                var tintColor = Vector4.Scale(material.GetVector(_tintColorId), new Vector4(1f, 1f, 1f, AlphaFactor));
-                material.SetVector(_tintColorId, tintColor);
-            }
             _materials.Add(material);
+            _tintAlphaFactors.Add(1f);
         }
 
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
         {
+            // Make the ambient effects less oppressive
+            var tintColor = material.GetVector(LitMaterialRegistry.TintColorId);
+            tintColor.Scale(new Vector4(1f, 1f, 1f, 0.5f));
+            material.SetVector(LitMaterialRegistry.TintColorId, tintColor);
             _materials.Add(material);
+            _tintAlphaFactors.Add(0f);
         }
 
         Plugin.Log.LogInfo($"Found {_materials.Count} materials with ambient lighting parameters");
 
         _ambientLightColors = new List<Vector4>(_materials.Count);
+        _tintColors = new List<Vector4>(_materials.Count);
 
         foreach (var material in _materials)
         {
-            _ambientLightColors.Add(material.GetVector(_ambientLightColorId));
+            _ambientLightColors.Add(material.GetVector(LitMaterialRegistry.LocalMinimalAmbientLightId));
+            _tintColors.Add(material.GetVector(LitMaterialRegistry.TintColorId));
         }
 
-        _gameWorld = Singleton<GameWorld>.Instance;
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
-        _weatherCurve = _weatherController.WeatherCurve;
 
         _lightingFactor = CalculateLightingFactor();
-        UpdateMaterials();
+        UpdateMaterials(_lightingFactor);
         Plugin.Log.LogInfo($"Initialized lighting factor to {_lightingFactor}");
     }
 
@@ -76,22 +73,12 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
     {
         if (_timer <= 0)
         {
-            ConsoleScreen.Log(
-                $"Cloudiness: {_weatherCurve.Cloudiness} Sunheight: {_weatherController.SunHeight} DT: {_gameWorld.GameDateTime.DateTime_0} {_gameWorld.GameDateTime.DateTime_1}");
-
             var currentLightingFactor = CalculateLightingFactor();
-
+            
             if (Mathf.Abs(currentLightingFactor - _lightingFactor) > FactorChangeThreshold)
             {
-                ConsoleScreen.Log($"Lighting factor threshold breached: {_lightingFactor} -> {currentLightingFactor}");
-
-                // Average out changes to smooth transitions until we get past the threshold
-                _lightingFactor = (_lightingFactor + currentLightingFactor) / 2f;
-                UpdateMaterials();
-            }
-            else
-            {
-                ConsoleScreen.Log($"Lighting factor within threshold: {_lightingFactor} -> {currentLightingFactor}");
+                _lightingFactor = currentLightingFactor;
+                UpdateMaterials(_lightingFactor);
             }
 
             _timer = RepeatRate;
@@ -102,26 +89,34 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
     private float CalculateLightingFactor()
     {
-        var dayLight = Mathf.Sqrt(Mathf.Max(_weatherController.SunHeight, 0f));
+        var dayLight = Mathf.Min(Mathf.Sqrt(Mathf.Max(_weatherController.SunHeight, 0f)) / 0.75f, 1f);
         // Clouds will really only factor into the equation during daytime. At night, the cloud factor is 0.
-        var cloudFactor = dayLight * Mathf.Max(_weatherCurve.Cloudiness, 0f);
+        var cloudFactor = dayLight * Mathf.Max(_weatherController.WeatherCurve.Cloudiness, 0f);
         // Full night will add a half-strength factor at most, to avoid full bright effects when it's pitch black. 
         var dayLightFactor = 0.5f * (1 - dayLight);
 
         return Mathf.Min(cloudFactor + dayLightFactor, 1f);
     }
 
-    private void UpdateMaterials()
+    private void UpdateMaterials(float lightingFactor)
     {
-        var lightingBoost = MaxLightingBoost * _lightingFactor;
+        var tintColorFactor = Mathf.Lerp(MinTintColorFactor, MaxTintColorFactor, lightingFactor);
+        var tintAlphaFactorBase = Mathf.Lerp(MinTintAlphaFactor, MaxTintAlphaFactor, lightingFactor);
+
+        var lightingBoost = MaxLightingBoost * lightingFactor;
+        var lightingBoostVec = new Vector4(lightingBoost, lightingBoost, lightingBoost, 1f);
 
         for (var i = 0; i < _materials.Count; i++)
         {
-            var material = _materials[i];
-            var ambientLightColor = _ambientLightColors[i] + new Vector4(lightingBoost, lightingBoost, lightingBoost, 0f);
-            material.SetVector(_ambientLightColorId, ambientLightColor);
-            Plugin.Log.LogInfo(
-                $"Adjusting material: {material.name} Ambient: {ambientLightColor}");
+            var ambientLightColor = _ambientLightColors[i];
+            ambientLightColor += Vector4.Scale(ambientLightColor, lightingBoostVec);
+
+            var tintColor = _tintColors[i];
+            var tintAlphaFactor = 1 + _tintAlphaFactors[i] * tintAlphaFactorBase;
+            tintColor.Scale(new Vector4(tintColorFactor, tintColorFactor, tintColorFactor, tintAlphaFactor));
+
+            _materials[i].SetVector(LitMaterialRegistry.TintColorId, tintColor);
+            _materials[i].SetVector(LitMaterialRegistry.LocalMinimalAmbientLightId, ambientLightColor);
         }
     }
 }
@@ -136,11 +131,11 @@ public static class StaticMaterialAmbientLighting
         switch (location)
         {
             case "factory4_day":
-                tintColorFactor = new Vector4(0.6f, 0.6f, 0.6f, 1f);
+                tintColorFactor = new Vector4(0.7f, 0.65f, 0.6f, 1f);
                 ambientLightFactor = new Vector4(0f, 0f, 0f, 1f);
                 break;
             case "factory4_night":
-                tintColorFactor = new Vector4(0.5f, 0.5f, 0.5f, 1f);
+                tintColorFactor = new Vector4(0.65f, 0.65f, 0.65f, 1f);
                 ambientLightFactor = new Vector4(1.5f, 1.5f, 1.5f, 1f);
                 break;
             default:
@@ -155,7 +150,7 @@ public static class StaticMaterialAmbientLighting
             ApplyScaling(material, tintColorFactor, ambientLightFactor);
         }
 
-        // Alpha channel scaling to 1 as we don't want to upscale alpha on these effects
+        // Don't scale the alpha
         tintColorFactor.w = 1f;
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
         {
@@ -165,15 +160,16 @@ public static class StaticMaterialAmbientLighting
 
     private static void ApplyScaling(Material material, Vector4 tintColorFactor, Vector4 ambientLightFactor)
     {
-        var tintColor = material.GetVector("_TintColor");
-        var ambientLightColor = material.GetVector("_LocalMinimalAmbientLight");
+        var tintColor = material.GetVector(LitMaterialRegistry.TintColorId);
+        var ambientLightColor = material.GetVector(LitMaterialRegistry.LocalMinimalAmbientLightId);
 
         var newTintColor = Vector4.Scale(tintColor, tintColorFactor);
         var newAmbientLightColor = Vector4.Scale(ambientLightColor, ambientLightFactor);
 
-        material.SetVector("_TintColor", newTintColor);
-        material.SetVector("_LocalMinimalAmbientLight", newAmbientLightColor);
+        material.SetVector(LitMaterialRegistry.TintColorId, newTintColor);
+        material.SetVector(LitMaterialRegistry.LocalMinimalAmbientLightId, newAmbientLightColor);
         Plugin.Log.LogInfo(
-            $"Adjusting material: {material.name} Tint: {tintColor} -> {newTintColor} Ambient: {ambientLightColor} -> {newAmbientLightColor}");
+            $"Adjusting material: {material.name} Tint: {tintColor} -> {newTintColor} Ambient: {ambientLightColor} -> {newAmbientLightColor}"
+        );
     }
 }

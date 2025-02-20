@@ -7,6 +7,9 @@ namespace HollywoodFX;
 
 public class LitMaterialRegistry
 {
+    public static readonly int TintColorId = Shader.PropertyToID("_TintColor");
+    public static readonly int LocalMinimalAmbientLightId = Shader.PropertyToID("_LocalMinimalAmbientLight");
+    
     public readonly List<Material> DynamicAlpha = new();
     public readonly List<Material> StaticAlpha = new();
 

@@ -293,7 +293,7 @@ namespace HollywoodFX
             if (attachedRigidbody.isKinematic)
                 return;
 
-            var scalingBase = 0.05f;
+            var scalingBase = 0.025f;
 
             // These are generally the loot items like guns on the ground, decrease the force to avoid yeeting them to the stratosphere
             if (material == MaterialType.None)
@@ -319,11 +319,10 @@ namespace HollywoodFX
             // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
             // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
             var upThrust = (bulletInfo.HitPoint - cur.position);
-            upThrust.y = Mathf.InverseLerp(0.8f, 1.6f, upThrust.y);
+            upThrust.y = Mathf.InverseLerp(1.2f, 1.6f, upThrust.y);
 
             var direction = (bulletInfo.Direction + upThrust).normalized;
             attachedRigidbody.AddForceAtPosition(direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
-            attachedRigidbody.AddTorque(upThrust * impactImpulse, ForceMode.VelocityChange);
         }
     }
 
@@ -353,7 +352,7 @@ namespace HollywoodFX
 
         public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
         {
-            var emissionChance = 0.4 * (kineticEnergy / _kineticEnergyNormFactor);
+            var emissionChance = 0.15 * (kineticEnergy / _kineticEnergyNormFactor);
 
             if (Random.Range(0f, 1f) < emissionChance)
             {
@@ -554,6 +553,8 @@ namespace HollywoodFX
                 effectMap["Puff_Dusty_Front_1"], effectMap["Puff_Dusty_Front_2"], effectMap["Puff_Dusty_Front_3"]
             };
 
+            var puffFrontRock = puffFront.Concat(puffFrontDusty).ToArray();
+
             Plugin.Log.LogInfo("Building flash sparks");
             var flashSparks = new[]
             {
@@ -577,6 +578,18 @@ namespace HollywoodFX
                 effectMap["Puff_Dusty_Hor_Left_1"], effectMap["Puff_Dusty_Hor_Left_2"]
             };
 
+            Plugin.Log.LogInfo("Building lingering puffs");
+            var puffLinger = new[]
+            {
+                effectMap["Puff_Smoke_Linger_1"]
+            };
+            
+            Plugin.Log.LogInfo("Building puff rings");
+            var puffRing = new[]
+            {
+                effectMap["Puff_Smoke_Ring_1"]
+            };
+
             Plugin.Log.LogInfo("Building mud debris");
             var debrisMudVert = new[]
             {
@@ -587,6 +600,12 @@ namespace HollywoodFX
             var debrisDirtVert = new[]
             {
                 effectMap["Debris_Dirt_Vert_1"], effectMap["Debris_Dirt_Vert_2"], effectMap["Debris_Dirt_Vert_3"]
+            };
+            
+            Plugin.Log.LogInfo("Building rock debris");
+            var debrisRock = new[]
+            {
+                effectMap["Debris_Rock_1"]
             };
 
             Plugin.Log.LogInfo("Building fine dust");
@@ -646,10 +665,12 @@ namespace HollywoodFX
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFrontDusty),
-                        new DirectionalImpact(puffFront, chance: 0.4f * debrisChanceScale),
+                        new DirectionalImpact(puffFrontRock),
+                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
+                        new DirectionalImpact(debrisRock, chance: 0.33f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
                         new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.2f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale),
@@ -673,10 +694,12 @@ namespace HollywoodFX
                 new(
                     directional:
                     [
-                        new DirectionalImpact(puffFrontDusty),
-                        new DirectionalImpact(puffFront, chance: 0.4f * debrisChanceScale),
+                        new DirectionalImpact(puffFrontRock),
+                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 1.0f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksLight, chance: 1f * debrisChanceScale),
-                        new DirectionalImpact(debrisGeneric, chance: 0.3f * debrisChanceScale),
+                        new DirectionalImpact(debrisGeneric, chance: 0.15f * debrisChanceScale),
+                        new DirectionalImpact(debrisRock, chance: 0.5f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
                         new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.1f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale),
@@ -701,6 +724,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFrontDusty),
+                        new DirectionalImpact(puffLinger, chance: 0.35f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up)
@@ -725,6 +750,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFrontDusty),
+                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.65f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Grass_1"]], chance: 0.4f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up),
@@ -739,6 +766,8 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
+                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.65f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.4f * debrisChanceScale),
                     ]
@@ -752,6 +781,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
+                        new DirectionalImpact(puffRing, chance: 0.85f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksLight, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale)
                     ]
@@ -765,6 +795,8 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
+                        new DirectionalImpact(puffLinger, chance: 0.35f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Wood_1"]], chance: 0.45f * debrisChanceScale),
                         new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f * debrisChanceScale),
@@ -779,6 +811,8 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(flashSparks),
+                        new DirectionalImpact(puffLinger, chance: 0.1f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalImpact(debrisSparksMetal, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksDrip, chance: 0.3f * debrisChanceScale),
@@ -856,11 +890,7 @@ namespace HollywoodFX
                     bodyImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled));
                     bodyArmorImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled, chance: 0.5f * debrisChanceScale));
 
-                    Effects.Effect[] puffBloodFront =
-                    [
-                        effectMap["Puff_Blood_Front_1"], effectMap["Puff_Blood_Front_2"], effectMap["Puff_Blood_Front_3"],
-                        effectMap["Puff_Blood_Front_4"], effectMap["Puff_Blood_Front_5"]
-                    ];
+                    Effects.Effect[] puffBloodFront = [effectMap["Puff_Blood_Front_1"], effectMap["Puff_Blood_Front_2"]];
                     bodyImpacts.Add(new DirectionalImpact(puffBloodFront));
                     bodyArmorImpacts.Add(new DirectionalImpact(puffBloodFront, chance: 0.5f * debrisChanceScale));
                 }

@@ -13,7 +13,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.2.1";
+    public const string HollywoodFXVersion = "1.3.0";
 
     public static ManualLogSource Log;
 
@@ -38,6 +38,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> WoundDecalsSize;
 
     public static ConfigEntry<bool> RagdollEnabled;
+    public static ConfigEntry<bool> RagdollCinematicEnabled;
     public static ConfigEntry<float> RagdollLifetime;
     public static ConfigEntry<float> RagdollForceMultiplier;
 
@@ -84,8 +85,11 @@ public class Plugin : BaseUnityPlugin
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
-            new PlayerPoolObjectRoleModelPostfixPatch().Enable();
+            if (RagdollCinematicEnabled.Value)
+                new PlayerPoolObjectRoleModelPostfixPatch().Enable();
+            
             new RagdollStartPrefixPatch().Enable();
+            new RagdollApplyImpulsePrefixPatch().Enable();
             new AttachWeaponPostfixPatch().Enable();
             new LootItemIsRigidBodyDonePrefixPatch().Enable();
             
@@ -231,6 +235,12 @@ public class Plugin : BaseUnityPlugin
         bool[] ragdollAcceptableValues = visceralCombatDetected ? [false] : [false, true];
         RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (requires game restart)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
+            new AcceptableValueList<bool>(ragdollAcceptableValues),
+            new ConfigurationManagerAttributes { Order = 13, ReadOnly = visceralCombatDetected }
+        ));
+        
+        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls", true, new ConfigDescription(
+            "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
         ));

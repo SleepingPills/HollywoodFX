@@ -129,48 +129,30 @@ public class EffectsAwakePrefixPatch : ModulePatch
     {
         Plugin.Log.LogInfo("Dropping various default particle effects");
 
-        HashSet<MaterialType> materialsTypes =
-        [
-            MaterialType.Chainfence,
-            MaterialType.GarbageMetal,
-            MaterialType.Grate,
-            MaterialType.MetalThin,
-            MaterialType.MetalThick,
-            MaterialType.MetalNoDecal,
-            MaterialType.Concrete,
-            MaterialType.Stone
-        ];
-
         foreach (var effect in effects.EffectsArray)
         {
             Plugin.Log.LogInfo($"Processing {effect.Name}");
-            foreach (var materialType in effect.MaterialTypes)
+            var filteredParticles = new List<Effects.Effect.ParticleSys>();
+
+            foreach (var particle in effect.Particles)
             {
-                if (!materialsTypes.Contains(materialType)) continue;
-
-                var filteredParticles = new List<Effects.Effect.ParticleSys>();
-
-                foreach (var particle in effect.Particles)
+                if (particle.Particle.name.ToLower().Contains("spark") || particle.Particle.name.ToLower().Contains("puff"))
                 {
-                    if (particle.Particle.name.Contains("Spark"))
-                    {
-                        Plugin.Log.LogInfo($"Dropping {particle.Particle.name}");
-                        continue;
-                    }
-
-                    Plugin.Log.LogInfo($"Keeping {particle.Particle.name}");
-                    filteredParticles.Add(particle);
+                    Plugin.Log.LogInfo($"Dropping {particle.Particle.name}");
+                    continue;
                 }
 
-                Plugin.Log.LogInfo(
-                    $"Clearing out particles for {effect.Name} material {materialType}: {effect.Particles}, {effect.Flash}, {effect.FlareID}"
-                );
-
-                effect.Particles = filteredParticles.ToArray();
-                effect.Flash = false;
-                effect.FlareID = 0;
-                break;
+                Plugin.Log.LogInfo($"Keeping {particle.Particle.name}");
+                filteredParticles.Add(particle);
             }
+
+            Plugin.Log.LogInfo(
+                $"Clearing out particles for {effect.Name}: {effect.Particles}, {effect.Flash}, {effect.FlareID}"
+            );
+
+            effect.Particles = filteredParticles.ToArray();
+            effect.Flash = false;
+            effect.FlareID = 0;
         }
     }
 }

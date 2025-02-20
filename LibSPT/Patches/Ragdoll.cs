@@ -3,21 +3,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using EFT.AssetsManager;
 using EFT.Interactive;
+using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
 namespace HollywoodFX.Patches;
-
-/*
-        // { "HumanLCalf", 1.25f },
-        // { "HumanRCalf", 1.25f },
-        // { "HumanLThigh1", 1.5f },
-        // { "HumanRThigh1", 1.5f },
-        { "HumanPelvis", 2.0f },
-        { "HumanSpine2", 1.5f },
-        { "HumanSpine3", 1.25f },
- */
 
 internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
 {
@@ -28,16 +19,15 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
         { "HumanLThigh1", 1.5f },
         { "HumanRThigh1", 1.5f },
         { "HumanPelvis", 1.75f },
-        { "HumanSpine3", 0.75f },
-        { "HumanHead", 0.5f },
+        { "HumanSpine2", 1.5f },
+        { "HumanSpine3", 1.25f },
     };
     
     private static readonly Dictionary<string, float> MassFactors = new()
     {
-        { "HumanPelvis", 1.25f },
-        { "HumanSpine2", 1.5f },
-        { "HumanSpine3", 1.75f },
-        { "HumanHead", 1.75f },
+        { "HumanSpine2", 1.25f },
+        { "HumanSpine3", 1.5f },
+        { "HumanHead", 1.5f },
     };
 
     
@@ -53,7 +43,7 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
         foreach (var spawner in __instance.RigidbodySpawners)
         {
             Plugin.Log.LogInfo(
-                $"Adjusting ragdoll spawner: {spawner.name} drag: {spawner.drag} angular drag: {spawner.angularDrag} mass: {spawner.mass}"
+                $"Adjusting rigidbody spawner: {spawner.name}"
             );
 
             if (!DragOverrides.TryGetValue(spawner.name, out var drag))
@@ -61,10 +51,35 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
             
             if (!MassFactors.TryGetValue(spawner.name, out var mass))
                 mass = 1f;
-            
-            spawner.drag = drag;
+
             spawner.angularDrag = 0f;
+            spawner.drag = drag;
             spawner.mass *= mass;
+
+            var collider = spawner.GetComponent<Collider>();
+            
+            if(collider == null)
+                continue;
+
+            collider.material.bounciness = 0.75f;
+            collider.material.bounceCombine = PhysicMaterialCombine.Maximum;
+
+            collider.sharedMaterial.bounciness = 0.75f;
+            collider.sharedMaterial.bounceCombine = PhysicMaterialCombine.Maximum;
+        }
+
+        foreach (var spawner in __instance.JointSpawners)
+        {
+            spawner.swing1Limit.bounciness = 0.65f;
+            spawner.swing2Limit.bounciness = 0.65f;
+            spawner.highTwistLimit.bounciness = 0.65f;
+            spawner.lowTwistLimit.bounciness = 0.65f;
+            
+            spawner.swingLimitSpring.spring = 150f;
+            spawner.twistLimitSpring.spring = 150f;
+            
+            spawner.swingLimitSpring.damper = 0.1f;
+            spawner.twistLimitSpring.damper = 0.1f;
         }
     }
 }
@@ -78,14 +93,30 @@ internal class RagdollStartPrefixPatch : ModulePatch
 
     [PatchPrefix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(RagdollClass __instance)
+    public static void Prefix(RagdollClass __instance, ref Func<bool, float, bool> ___func_0, RigidbodySpawner[] ___rigidbodySpawner_0)
     {
-        Traverse.Create(__instance).Field("func_0").SetValue(new Func<bool, float, bool>(CheckCorpseIsStill));
+        ___func_0 = CheckCorpseIsStill;
     }
 
     private static bool CheckCorpseIsStill(bool sleeping, float timePassed)
     {
         return timePassed >= Plugin.RagdollLifetime.Value;
+    }
+}
+
+internal class RagdollApplyImpulsePrefixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.method_8));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable InconsistentNaming
+    public static bool Prefix(RagdollClass __instance, Rigidbody rigidbody, Vector3 direction, Vector3 point, float thrust)
+    {
+        rigidbody.AddForceAtPosition(direction * thrust * 2f * Plugin.RagdollForceMultiplier.Value, point, ForceMode.Impulse);
+        return false;
     }
 }
 
