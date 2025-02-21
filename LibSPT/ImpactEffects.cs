@@ -241,7 +241,7 @@ namespace HollywoodFX
             }
 
             // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
-            context.Normal = (0.6f * context.Normal + 0.4f* Random.onUnitSphere).normalized; 
+            context.Normal = (0.75f * context.Normal + 0.25f* Random.onUnitSphere).normalized; 
             
             var isBodyShot = (context.Material is
                 MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet or MaterialType.None);
@@ -670,7 +670,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontRock),
                         new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(debrisRock, chance: 0.33f * debrisChanceScale),
@@ -699,7 +699,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontRock),
                         new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksLight, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.15f * debrisChanceScale),
                         new DirectionalImpact(debrisRock, chance: 0.5f * debrisChanceScale),
@@ -728,7 +728,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(puffLinger, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up)
@@ -754,7 +754,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.65f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.45f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Grass_1"]], chance: 0.4f * debrisChanceScale),
                         new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up),
@@ -770,7 +770,7 @@ namespace HollywoodFX
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.65f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.4f * debrisChanceScale),
                     ]
@@ -784,7 +784,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalImpact(puffRing, chance: 0.85f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksLight, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale)
                     ]
@@ -799,7 +799,7 @@ namespace HollywoodFX
                         new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalImpact(puffLinger, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
                         new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact([effectMap["Debris_Wood_1"]], chance: 0.45f * debrisChanceScale),
                         new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f * debrisChanceScale),
@@ -815,7 +815,7 @@ namespace HollywoodFX
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(flashSparks),
                         new DirectionalImpact(puffLinger, chance: 0.1f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.35f * debrisChanceScale),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalImpact(debrisSparksMetal, chance: 0.6f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksDrip, chance: 0.3f * debrisChanceScale),

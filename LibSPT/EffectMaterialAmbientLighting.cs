@@ -18,7 +18,7 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
     private const float MaxLightingBoost = 2f;
     
     private const float MinTintColorFactor = 0.9f;
-    private const float MaxTintColorFactor = 1.1f;
+    private const float MaxTintColorFactor = 1f;
     
     private const float MinTintAlphaFactor = 0f;
     private const float MaxTintAlphaFactor = 0.15f;
