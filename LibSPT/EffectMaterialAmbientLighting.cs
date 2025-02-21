@@ -17,11 +17,11 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
     private const float MaxLightingBoost = 2f;
     
-    private const float MinTintColorFactor = 0.8f;
-    private const float MaxTintColorFactor = 1f;
+    private const float MinTintColorFactor = 0.9f;
+    private const float MaxTintColorFactor = 1.1f;
     
-    private const float MinTintAlphaFactor = -0.1f;
-    private const float MaxTintAlphaFactor = 0.1f;
+    private const float MinTintAlphaFactor = 0f;
+    private const float MaxTintAlphaFactor = 0.15f;
 
     private const float FactorChangeThreshold = 0.1f;
     private float _lightingFactor;
@@ -131,7 +131,7 @@ public static class StaticMaterialAmbientLighting
         switch (location)
         {
             case "factory4_day":
-                tintColorFactor = new Vector4(0.7f, 0.65f, 0.6f, 0.9f);
+                tintColorFactor = new Vector4(0.7f, 0.65f, 0.6f, 1f);
                 ambientLightFactor = new Vector4(0f, 0f, 0f, 1f);
                 break;
             case "factory4_night":

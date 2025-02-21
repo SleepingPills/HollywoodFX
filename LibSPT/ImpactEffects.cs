@@ -151,7 +151,7 @@ namespace HollywoodFX
         public readonly MaterialType Material = material;
         public readonly BallisticCollider Collider = collider;
         public readonly Vector3 Position = position;
-        public readonly Vector3 Normal = normal;
+        public Vector3 Normal = normal;
         public readonly float Volume = volume;
         public readonly bool IsKnife = isKnife;
         public readonly EPointOfView Pov = pov;
@@ -240,6 +240,9 @@ namespace HollywoodFX
                 kineticEnergy = Mathf.Max(BulletInfo.BulletMassGram, 3.5f) * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
             }
 
+            // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
+            context.Normal = (0.6f * context.Normal + 0.4f* Random.onUnitSphere).normalized; 
+            
             var isBodyShot = (context.Material is
                 MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet or MaterialType.None);
 
@@ -352,7 +355,7 @@ namespace HollywoodFX
 
         public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
         {
-            var emissionChance = 0.15 * (kineticEnergy / _kineticEnergyNormFactor);
+            var emissionChance = 0.3 * (kineticEnergy / _kineticEnergyNormFactor);
 
             if (Random.Range(0f, 1f) < emissionChance)
             {
@@ -696,7 +699,7 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontRock),
                         new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 1.0f * debrisChanceScale),
+                        new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksLight, chance: 1f * debrisChanceScale),
                         new DirectionalImpact(debrisGeneric, chance: 0.15f * debrisChanceScale),
                         new DirectionalImpact(debrisRock, chance: 0.5f * debrisChanceScale),
@@ -814,7 +817,7 @@ namespace HollywoodFX
                         new DirectionalImpact(puffLinger, chance: 0.1f * debrisChanceScale),
                         new DirectionalImpact(puffRing, chance: 0.75f * debrisChanceScale),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalImpact(debrisSparksMetal, chance: 1f * debrisChanceScale),
+                        new DirectionalImpact(debrisSparksMetal, chance: 0.6f * debrisChanceScale),
                         new DirectionalImpact(debrisSparksDrip, chance: 0.3f * debrisChanceScale),
                         new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale)
                     ]
