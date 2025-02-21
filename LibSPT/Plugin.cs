@@ -13,7 +13,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.3.0";
+    public const string HollywoodFXVersion = "1.3.3";
 
     public static ManualLogSource Log;
 

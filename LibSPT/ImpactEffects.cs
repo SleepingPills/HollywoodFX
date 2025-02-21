@@ -441,7 +441,7 @@ namespace HollywoodFX
                 camOrientation |= CamDir.Front;
             }
 
-            if (camAngle < 160)
+            if (camAngle < 150)
             {
                 camOrientation |= CamDir.Angled;
             }
