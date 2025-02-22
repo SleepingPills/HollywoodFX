@@ -54,7 +54,7 @@ internal class ImpactContext
     public void EmitEffect(Effects.Effect effect)
     {
         Singleton<Effects>.Instance.AddEffectEmit(
-            effect, Position, Normal, Collider, false, Volume,
+            effect, Position, RandNormal, Collider, false, Volume,
             IsKnife, true, false, Pov
         );
     }
@@ -84,6 +84,9 @@ internal class ImpactContext
         {
             IsHitPointVisible = true;
         }
+        
+        // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
+        RandNormal = (0.75f * Normal + 0.25f * Random.onUnitSphere).normalized;
 
         UpdateKineticEnergy();
         UpdateImpactOrientation(normal);
@@ -148,8 +151,5 @@ internal class ImpactContext
             // NB: We floor the bullet weight for KE calculations as BSG specified that buckshot pellets weigh 0.1g for example. IRL it's 3.5g
             KineticEnergy = Mathf.Max(ImpactStatic.BulletInfo.BulletMassGram, 3.5f) * Mathf.Pow(ImpactStatic.BulletInfo.Speed, 2) / 2000;
         }
-
-        // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
-        RandNormal = (0.75f * Normal + 0.25f * Random.onUnitSphere).normalized;
     }
 }
