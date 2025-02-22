@@ -90,7 +90,6 @@ public class Plugin : BaseUnityPlugin
                 new PlayerPoolObjectRoleModelPostfixPatch().Enable();
             
             new RagdollStartPrefixPatch().Enable();
-            new RagdollApplyImpulsePrefixPatch().Enable();
             new AttachWeaponPostfixPatch().Enable();
             new LootItemIsRigidBodyDonePrefixPatch().Enable();
             
@@ -257,6 +256,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 100f),
             new ConfigurationManagerAttributes { Order = 10, ReadOnly = visceralCombatDetected }
         ));
+        RagdollForceMultiplier.SettingChanged += (_, _) => EFTHardSettings.Instance.HIT_FORCE = 2.5f * 150f * RagdollForceMultiplier.Value;
 
         /*
          * Misc

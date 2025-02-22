@@ -104,22 +104,6 @@ internal class RagdollStartPrefixPatch : ModulePatch
     }
 }
 
-internal class RagdollApplyImpulsePrefixPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.method_8));
-    }
-
-    [PatchPrefix]
-    // ReSharper disable InconsistentNaming
-    public static bool Prefix(RagdollClass __instance, Rigidbody rigidbody, Vector3 direction, Vector3 point, float thrust)
-    {
-        rigidbody.AddForceAtPosition(direction * thrust * 2f * Plugin.RagdollForceMultiplier.Value, point, ForceMode.Impulse);
-        return false;
-    }
-}
-
 internal class AttachWeaponPostfixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
