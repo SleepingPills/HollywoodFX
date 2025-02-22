@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Comfort.Common;
-using EFT;
 using EFT.Ballistics;
-using EFT.Particles;
-using HarmonyLib;
 using JetBrains.Annotations;
 using Systems.Effects;
 using UnityEngine;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace System.Runtime.CompilerServices
@@ -23,140 +18,6 @@ namespace System.Runtime.CompilerServices
 
 namespace HollywoodFX
 {
-    [Flags]
-    internal enum CamDir
-    {
-        None = 0,
-        Front = 1 << 0,
-        Angled = 1 << 1,
-        Left = 1 << 6,
-        Right = 1 << 7,
-        All = ~0
-    }
-
-    [Flags]
-    internal enum WorldDir
-    {
-        None = 0,
-        Horizontal = 1 << 1,
-        Vertical = 1 << 2,
-        Up = 1 << 3,
-        Down = 1 << 4,
-        All = ~0
-    }
-
-    internal static class EffectUtils
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Emit(Effects effects, EmissionContext context, Effects.Effect effect)
-        {
-            effects.AddEffectEmit(
-                effect, context.Position, context.Normal, context.Collider, false, context.Volume,
-                context.IsKnife, true, false, context.Pov
-            );
-        }
-
-        public static Dictionary<string, Effects.Effect> LoadEffects(Effects cannedEffects, GameObject impactsPrefab)
-        {
-            Plugin.Log.LogInfo("Instantiating Impact Effects Prefab");
-            var impactInstance = Object.Instantiate(impactsPrefab);
-            Plugin.Log.LogInfo("Getting Effects Component");
-            var impactEffects = impactInstance.GetComponent<Effects>();
-            Plugin.Log.LogInfo($"Loaded {impactEffects.EffectsArray.Length} extra effects");
-
-            Plugin.Log.LogInfo("Replacing transform parent with internal effects instance");
-            foreach (var child in impactInstance.transform.GetChildren())
-            {
-                child.parent = cannedEffects.transform;
-            }
-
-            Plugin.Log.LogInfo("Adding new effects to the internal effects instance");
-            List<Effects.Effect> customEffectsList = [];
-            customEffectsList.AddRange(cannedEffects.EffectsArray);
-            customEffectsList.AddRange(impactEffects.EffectsArray);
-
-            cannedEffects.EffectsArray = [.. customEffectsList];
-
-            return impactEffects.EffectsArray.ToDictionary(x => x.Name, x => x);
-        }
-
-        public static void ScaleEffect(Effects.Effect effect, float sizeScaling, float emissionScaling)
-        {
-            var mediator = effect.BasicParticleSystemMediator;
-
-            var particleSystems = GetMediatorParticleSystems(mediator);
-
-            if (particleSystems == null)
-                return;
-
-            if (!Mathf.Approximately(sizeScaling, 1f))
-            {
-                foreach (var particleSystem in particleSystems)
-                {
-                    Plugin.Log.LogInfo($"Scaling size for {effect.Name} particle system {particleSystem.name}");
-                    particleSystem.transform.localScale *= sizeScaling;
-                }
-            }
-
-            if (Mathf.Approximately(emissionScaling, 1f)) return;
-
-            foreach (var particleSystem in particleSystems)
-            {
-                Plugin.Log.LogInfo($"Scaling emission for {effect.Name} particle system {particleSystem.name}");
-
-                var main = particleSystem.main;
-                main.maxParticles = (int)(main.maxParticles * emissionScaling);
-
-                // We skip the rateOver[X]Multiplier as these have natural scaling over distance, no need to increase the density
-                var emission = particleSystem.emission;
-
-                for (var i = 0; i < emission.burstCount; i++)
-                {
-                    var burst = emission.GetBurst(i);
-                    burst.minCount = CalcBurstCount(burst.minCount, emissionScaling);
-                    burst.maxCount = CalcBurstCount(burst.maxCount, emissionScaling);
-                    emission.SetBurst(i, burst);
-                }
-            }
-        }
-
-        public static ParticleSystem[] GetMediatorParticleSystems(BasicParticleSystemMediator mediator)
-        {
-            return Traverse.Create(mediator).Field("_particleSystems").GetValue<ParticleSystem[]>();
-        }
-
-        public static short CalcBurstCount(short count, float scaling)
-        {
-            // Don't try to scale single particle emissions
-            if (count < 2)
-            {
-                return count;
-            }
-
-            // Clip the lower value to 1
-            return (short)Mathf.Max(count * scaling, 1f);
-        }
-    }
-
-    internal struct EmissionContext(
-        MaterialType material,
-        BallisticCollider collider,
-        Vector3 position,
-        Vector3 normal,
-        float volume,
-        bool isKnife,
-        EPointOfView pov
-    )
-    {
-        public readonly MaterialType Material = material;
-        public readonly BallisticCollider Collider = collider;
-        public readonly Vector3 Position = position;
-        public Vector3 Normal = normal;
-        public readonly float Volume = volume;
-        public readonly bool IsKnife = isKnife;
-        public readonly EPointOfView Pov = pov;
-    }
-
     internal readonly struct DirectionalImpact(
         Effects.Effect[] effects,
         float chance = 1f,
@@ -176,17 +37,17 @@ namespace HollywoodFX
         float forceGeneric = 0f
     )
     {
-        public void Emit(Effects effects, EmissionContext context, CamDir camDir, WorldDir worldDir)
+        public void Emit(ImpactContext context)
         {
             Effects.Effect genericEffect = null;
 
-            if (generic != null && camDir.HasFlag(CamDir.Angled))
+            if (generic != null && context.CamOrientation.HasFlag(CamDir.Angled))
             {
                 genericEffect = generic[Random.Range(0, generic.Length)];
 
                 if (Random.Range(0f, 1f) < forceGeneric)
                 {
-                    EffectUtils.Emit(effects, context, genericEffect);
+                    context.EmitEffect(genericEffect);
                     return;
                 }
             }
@@ -195,222 +56,22 @@ namespace HollywoodFX
 
             foreach (var impact in directional)
             {
-                if (!camDir.HasFlag(impact.CamDir) || !worldDir.HasFlag(impact.WorldDir)) continue;
+                if (!context.CamOrientation.HasFlag(impact.CamDir) || !context.WorldOrientation.HasFlag(impact.WorldDir)) continue;
                 if (!(Random.Range(0f, 1f) < impact.Chance)) continue;
 
                 var effect = impact.Effects[Random.Range(0, impact.Effects.Length)];
 
-                EffectUtils.Emit(effects, context, effect);
+                context.EmitEffect(effect);
 
                 hasEmitted = true;
             }
 
             if (hasEmitted || genericEffect == null) return;
 
-            EffectUtils.Emit(effects, context, genericEffect);
+            context.EmitEffect(genericEffect);
         }
     }
-
-    internal class ImpactController
-    {
-        public static readonly ImpactController Instance = new();
-
-        private BattleAmbience _battleAmbience;
-        private ImpactEffects _impactEffects;
-
-        [CanBeNull] public EftBulletClass BulletInfo = null;
-        [CanBeNull] public ShotInfoClass PlayerHitInfo = null;
-
-        public void Emit(Effects effects, EmissionContext context, ref bool isHitPointVisible)
-        {
-            var distance = Vector3.Distance(CameraClass.Instance.Camera.transform.position, context.Position);
-
-            // Render things closer than 3 meters but further than 1 of the camera even if the impact location is not directly in the viewport
-            if (distance is <= 3f and >= 1f)
-            {
-                isHitPointVisible = true;
-            }
-
-            var kineticEnergy = 500f;
-
-            if (BulletInfo != null)
-            {
-                // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
-                // NB: We floor the bullet weight for KE calculations as BSG specified that buckshot pellets weigh 0.1g for example. IRL it's 3.5g
-                kineticEnergy = Mathf.Max(BulletInfo.BulletMassGram, 3.5f) * Mathf.Pow(BulletInfo.Speed, 2) / 2000;
-            }
-
-            // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
-            context.Normal = (0.75f * context.Normal + 0.25f* Random.onUnitSphere).normalized; 
-            
-            var isBodyShot = (context.Material is
-                MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet or MaterialType.None);
-
-            if (isHitPointVisible)
-            {
-                _impactEffects.Emit(effects, context, kineticEnergy);
-
-                if (isBodyShot)
-                {
-                    RagdollEffects.Apply(context.Material, kineticEnergy);
-                }
-                else if (Plugin.BattleAmbienceEnabled.Value)
-                {
-                    _battleAmbience.Emit(effects, context, kineticEnergy);
-                }
-            }
-            else
-            {
-                if (!isBodyShot && Plugin.BattleAmbienceEnabled.Value && distance < Plugin.AmbientSimulationRange.Value)
-                    _battleAmbience.Emit(effects, context, kineticEnergy);
-            }
-        }
-
-        public void Setup(Effects cannedEffects)
-        {
-            Plugin.Log.LogInfo("Loading Impacts Prefab");
-            var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
-            var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
-
-            _battleAmbience = new BattleAmbience(cannedEffects, ambiencePrefab);
-            _impactEffects = new ImpactEffects(cannedEffects, impactsPrefab);
-        }
-    }
-
-    internal static class RagdollEffects
-    {
-        public static void Apply(MaterialType material, float kineticEnergy)
-        {
-            if (!Plugin.RagdollEnabled.Value) return;
-
-            var bulletInfo = ImpactController.Instance.BulletInfo;
-
-            if (bulletInfo == null) return;
-
-            var attachedRigidbody = bulletInfo.HitCollider.attachedRigidbody;
-
-            if (attachedRigidbody == null)
-                return;
-
-            // Kinematic means it's not physics controlled
-            if (attachedRigidbody.isKinematic)
-                return;
-
-            var scalingBase = 0.025f;
-
-            // These are generally the loot items like guns on the ground, decrease the force to avoid yeeting them to the stratosphere
-            if (material == MaterialType.None)
-                scalingBase *= 0.1f;
-
-            var penetrationFactor = 0.6f;
-
-            if (ImpactController.Instance.BulletInfo != null)
-            {
-                penetrationFactor = (0.3f + 0.7f * Mathf.InverseLerp(50f, 20f, ImpactController.Instance.BulletInfo.PenetrationPower));
-            }
-
-            var bulletForce = scalingBase * kineticEnergy;
-            var impactImpulse = penetrationFactor * bulletForce * Plugin.RagdollForceMultiplier.Value;
-
-            // Find the root transform
-            var cur = attachedRigidbody.transform;
-            while (cur.parent != null)
-            {
-                cur = cur.parent;
-            }
-
-            // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
-            // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
-            var upThrust = (bulletInfo.HitPoint - cur.position);
-            upThrust.y = Mathf.InverseLerp(1.2f, 1.6f, upThrust.y);
-
-            var direction = (bulletInfo.Direction + upThrust).normalized;
-            attachedRigidbody.AddForceAtPosition(direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
-        }
-    }
-
-    internal class BattleAmbience
-    {
-        private readonly Effects.Effect[] _cloudSmoke;
-        private readonly Effects.Effect[] _suspendedDust;
-        private readonly float _kineticEnergyNormFactor;
-
-        public BattleAmbience(Effects cannedEffects, GameObject prefab)
-        {
-            Plugin.Log.LogInfo("Building Battle Ambience Effects");
-
-            var effectMap = EffectUtils.LoadEffects(cannedEffects, prefab);
-
-            foreach (var effect in effectMap.Values)
-            {
-                Plugin.Log.LogInfo($"Effect {effect.Name} emission scaling: {Plugin.AmbientEffectDensity.Value}");
-                ScaleEffect(effect, Plugin.AmbientParticleLifetime.Value, Plugin.AmbientParticleLimit.Value, Plugin.AmbientEffectDensity.Value);
-                Singleton<LitMaterialRegistry>.Instance.Register(effect, false);
-            }
-
-            _cloudSmoke = [effectMap["Cloud_Smoke_1"]];
-            _suspendedDust = [effectMap["Suspended_Dust_1"], effectMap["Suspended_Glitter_1"]];
-            _kineticEnergyNormFactor = Plugin.ChonkEffectEnergy.Value;
-        }
-
-        public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
-        {
-            var emissionChance = 0.3 * (kineticEnergy / _kineticEnergyNormFactor);
-
-            if (Random.Range(0f, 1f) < emissionChance)
-            {
-                var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
-                EffectUtils.Emit(effects, context, smokeEffect);
-            }
-
-            if (!(Random.Range(0f, 1f) < emissionChance)) return;
-
-            var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
-            EffectUtils.Emit(effects, context, dustEffect);
-        }
-
-        private static void ScaleEffect(Effects.Effect effect, float lifetimeScaling, float limitScaling, float emissionScaling)
-        {
-            var particleSystems = EffectUtils.GetMediatorParticleSystems(effect.BasicParticleSystemMediator);
-
-            if (particleSystems == null)
-                return;
-
-            if (Mathf.Approximately(emissionScaling, 1f)) return;
-
-            foreach (var particleSystem in particleSystems)
-            {
-                var main = particleSystem.main;
-
-                if (!Mathf.Approximately(limitScaling, 1))
-                {
-                    main.maxParticles = (int)(main.maxParticles * limitScaling);
-                }
-
-                if (!Mathf.Approximately(lifetimeScaling, 1))
-                {
-                    var lifetime = main.startLifetime;
-                    lifetime.constant *= lifetimeScaling;
-                    lifetime.constantMin *= lifetimeScaling;
-                    lifetime.constantMax *= lifetimeScaling;
-                    lifetime.curveMultiplier = lifetimeScaling;
-                }
-
-                if (Mathf.Approximately(emissionScaling, 1)) continue;
-
-                var emission = particleSystem.emission;
-
-                for (var i = 0; i < emission.burstCount; i++)
-                {
-                    var burst = emission.GetBurst(i);
-                    burst.minCount = EffectUtils.CalcBurstCount(burst.minCount, emissionScaling);
-                    burst.maxCount = EffectUtils.CalcBurstCount(burst.maxCount, emissionScaling);
-                    emission.SetBurst(i, burst);
-                }
-            }
-        }
-    }
-
+    
     internal class ImpactEffects
     {
         private readonly List<ImpactSystem>[] _smallCaliberImpacts;
@@ -426,61 +87,15 @@ namespace HollywoodFX
             _chonkCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.ChonkEffectSize.Value);
         }
 
-        public void Emit(Effects effects, EmissionContext context, float kineticEnergy)
+        public void Emit(ImpactContext context)
         {
-            var camera = CameraClass.Instance.Camera;
-            var worldAngle = Vector3.Angle(Vector3.down, context.Normal);
-            var camAngle = Vector3.Angle(camera.transform.forward, context.Normal);
-            var camAngleSigned = Vector3.SignedAngle(camera.transform.forward, context.Normal, Vector3.up);
-
-            var camOrientation = CamDir.None;
-            var worldOrientation = WorldDir.None;
-
-            if (camAngle > 107.5)
-            {
-                camOrientation |= CamDir.Front;
-            }
-
-            if (camAngle < 150)
-            {
-                camOrientation |= CamDir.Angled;
-            }
-
-            switch (camAngleSigned)
-            {
-                case > 0:
-                    camOrientation |= CamDir.Right;
-                    break;
-                case < 0:
-                    camOrientation |= CamDir.Left;
-                    break;
-            }
-
-            if (worldAngle > 45 & worldAngle < 135)
-            {
-                worldOrientation |= WorldDir.Horizontal;
-            }
-            else
-            {
-                worldOrientation |= WorldDir.Vertical;
-
-                if (worldAngle >= 135)
-                {
-                    worldOrientation |= WorldDir.Up;
-                }
-                else
-                {
-                    worldOrientation |= WorldDir.Down;
-                }
-            }
-
             var impactChoice = _midCaliberImpacts;
 
-            if (kineticEnergy <= Plugin.SmallEffectEnergy.Value)
+            if (context.KineticEnergy <= Plugin.SmallEffectEnergy.Value)
             {
                 impactChoice = _smallCaliberImpacts;
             }
-            else if (kineticEnergy >= Plugin.ChonkEffectEnergy.Value)
+            else if (context.KineticEnergy >= Plugin.ChonkEffectEnergy.Value)
             {
                 impactChoice = _chonkCaliberImpacts;
             }
@@ -492,7 +107,7 @@ namespace HollywoodFX
 
             foreach (var impactSystem in currentSystems)
             {
-                impactSystem.Emit(effects, context, camOrientation, worldOrientation);
+                impactSystem.Emit(context);
             }
         }
 

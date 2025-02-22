@@ -88,9 +88,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssetRegistry.cs" />
+    <Compile Include="BattleAmbience.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="EffectMaterialAmbientLighting.cs" />
+    <Compile Include="EffectUtils.cs" />
+    <Compile Include="ImpactContext.cs" />
+    <Compile Include="ImpactController.cs" />
     <Compile Include="ImpactEffects.cs" />
+    <Compile Include="ImpactRagdoll.cs" />
+    <Compile Include="ImpactStatic.cs" />
     <Compile Include="LitMaterialRegistry.cs" />
     <Compile Include="Patches\AmmoPoolObject.cs" />
     <Compile Include="Patches\BulletImpact.cs" />
@@ -103,6 +109,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="notes.MD" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Gore\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Comfort.Common;
 using DeferredDecals;
 using EFT;
 using EFT.Ballistics;
@@ -182,7 +183,8 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
         try
         {
-            ImpactController.Instance.Setup(__instance);
+            Singleton<ImpactController>.Create(new ImpactController());
+            Singleton<ImpactController>.Instance.Setup(__instance);
         }
         catch (Exception e)
         {
@@ -194,6 +196,8 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
 public class EffectsEmitPatch : ModulePatch
 {
+    private static readonly ImpactContext ImpactContext = new();
+    
     protected override MethodBase GetTargetMethod()
     {
         // Need to disambiguate the correct emit method
@@ -207,12 +211,12 @@ public class EffectsEmitPatch : ModulePatch
     [PatchPrefix]
     // ReSharper disable once InconsistentNaming
     public static void Prefix(Effects __instance, MaterialType material, BallisticCollider hitCollider,
-        Vector3 position, Vector3 normal, float volume, bool isKnife, ref bool isHitPointVisible, EPointOfView pov)
+        Vector3 position, Vector3 normal, float volume, bool isKnife, bool isHitPointVisible, EPointOfView pov)
     {
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        var context = new EmissionContext(material, hitCollider, position, normal, volume, isKnife, pov);
-        ImpactController.Instance.Emit(__instance, context, ref isHitPointVisible);
+        ImpactContext.Update(material, hitCollider, position, normal, volume, isKnife, isHitPointVisible, pov);
+        Singleton<ImpactController>.Instance.Emit(ImpactContext);
     }
 }

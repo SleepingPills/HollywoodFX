@@ -11,6 +11,7 @@ namespace HollywoodFX;
 
 [BepInPlugin("com.janky.hollywoodfx", "Janky's HollywoodFX", HollywoodFXVersion)]
 [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
     public const string HollywoodFXVersion = "1.3.3";
