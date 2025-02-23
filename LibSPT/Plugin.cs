@@ -111,7 +111,7 @@ public class Plugin : BaseUnityPlugin
         const string effectSize = "1. Effect Size (changes have no effect in-raid)";
         const string battleAmbience = "2. Ambient Battle Effects (changes have no effect in-raid)";
         const string bloodGore = "3. Blood/Gore Settings (changes have no effect in-raid)";
-        const string ragdoll = "4. Ragdoll Effects (DISABLED WHEN VISCERAL COMBAT IS LOADED)";
+        const string ragdoll = "4. Ragdoll Effects (disabled by Visceral Combat)";
         const string misc = "5. Miscellaneous Flotsam (changes have no effect in-raid)";
         const string debug = "6. Debug";
 
