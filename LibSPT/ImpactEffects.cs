@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Comfort.Common;
 using EFT.Ballistics;
+using EFT.UI;
 using HollywoodFX.Particles;
 using JetBrains.Annotations;
 using Systems.Effects;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace System.Runtime.CompilerServices
@@ -20,35 +21,37 @@ namespace System.Runtime.CompilerServices
 namespace HollywoodFX
 {
     internal readonly struct DirectionalImpact(
-        SystemBundle[] effects,
+        EffectBundle effect,
         float chance = 1f,
+        bool chanceEnergyScale = false,
         CamDir camDir = CamDir.None,
         WorldDir worldDir = WorldDir.None
     )
     {
-        public readonly SystemBundle[] Effects = effects;
+        public readonly EffectBundle Effect = effect;
         public readonly WorldDir WorldDir = worldDir;
         public readonly CamDir CamDir = camDir;
         public readonly float Chance = chance;
+        public readonly bool ChanceEnergyScale = chanceEnergyScale;
     }
 
     internal class ImpactSystem(
         DirectionalImpact[] directional,
-        [CanBeNull] SystemBundle[] generic = null,
+        [CanBeNull] EffectBundle generic = null,
         float forceGeneric = 0f
     )
     {
-        public void Emit(ImpactContext context, float scaling)
+        public void Emit(ImpactContext context, float chanceScaling, float sizeScaling)
         {
-            SystemBundle genericEffect = null;
-
-            if (generic != null && context.CamOrientation.HasFlag(CamDir.Angled))
+            EffectBundle genericImpact = null;
+            
+            if (generic != null && context.CamDir.HasFlag(CamDir.Angled))
             {
-                genericEffect = generic[Random.Range(0, generic.Length)];
-
+                genericImpact = generic;
+                
                 if (Random.Range(0f, 1f) < forceGeneric)
                 {
-                    genericEffect.EmitRandom(context.Position, context.Normal, scaling);
+                    genericImpact.EmitRandom(context.Position, context.RandNormal, sizeScaling);
                     return;
                 }
             }
@@ -57,24 +60,24 @@ namespace HollywoodFX
 
             foreach (var impact in directional)
             {
-                if (!context.CamOrientation.HasFlag(impact.CamDir) || !context.WorldOrientation.HasFlag(impact.WorldDir)) continue;
-                if (!(Random.Range(0f, 1f) < impact.Chance)) continue;
+                if (!context.CamDir.HasFlag(impact.CamDir) || !context.WorldDir.HasFlag(impact.WorldDir)) continue;
 
-                var effect = impact.Effects[Random.Range(0, impact.Effects.Length)];
-                effect.EmitRandom(context.Position, context.Normal, scaling);
+                var impactChance = impact.ChanceEnergyScale ? impact.Chance * chanceScaling : impact.Chance;
+                if (!(Random.Range(0f, 1f) < impactChance)) continue;
 
+                impact.Effect.EmitRandom(context.Position, context.RandNormal, sizeScaling);
                 hasEmitted = true;
             }
 
-            if (hasEmitted || genericEffect == null) return;
+            if (hasEmitted || genericImpact == null) return;
 
-            genericEffect.EmitRandom(context.Position, context.Normal, scaling);
+            genericImpact.EmitRandom(context.Position, context.RandNormal, sizeScaling);
         }
     }
-    
-    internal class ImpactEffects(Effects cannedEffects, GameObject prefab)
+
+    internal class ImpactEffects(Effects eftEffects, GameObject prefab)
     {
-        private readonly List<ImpactSystem>[] _impacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.EffectSize.Value);
+        private readonly List<ImpactSystem>[] _impacts = BuildCoreImpactSystems(eftEffects, prefab);
 
         public void Emit(ImpactContext context)
         {
@@ -83,169 +86,104 @@ namespace HollywoodFX
             if (currentSystems == null)
                 return;
 
-            var scaleByKineticEnergy = Mathf.Clamp(Mathf.Sqrt(context.KineticEnergy / 1500f), 0.5f, 1.25f) * Plugin.EffectSize.Value;  
+            var scale = Mathf.Clamp(Mathf.Sqrt(context.KineticEnergy / 1500f), 0.5f, 1.25f) * Plugin.EffectSize.Value;
+
+            // Chance scaling has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
+            // things too much for smaller ones.
+            var chanceScale = scale < 1f ? scale : Mathf.Pow(scale, 2f);
 
             foreach (var impactSystem in currentSystems)
             {
-                impactSystem.Emit(context, scaleByKineticEnergy);
+                impactSystem.Emit(context, chanceScale, scale);
             }
         }
 
-        private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects cannedEffects, GameObject impactsPrefab, float scaling)
+        private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects eftEffects, GameObject prefab)
         {
-            // TODO: swap out to the new particle system loading
-            var effectMap = EffectUtils.LoadEffects(cannedEffects, impactsPrefab);
+            Plugin.Log.LogInfo("Instantiating Impact Effects Prefab");
+            var rootInstance = Object.Instantiate(prefab);
 
-            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-            foreach (var effect in effectMap.Values)
+            var effectMap = new Dictionary<string, EffectBundle>();
+
+            foreach (var group in rootInstance.transform.GetChildren())
             {
-                Singleton<LitMaterialRegistry>.Instance.Register(effect, true);
-            }
+                var groupName = group.name;
+                var effects = new List<ParticleSystem>();
 
-            // Debris chance has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
-            // things too much for smaller ones.
-            var debrisChanceScale = scaling < 1f ? scaling : Mathf.Pow(scaling, 2f);
-
-            // Emissions only scale up, and that's as square root to avoid generating too much noise
-            var emissionScaling = Mathf.Max(Mathf.Sqrt(scaling), 1);
-
-            foreach (var effect in effectMap.Values)
-            {
-                var sizeScaling = scaling;
-
-                // Clip the debris size to 1 otherwise things start looking silly. We still increase the quantity.
-                if (effect.Name.Contains("Debris"))
+                foreach (var child in group.GetChildren())
                 {
-                    sizeScaling = Mathf.Min(sizeScaling, 1f);
-                }
-                else if (effect.Name.Contains("Squirt") || effect.Name.Contains("Splash") || effect.Name.Contains("Flash"))
-                {
-                    sizeScaling = sizeScaling < 1f ? sizeScaling : Mathf.Sqrt(sizeScaling);
+                    if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
+
+                    child.parent = eftEffects.transform;
+                    Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, false);
+                    effects.Add(particleSystem);
                 }
 
-                Plugin.Log.LogInfo($"Effect {effect.Name} size scaling: {sizeScaling}, emission scaling: {emissionScaling}");
-
-                EffectUtils.ScaleEffect(effect, sizeScaling, emissionScaling);
+                effectMap[groupName] = new EffectBundle(effects.ToArray());
+                Plugin.Log.LogInfo($"Added impact effect `{groupName}` with {effects.Count} particle systems");
             }
 
-            return DefineImpactSystems(effectMap, debrisChanceScale);
+            return DefineImpactSystems(effectMap);
         }
 
-        private static List<ImpactSystem>[] DefineImpactSystems(Dictionary<string, Effects.Effect> effectMap, float debrisChanceScale)
+        private static List<ImpactSystem>[] DefineImpactSystems(Dictionary<string, EffectBundle> effectMap)
         {
             Plugin.Log.LogInfo("Constructing impact systems");
 
             // Define major building blocks for systems
             Plugin.Log.LogInfo("Building frontal puffs");
-            var puffFront = new[]
-            {
-                effectMap["Puff_Front_1"], effectMap["Puff_Front_2"]
-            };
-
-            var puffFrontBody = new[]
-            {
-                effectMap["Puff_Body_Front_1"], effectMap["Puff_Body_Front_2"]
-            };
-
-            var puffFrontDusty = new[]
-            {
-                effectMap["Puff_Dusty_Front_1"], effectMap["Puff_Dusty_Front_2"], effectMap["Puff_Dusty_Front_3"]
-            };
-
-            var puffFrontRock = puffFront.Concat(puffFrontDusty).ToArray();
+            var puffFront = effectMap["Puff_Front"];
+            var puffFrontBody = effectMap["Puff_Body_Front"];
+            var puffFrontDusty = effectMap["Puff_Dusty_Front"];
+            var puffFrontRock = EffectBundle.Merge(puffFront, puffFrontDusty);
 
             Plugin.Log.LogInfo("Building flash sparks");
-            var flashSparks = new[]
-            {
-                effectMap["Flash_Sparks_1"], effectMap["Flash_Sparks_2"], effectMap["Flash_Sparks_3"]
-            };
+            var flashSparks = effectMap["Flash_Sparks"];
 
             Plugin.Log.LogInfo("Building generic puffs");
-            var puffGeneric = new[]
-            {
-                effectMap["Puff_1"], effectMap["Puff_2"], effectMap["Puff_3"], effectMap["Puff_4"]
-            };
+            var puffGeneric = effectMap["Puff"];
 
             Plugin.Log.LogInfo("Building horizontal puffs");
-            var puffGenericHorRight = new[]
-            {
-                effectMap["Puff_Dusty_Hor_Right_1"], effectMap["Puff_Dusty_Hor_Right_2"]
-            };
-
-            var puffGenericHorLeft = new[]
-            {
-                effectMap["Puff_Dusty_Hor_Left_1"], effectMap["Puff_Dusty_Hor_Left_2"]
-            };
+            var puffGenericHorRight = effectMap["Puff_Dusty_Hor_Right"];
+            var puffGenericHorLeft = effectMap["Puff_Dusty_Hor_Left"];
 
             Plugin.Log.LogInfo("Building lingering puffs");
-            var puffLinger = new[]
-            {
-                effectMap["Puff_Smoke_Linger_1"]
-            };
-            
-            Plugin.Log.LogInfo("Building puff rings");
-            var puffRing = new[]
-            {
-                effectMap["Puff_Smoke_Ring_1"]
-            };
+            var puffLinger = effectMap["Puff_Smoke_Linger"];
 
-            Plugin.Log.LogInfo("Building mud debris");
-            var debrisMudVert = new[]
-            {
-                effectMap["Debris_Mud_Vert_1"], effectMap["Debris_Mud_Vert_2"], effectMap["Debris_Mud_Vert_3"]
-            };
+            Plugin.Log.LogInfo("Building puff rings");
+            var puffRing = effectMap["Puff_Smoke_Ring"];
 
             Plugin.Log.LogInfo("Building dirt debris");
-            var debrisDirtVert = new[]
-            {
-                effectMap["Debris_Dirt_Vert_1"], effectMap["Debris_Dirt_Vert_2"], effectMap["Debris_Dirt_Vert_3"]
-            };
-            
+            var debrisDirtVert = effectMap["Debris_Dirt_Vert"];
+
+            Plugin.Log.LogInfo("Building mud debris");
+            var debrisMudVert = EffectBundle.Merge(debrisDirtVert, effectMap["Debris_Mud_Vert"]);
+
             Plugin.Log.LogInfo("Building rock debris");
-            var debrisRock = new[]
-            {
-                effectMap["Debris_Rock_1"]
-            };
+            var debrisRock = effectMap["Debris_Rock"];
 
             Plugin.Log.LogInfo("Building fine dust");
-            var debrisDust = new[]
-            {
-                effectMap["Fine_Dust_1"]
-            };
+            var debrisDust = effectMap["Fine_Dust"];
 
             Plugin.Log.LogInfo("Building fine spark");
-            var debrisSparksLight = new[]
-            {
-                effectMap["Fine_Sparks_Light_1"], effectMap["Fine_Dust_1"], effectMap["Fine_Dust_1"], effectMap["Fine_Dust_1"],
-                effectMap["Fine_Dust_1"]
-            };
+            var debrisSparksLight = EffectBundle.Merge(
+                effectMap["Fine_Sparks_Light"], effectMap["Fine_Dust"], effectMap["Fine_Dust"],
+                effectMap["Fine_Dust"], effectMap["Fine_Dust"]
+            );
 
-            var debrisSparksMetal = new[]
-            {
-                effectMap["Fine_Sparks_Metal_1"], effectMap["Fine_Sparks_Metal_1"], effectMap["Fine_Sparks_Light_1"]
-            };
+            var debrisSparksMetal = EffectBundle.Merge(
+                effectMap["Fine_Sparks_Metal"], effectMap["Fine_Sparks_Metal"], effectMap["Fine_Sparks_Light"]
+            );
 
             Plugin.Log.LogInfo("Building generic debris");
-            var debrisGeneric = new[]
-            {
-                effectMap["Debris_Generic_1"]
-            };
+            var debrisGeneric = effectMap["Debris_Generic"];
 
             Plugin.Log.LogInfo("Building misc debris");
-            var bulletHoleSmoke = new[]
-            {
-                effectMap["Impact_Smoke_1"]
-            };
+            var bulletHoleSmoke = effectMap["Impact_Smoke"];
 
-            var debrisSparksDrip = new[]
-            {
-                effectMap["Drip_Sparks"]
-            };
+            var debrisSparksDrip = effectMap["Drip_Sparks"];
 
-            var fallingDust = new[]
-            {
-                effectMap["Falling_Dust_1"]
-            };
+            var fallingDust = effectMap["Falling_Dust"];
 
             Plugin.Log.LogInfo("Defining material specific impacts");
             var softRockImpact = new List<ImpactSystem>
@@ -265,14 +203,14 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFrontRock),
-                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
-                        new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
-                        new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(debrisRock, chance: 0.33f * debrisChanceScale),
+                        new DirectionalImpact(puffLinger, chance: 0.25f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.5f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisDust, chance: 1f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisGeneric, chance: 0.35f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisRock, chance: 0.33f, chanceEnergyScale: true),
                         new DirectionalImpact(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
-                        new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.2f * debrisChanceScale),
-                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale),
+                        new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.2f, chanceEnergyScale: true),
+                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f, chanceEnergyScale: true),
                     ]
                 )
             };
@@ -294,14 +232,14 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFrontRock),
-                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(debrisSparksLight, chance: 1f * debrisChanceScale),
-                        new DirectionalImpact(debrisGeneric, chance: 0.15f * debrisChanceScale),
-                        new DirectionalImpact(debrisRock, chance: 0.5f * debrisChanceScale),
+                        new DirectionalImpact(puffLinger, chance: 0.25f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.35f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisSparksLight, chance: 1f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisGeneric, chance: 0.15f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisRock, chance: 0.5f, chanceEnergyScale: true),
                         new DirectionalImpact(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
-                        new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.1f * debrisChanceScale),
-                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale),
+                        new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.1f, chanceEnergyScale: true),
+                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f, chanceEnergyScale: true),
                     ]
                 )
             };
@@ -323,11 +261,11 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFrontDusty),
-                        new DirectionalImpact(puffLinger, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
-                        new DirectionalImpact(debrisDust, chance: 1f * debrisChanceScale),
-                        new DirectionalImpact(debrisGeneric, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up)
+                        new DirectionalImpact(puffLinger, chance: 0.35f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.5f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisDust, chance: 1f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisGeneric, chance: 0.35f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisMudVert, worldDir: WorldDir.Vertical | WorldDir.Up)
                     ]
                 )
             };
@@ -349,11 +287,11 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFrontDusty),
-                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.45f * debrisChanceScale),
-                        new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
-                        new DirectionalImpact([effectMap["Debris_Grass_1"]], chance: 0.4f * debrisChanceScale),
-                        new DirectionalImpact(debrisDirtVert.Concat(debrisMudVert).ToArray(), worldDir: WorldDir.Vertical | WorldDir.Up),
+                        new DirectionalImpact(puffLinger, chance: 0.25f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.45f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisDust, chance: 0.75f, chanceEnergyScale: true),
+                        new DirectionalImpact(effectMap["Debris_Grass"], chance: 0.4f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisMudVert, worldDir: WorldDir.Vertical | WorldDir.Up),
                     ]
                 )
             };
@@ -365,10 +303,10 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalImpact(puffLinger, chance: 0.25f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
-                        new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
-                        new DirectionalImpact(debrisGeneric, chance: 0.4f * debrisChanceScale),
+                        new DirectionalImpact(puffLinger, chance: 0.25f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.5f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisDust, chance: 0.75f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisGeneric, chance: 0.4f, chanceEnergyScale: true),
                     ]
                 )
             };
@@ -380,9 +318,9 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalImpact(puffRing, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(debrisSparksLight, chance: 0.75f * debrisChanceScale),
-                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale)
+                        new DirectionalImpact(puffRing, chance: 0.35f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisSparksLight, chance: 0.75f, chanceEnergyScale: true),
+                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f, chanceEnergyScale: true)
                     ]
                 )
             };
@@ -394,12 +332,12 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFrontDusty),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalImpact(puffLinger, chance: 0.35f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.5f * debrisChanceScale),
-                        new DirectionalImpact(debrisDust, chance: 0.75f * debrisChanceScale),
-                        new DirectionalImpact([effectMap["Debris_Wood_1"]], chance: 0.45f * debrisChanceScale),
-                        new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f * debrisChanceScale),
-                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale)
+                        new DirectionalImpact(puffLinger, chance: 0.35f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.5f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisDust, chance: 0.75f, chanceEnergyScale: true),
+                        new DirectionalImpact(effectMap["Debris_Wood"], chance: 0.45f, chanceEnergyScale: true),
+                        new DirectionalImpact(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f, chanceEnergyScale: true),
+                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f, chanceEnergyScale: true)
                     ]
                 )
             };
@@ -410,12 +348,12 @@ namespace HollywoodFX
                     [
                         new DirectionalImpact(puffFront),
                         new DirectionalImpact(flashSparks),
-                        new DirectionalImpact(puffLinger, chance: 0.1f * debrisChanceScale),
-                        new DirectionalImpact(puffRing, chance: 0.35f * debrisChanceScale),
+                        new DirectionalImpact(puffLinger, chance: 0.1f, chanceEnergyScale: true),
+                        new DirectionalImpact(puffRing, chance: 0.35f, chanceEnergyScale: true),
                         new DirectionalImpact(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalImpact(debrisSparksMetal, chance: 0.6f * debrisChanceScale),
-                        new DirectionalImpact(debrisSparksDrip, chance: 0.3f * debrisChanceScale),
-                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f * debrisChanceScale)
+                        new DirectionalImpact(debrisSparksMetal, chance: 0.6f, chanceEnergyScale: true),
+                        new DirectionalImpact(debrisSparksDrip, chance: 0.3f, chanceEnergyScale: true),
+                        new DirectionalImpact(bulletHoleSmoke, chance: 0.05f, chanceEnergyScale: true)
                     ]
                 )
             };
@@ -454,21 +392,21 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.MetalNoDecal] = metalImpact;
             impactSystems[(int)MaterialType.None] = hardGenericImpact;
 
-            DefineBodyImpactSystems(effectMap, impactSystems, puffFrontDusty.Concat(puffFrontBody).ToArray(), debrisDust, debrisSparksLight,
-                debrisChanceScale);
+            DefineBodyImpactSystems(
+                effectMap, impactSystems, EffectBundle.Merge(puffFrontDusty, puffFrontBody), debrisDust, debrisSparksLight
+            );
 
             return impactSystems;
         }
 
-        private static void DefineBodyImpactSystems(Dictionary<string, Effects.Effect> effectMap, List<ImpactSystem>[] impactSystems,
-            Effects.Effect[] puffFront, Effects.Effect[] debrisDust, Effects.Effect[] debrisSparksLight,
-            float debrisChanceScale)
+        private static void DefineBodyImpactSystems(Dictionary<string, EffectBundle> effectMap, List<ImpactSystem>[] impactSystems,
+            EffectBundle puffFront, EffectBundle debrisDust, EffectBundle debrisSparksLight)
         {
             List<DirectionalImpact> bodyArmorImpacts =
             [
                 new(puffFront, chance: 0.3f),
-                new(debrisDust, chance: 0.4f * debrisChanceScale),
-                new([effectMap["Debris_Armor_Fabric_1"]], chance: 0.4f * debrisChanceScale)
+                new(debrisDust, chance: 0.4f, chanceEnergyScale: true),
+                new(effectMap["Debris_Armor_Fabric"], chance: 0.4f, chanceEnergyScale: true)
             ];
 
             List<ImpactSystem> bodyImpact = null;
@@ -480,60 +418,33 @@ namespace HollywoodFX
 
                 if (Plugin.BloodPuffsEnabled.Value)
                 {
-                    Effects.Effect[] puffBloodVert =
-                    [
-                        effectMap["Puff_Blood_1"], effectMap["Puff_Blood_2"],
-                        effectMap["Puff_Blood_3"], effectMap["Puff_Blood_4"]
-                    ];
-
+                    var puffBloodVert = effectMap["Puff_Blood"];
                     bodyImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled));
-                    bodyArmorImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled, chance: 0.5f * debrisChanceScale));
+                    bodyArmorImpacts.Add(new DirectionalImpact(puffBloodVert, camDir: CamDir.Angled, chance: 0.5f, chanceEnergyScale: true));
 
-                    Effects.Effect[] puffBloodFront = [effectMap["Puff_Blood_Front_1"], effectMap["Puff_Blood_Front_2"]];
+                    var puffBloodFront = effectMap["Puff_Blood_Front"];
                     bodyImpacts.Add(new DirectionalImpact(puffBloodFront));
-                    bodyArmorImpacts.Add(new DirectionalImpact(puffBloodFront, chance: 0.5f * debrisChanceScale));
+                    bodyArmorImpacts.Add(new DirectionalImpact(puffBloodFront, chance: 0.5f, chanceEnergyScale: true));
                 }
 
                 if (Plugin.BloodSplatterEnabled.Value)
                 {
-                    // #3 is twice to increase  the chance of splatters
-                    Effects.Effect[] squirts =
-                    [
-                        effectMap["Squirt_Blood_1"], effectMap["Squirt_Blood_2"],
-                        effectMap["Squirt_Blood_3"], effectMap["Squirt_Blood_3"]
-                    ];
+                    var squirts = effectMap["Squirt_Blood"];
 
-                    foreach (var squirt in squirts)
+                    foreach (var squirt in squirts.ParticleSystems)
                     {
-                        var squirtParticles = EffectUtils.GetMediatorParticleSystems(squirt.BasicParticleSystemMediator);
-
-                        foreach (var particleSystem in squirtParticles)
-                        {
-                            particleSystem.gameObject.AddComponent<BloodSquirtCollisionHandler>();
-                        }
+                        squirt.gameObject.AddComponent<BloodSquirtCollisionHandler>();
                     }
 
-                    bodyImpacts.Add(
-                        new DirectionalImpact(squirts,
-                            chance: 0.5f * debrisChanceScale)
-                    );
-                    bodyImpacts.Add(
-                        new DirectionalImpact([
-                            effectMap["Splash_Blood_Front_1"], effectMap["Splash_Blood_Front_2"], effectMap["Splash_Blood_Front_3"]
-                        ], chance: 0.5f * debrisChanceScale)
-                    );
+                    bodyImpacts.Add(new DirectionalImpact(squirts, chance: 0.5f, chanceEnergyScale: true));
+                    bodyImpacts.Add(new DirectionalImpact(effectMap["Splash_Blood_Front"], chance: 0.5f, chanceEnergyScale: true));
                 }
 
                 if (Plugin.BloodSplatterFineEnabled.Value)
                 {
-                    bodyImpacts.Add(new DirectionalImpact([effectMap["Fine_Blood_1"], effectMap["Fine_Blood_2"]]));
-                    bodyArmorImpacts.Add(new DirectionalImpact([effectMap["Fine_Blood_1"], effectMap["Fine_Blood_2"]],
-                        chance: 0.25f * debrisChanceScale));
-                }
-
-                foreach (var effect in bodyImpacts.SelectMany(directionalImpact => directionalImpact.Effects))
-                {
-                    EffectUtils.ScaleEffect(effect, Plugin.BloodEffectSize.Value, 1);
+                    var fineBlood = effectMap["Fine_Blood"];
+                    bodyImpacts.Add(new DirectionalImpact(fineBlood));
+                    bodyArmorImpacts.Add(new DirectionalImpact(fineBlood, chance: 0.25f, chanceEnergyScale: true));
                 }
 
                 bodyImpact = [new ImpactSystem(directional: bodyImpacts.ToArray())];
@@ -547,8 +458,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalImpact(puffFront, chance: 0.55f),
-                        new DirectionalImpact(debrisSparksLight, chance: 0.4f * debrisChanceScale),
-                        new DirectionalImpact([effectMap["Debris_Armor_Metal_1"]], chance: 0.4f * debrisChanceScale)
+                        new DirectionalImpact(debrisSparksLight, chance: 0.4f, chanceEnergyScale: true),
+                        new DirectionalImpact(effectMap["Debris_Armor_Metal"], chance: 0.4f, chanceEnergyScale: true)
                     ]
                 )
             };

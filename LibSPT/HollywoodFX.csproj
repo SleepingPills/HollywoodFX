@@ -91,7 +91,6 @@
     <Compile Include="BattleAmbience.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="EffectMaterialAmbientLighting.cs" />
-    <Compile Include="EffectUtils.cs" />
     <Compile Include="ImpactContext.cs" />
     <Compile Include="ImpactController.cs" />
     <Compile Include="ImpactEffects.cs" />
@@ -100,7 +99,7 @@
     <Compile Include="LitMaterialRegistry.cs" />
     <Compile Include="ParticleController.cs" />
     <Compile Include="Particles\EmissionController.cs" />
-    <Compile Include="Particles\SystemBundle.cs" />
+    <Compile Include="Particles\EffectBundle.cs" />
     <Compile Include="Patches\AmmoPoolObject.cs" />
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Effects.cs" />

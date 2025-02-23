@@ -30,6 +30,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> BloodSplatterEnabled;
     public static ConfigEntry<bool> BloodSplatterFineEnabled;
     public static ConfigEntry<bool> BloodPuffsEnabled;
+    // TODO: Factor this in at the gore system level
     public static ConfigEntry<float> BloodEffectSize;
     public static ConfigEntry<bool> WoundDecalsEnabled;
     public static ConfigEntry<float> WoundDecalsSize;
@@ -117,7 +118,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Effect sizing
          */
-        EffectSize = Config.Bind(effectSize, "Dakka Scale (larger number = more dakka)", 1.0f, new ConfigDescription(
+        EffectSize = Config.Bind(effectSize, "Dakka Scale (larger is more dakka)", 1.0f, new ConfigDescription(
             "Scales the size of effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 91 }

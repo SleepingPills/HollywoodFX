@@ -6,8 +6,18 @@ namespace HollywoodFX;
 
 internal class ImpactController
 {
-    private BattleAmbience _battleAmbience;
-    private ImpactEffects _impactEffects;
+    private readonly BattleAmbience _battleAmbience;
+    private readonly ImpactEffects _impactEffects;
+
+    public ImpactController(Effects eftEffects)
+    {
+        Plugin.Log.LogInfo("Loading Impacts Prefabs");
+        var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
+        _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
+        
+        var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
+        _impactEffects = new ImpactEffects(eftEffects, impactsPrefab);
+    }
 
     public void Emit(ImpactContext impactContext)
     {
@@ -16,7 +26,7 @@ internal class ImpactController
 
         if (impactContext.IsHitPointVisible)
         {
-            // _impactEffects.Emit(impactContext);
+            _impactEffects.Emit(impactContext);
 
             if (isBodyShot)
             {
@@ -32,15 +42,5 @@ internal class ImpactController
             if (!isBodyShot && Plugin.BattleAmbienceEnabled.Value && impactContext.DistanceToImpact < Plugin.AmbientSimulationRange.Value)
                 _battleAmbience.Emit(impactContext);
         }
-    }
-
-    public void Setup(Effects eftEffects)
-    {
-        Plugin.Log.LogInfo("Loading Impacts Prefab");
-        var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
-        _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
-        
-        var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
-        _impactEffects = new ImpactEffects(eftEffects, impactsPrefab);
     }
 }

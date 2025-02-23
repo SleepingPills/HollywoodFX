@@ -133,6 +133,13 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
         foreach (var effect in effects.EffectsArray)
         {
+            // Skip grenade effects or those which have no material attached
+            if (effect.Name.ToLower().Contains("grenade") || effect.MaterialTypes.Length == 0)
+            {
+                Plugin.Log.LogInfo($"Skipping {effect.Name}");
+                continue;
+            }
+            
             Plugin.Log.LogInfo($"Processing {effect.Name}");
             var filteredParticles = new List<Effects.Effect.ParticleSys>();
 
@@ -186,9 +193,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
         {
             var emissionController = __instance.gameObject.AddComponent<EmissionController>();
             Singleton<EmissionController>.Create(emissionController);
-            
-            Singleton<ImpactController>.Create(new ImpactController());
-            Singleton<ImpactController>.Instance.Setup(__instance);
+            Singleton<ImpactController>.Create(new ImpactController(__instance));
         }
         catch (Exception e)
         {
@@ -220,7 +225,7 @@ public class EffectsEmitPatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        ImpactContext.Update(material, hitCollider, position, normal, volume, isKnife, isHitPointVisible, pov);
+        ImpactContext.Update(material, position, normal, isHitPointVisible);
         Singleton<ImpactController>.Instance.Emit(ImpactContext);
     }
 }

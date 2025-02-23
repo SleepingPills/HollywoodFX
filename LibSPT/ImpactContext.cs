@@ -35,48 +35,28 @@ internal enum WorldDir
 internal class ImpactContext
 {
     public MaterialType Material;
-    public BallisticCollider Collider;
     public Vector3 Position;
     public Vector3 Normal;
-    public float Volume;
-    public bool IsKnife;
     public bool IsHitPointVisible;
-    public EPointOfView Pov;
 
     public float DistanceToImpact;
 
-    public CamDir CamOrientation;
-    public WorldDir WorldOrientation;
+    public CamDir CamDir;
+    public WorldDir WorldDir;
     public float KineticEnergy;
 
     public Vector3 RandNormal;
-
-    public void EmitEffect(Effects.Effect effect)
-    {
-        Singleton<Effects>.Instance.AddEffectEmit(
-            effect, Position, RandNormal, Collider, false, Volume,
-            IsKnife, true, false, Pov
-        );
-    }
-
+    
     public void Update(MaterialType material,
-        BallisticCollider collider,
         Vector3 position,
         Vector3 normal,
-        float volume,
-        bool isKnife,
-        bool isHitPointVisible,
-        EPointOfView pov)
+        bool isHitPointVisible)
     {
         Material = material;
-        Collider = collider;
         Position = position;
         Normal = normal;
-        Volume = volume;
-        IsKnife = isKnife;
         IsHitPointVisible = isHitPointVisible;
-        Pov = pov;
-
+    
         DistanceToImpact = Vector3.Distance(CameraClass.Instance.Camera.transform.position, Position);
 
         // Render things closer than 3 meters but further than 1 of the camera even if the impact location is not directly in the viewport
@@ -86,7 +66,7 @@ internal class ImpactContext
         }
         
         // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
-        RandNormal = (0.75f * Normal + 0.25f * Random.onUnitSphere).normalized;
+        RandNormal = (0.85f * Normal + 0.15f * Random.onUnitSphere).normalized;
 
         UpdateKineticEnergy();
         UpdateImpactOrientation(normal);
@@ -99,51 +79,51 @@ internal class ImpactContext
         var camAngle = Vector3.Angle(camera.transform.forward, normal);
         var camAngleSigned = Vector3.SignedAngle(camera.transform.forward, normal, Vector3.up);
 
-        CamOrientation = CamDir.None;
-        WorldOrientation = WorldDir.None;
+        CamDir = CamDir.None;
+        WorldDir = WorldDir.None;
 
         if (camAngle > 107.5)
         {
-            CamOrientation |= CamDir.Front;
+            CamDir |= CamDir.Front;
         }
 
         if (camAngle < 150)
         {
-            CamOrientation |= CamDir.Angled;
+            CamDir |= CamDir.Angled;
         }
 
         switch (camAngleSigned)
         {
             case > 0:
-                CamOrientation |= CamDir.Right;
+                CamDir |= CamDir.Right;
                 break;
             case < 0:
-                CamOrientation |= CamDir.Left;
+                CamDir |= CamDir.Left;
                 break;
         }
 
         if (worldAngle > 45 & worldAngle < 135)
         {
-            WorldOrientation |= WorldDir.Horizontal;
+            WorldDir |= WorldDir.Horizontal;
         }
         else
         {
-            WorldOrientation |= WorldDir.Vertical;
+            WorldDir |= WorldDir.Vertical;
 
             if (worldAngle >= 135)
             {
-                WorldOrientation |= WorldDir.Up;
+                WorldDir |= WorldDir.Up;
             }
             else
             {
-                WorldOrientation |= WorldDir.Down;
+                WorldDir |= WorldDir.Down;
             }
         }
     }
 
     private void UpdateKineticEnergy()
     {
-        KineticEnergy = 500f;
+        KineticEnergy = 1500f;
 
         if (ImpactStatic.BulletInfo != null)
         {

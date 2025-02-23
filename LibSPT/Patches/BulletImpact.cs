@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Comfort.Common;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 
