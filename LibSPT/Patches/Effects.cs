@@ -5,11 +5,12 @@ using Comfort.Common;
 using DeferredDecals;
 using EFT;
 using EFT.Ballistics;
-using EFT.UI;
 using HarmonyLib;
+using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Patches;
 
@@ -71,7 +72,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
             
         var decalsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
         Plugin.Log.LogInfo("Instantiating Decal Effects Prefab");
-        var decalsInstance = UnityEngine.Object.Instantiate(decalsPrefab);
+        var decalsInstance = Object.Instantiate(decalsPrefab);
         Plugin.Log.LogInfo("Getting Effects Component");
         var decalsEffects = decalsInstance.GetComponent<Effects>();
 
@@ -183,6 +184,9 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
         try
         {
+            var emissionController = __instance.gameObject.AddComponent<EmissionController>();
+            Singleton<EmissionController>.Create(emissionController);
+            
             Singleton<ImpactController>.Create(new ImpactController());
             Singleton<ImpactController>.Instance.Setup(__instance);
         }

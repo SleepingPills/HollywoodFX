@@ -18,11 +18,7 @@ public class Plugin : BaseUnityPlugin
 
     public static ManualLogSource Log;
 
-    public static ConfigEntry<float> SmallEffectEnergy;
-    public static ConfigEntry<float> ChonkEffectEnergy;
-    public static ConfigEntry<float> SmallEffectSize;
-    public static ConfigEntry<float> MediumEffectSize;
-    public static ConfigEntry<float> ChonkEffectSize;
+    public static ConfigEntry<float> EffectSize;
 
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
@@ -121,34 +117,10 @@ public class Plugin : BaseUnityPlugin
         /*
          * Effect sizing
          */
-        SmallEffectEnergy = Config.Bind(effectSize, "Small impact energy upper bound (Joules)", 750f, new ConfigDescription(
-            "Impacts with less or equal energy to this value trigger a small effect. A 4g bullet travelling at 550m/s has roughly 750J energy.",
-            new AcceptableValueRange<float>(100f, 5000f),
-            new ConfigurationManagerAttributes { Order = 94 }
-        ));
-
-        ChonkEffectEnergy = Config.Bind(effectSize, "Chonky impact energy lower bound (Joules)", 2500f, new ConfigDescription(
-            "Impacts with more or equal energy to this trigger a large effect. A 5g bullet travelling at 1000m/s has 2500J energy.",
-            new AcceptableValueRange<float>(100f, 5000f),
-            new ConfigurationManagerAttributes { Order = 93 }
-        ));
-
-        SmallEffectSize = Config.Bind(effectSize, "Small Effect Scale", 0.5f, new ConfigDescription(
-            "Scales the size of effects triggered by light ammo.",
-            new AcceptableValueRange<float>(0.1f, 2f),
-            new ConfigurationManagerAttributes { Order = 92 }
-        ));
-
-        MediumEffectSize = Config.Bind(effectSize, "Medium Effect Scale", 1.0f, new ConfigDescription(
-            "Scales the size of effects triggered by mid-weight ammo.",
-            new AcceptableValueRange<float>(0.1f, 2f),
+        EffectSize = Config.Bind(effectSize, "Dakka Scale (larger number = more dakka)", 1.0f, new ConfigDescription(
+            "Scales the size of effects.",
+            new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 91 }
-        ));
-
-        ChonkEffectSize = Config.Bind(effectSize, "Chonky Effect Scale", 1.25f, new ConfigDescription(
-            "Scales the size of effects triggered by chonky ammo.",
-            new AcceptableValueRange<float>(0.1f, 2f),
-            new ConfigurationManagerAttributes { Order = 90 }
         ));
 
         /*

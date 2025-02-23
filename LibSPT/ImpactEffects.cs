@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Comfort.Common;
 using EFT.Ballistics;
+using HollywoodFX.Particles;
 using JetBrains.Annotations;
 using Systems.Effects;
 using UnityEngine;
@@ -19,13 +20,13 @@ namespace System.Runtime.CompilerServices
 namespace HollywoodFX
 {
     internal readonly struct DirectionalImpact(
-        Effects.Effect[] effects,
+        SystemBundle[] effects,
         float chance = 1f,
         CamDir camDir = CamDir.None,
         WorldDir worldDir = WorldDir.None
     )
     {
-        public readonly Effects.Effect[] Effects = effects;
+        public readonly SystemBundle[] Effects = effects;
         public readonly WorldDir WorldDir = worldDir;
         public readonly CamDir CamDir = camDir;
         public readonly float Chance = chance;
@@ -33,13 +34,13 @@ namespace HollywoodFX
 
     internal class ImpactSystem(
         DirectionalImpact[] directional,
-        [CanBeNull] Effects.Effect[] generic = null,
+        [CanBeNull] SystemBundle[] generic = null,
         float forceGeneric = 0f
     )
     {
-        public void Emit(ImpactContext context)
+        public void Emit(ImpactContext context, float scaling)
         {
-            Effects.Effect genericEffect = null;
+            SystemBundle genericEffect = null;
 
             if (generic != null && context.CamOrientation.HasFlag(CamDir.Angled))
             {
@@ -47,7 +48,7 @@ namespace HollywoodFX
 
                 if (Random.Range(0f, 1f) < forceGeneric)
                 {
-                    context.EmitEffect(genericEffect);
+                    genericEffect.EmitRandom(context.Position, context.Normal, scaling);
                     return;
                 }
             }
@@ -60,59 +61,39 @@ namespace HollywoodFX
                 if (!(Random.Range(0f, 1f) < impact.Chance)) continue;
 
                 var effect = impact.Effects[Random.Range(0, impact.Effects.Length)];
-
-                context.EmitEffect(effect);
+                effect.EmitRandom(context.Position, context.Normal, scaling);
 
                 hasEmitted = true;
             }
 
             if (hasEmitted || genericEffect == null) return;
 
-            context.EmitEffect(genericEffect);
+            genericEffect.EmitRandom(context.Position, context.Normal, scaling);
         }
     }
     
-    internal class ImpactEffects
+    internal class ImpactEffects(Effects cannedEffects, GameObject prefab)
     {
-        private readonly List<ImpactSystem>[] _smallCaliberImpacts;
-        private readonly List<ImpactSystem>[] _midCaliberImpacts;
-        private readonly List<ImpactSystem>[] _chonkCaliberImpacts;
-
-        public ImpactEffects(Effects cannedEffects, GameObject prefab)
-        {
-            _midCaliberImpacts = new List<ImpactSystem>[Enum.GetNames(typeof(MaterialType)).Length];
-
-            _smallCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.SmallEffectSize.Value);
-            _midCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.MediumEffectSize.Value);
-            _chonkCaliberImpacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.ChonkEffectSize.Value);
-        }
+        private readonly List<ImpactSystem>[] _impacts = BuildCoreImpactSystems(cannedEffects, prefab, Plugin.EffectSize.Value);
 
         public void Emit(ImpactContext context)
         {
-            var impactChoice = _midCaliberImpacts;
-
-            if (context.KineticEnergy <= Plugin.SmallEffectEnergy.Value)
-            {
-                impactChoice = _smallCaliberImpacts;
-            }
-            else if (context.KineticEnergy >= Plugin.ChonkEffectEnergy.Value)
-            {
-                impactChoice = _chonkCaliberImpacts;
-            }
-
-            var currentSystems = impactChoice[(int)context.Material];
+            var currentSystems = _impacts[(int)context.Material];
 
             if (currentSystems == null)
                 return;
 
+            var scaleByKineticEnergy = Mathf.Clamp(Mathf.Sqrt(context.KineticEnergy / 1500f), 0.5f, 1.25f) * Plugin.EffectSize.Value;  
+
             foreach (var impactSystem in currentSystems)
             {
-                impactSystem.Emit(context);
+                impactSystem.Emit(context, scaleByKineticEnergy);
             }
         }
 
         private static List<ImpactSystem>[] BuildCoreImpactSystems(Effects cannedEffects, GameObject impactsPrefab, float scaling)
         {
+            // TODO: swap out to the new particle system loading
             var effectMap = EffectUtils.LoadEffects(cannedEffects, impactsPrefab);
 
             // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
@@ -258,7 +239,7 @@ namespace HollywoodFX
 
             var debrisSparksDrip = new[]
             {
-                effectMap["Debris_Sparks_Drip_1"]
+                effectMap["Drip_Sparks"]
             };
 
             var fallingDust = new[]

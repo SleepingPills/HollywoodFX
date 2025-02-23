@@ -47,4 +47,34 @@
 //         $"Body impact. Collider: {collider?.name} Rigidbody: {colliderAttachedRigidbody?.name} Enabled: {collider?.enabled}, Kinematic: {colliderAttachedRigidbody?.isKinematic} Sleeping: {colliderAttachedRigidbody?.IsSleeping()} DtcColl: {colliderAttachedRigidbody?.detectCollisions}"
 //     );
 // }
+
+
+if (bulletInfo is { Player.IsAI: false })
+{
+    var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    sphere.transform.position = context.Position;
+    // sphere.transform.localScale = Vector3.one * 0.2f;
+    sphere.transform.parent = attachedRigidbody.transform;
+    
+    // foreach (var collider in sphere.GetComponentsInChildren<Collider>())
+    // {
+    //     Object.DestroyImmediate(collider);
+    // }
+}
+
+var gm = cur.gameObject;
+var player = gm.GetComponent<Player>();
+
+if (player != null)
+{
+    var playerTraverse = Traverse.Create(player);
+
+    var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<GStruct56>>();
+    var playerBody = playerTraverse.Field("_playerBody").GetValue<PlayerBody>();
+
+    preAllocatedRenderersList.Clear();
+    playerBody.GetBodyRenderersNonAlloc(preAllocatedRenderersList);
+    Singleton<Effects>.Instance.EffectsCommutator.PlayerMeshesHit(preAllocatedRenderersList, context.Position, -context.Normal);
+}
+
 ```

@@ -1,5 +1,4 @@
-﻿using EFT;
-using EFT.Ballistics;
+﻿using EFT.Ballistics;
 using Systems.Effects;
 using UnityEngine;
 
@@ -17,7 +16,7 @@ internal class ImpactController
 
         if (impactContext.IsHitPointVisible)
         {
-            _impactEffects.Emit(impactContext);
+            // _impactEffects.Emit(impactContext);
 
             if (isBodyShot)
             {
@@ -35,13 +34,13 @@ internal class ImpactController
         }
     }
 
-    public void Setup(Effects cannedEffects)
+    public void Setup(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading Impacts Prefab");
-        var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
         var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
-
-        _battleAmbience = new BattleAmbience(cannedEffects, ambiencePrefab);
-        _impactEffects = new ImpactEffects(cannedEffects, impactsPrefab);
+        _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
+        
+        var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
+        _impactEffects = new ImpactEffects(eftEffects, impactsPrefab);
     }
 }

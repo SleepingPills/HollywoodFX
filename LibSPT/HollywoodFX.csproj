@@ -98,6 +98,9 @@
     <Compile Include="ImpactRagdoll.cs" />
     <Compile Include="ImpactStatic.cs" />
     <Compile Include="LitMaterialRegistry.cs" />
+    <Compile Include="ParticleController.cs" />
+    <Compile Include="Particles\EmissionController.cs" />
+    <Compile Include="Particles\SystemBundle.cs" />
     <Compile Include="Patches\AmmoPoolObject.cs" />
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Effects.cs" />

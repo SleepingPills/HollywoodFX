@@ -17,7 +17,7 @@ internal static class RagdollEffects
 
         if (attachedRigidbody == null)
             return;
-
+        
         // Kinematic means it's not physics controlled
         if (attachedRigidbody.isKinematic)
             return;
@@ -44,7 +44,7 @@ internal static class RagdollEffects
         {
             cur = cur.parent;
         }
-
+        
         // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
         // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
         var upThrust = (bulletInfo.HitPoint - cur.position);

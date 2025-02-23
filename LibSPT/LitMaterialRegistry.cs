@@ -39,4 +39,14 @@ public class LitMaterialRegistry
             }
         }
     }
+    
+    public void Register(ParticleSystem system, bool dynamicAlpha)
+    {
+        foreach (var renderer in system.GetComponentsInChildren<ParticleSystemRenderer>())
+        {
+            if (renderer == null || renderer.material == null) continue;
+
+            Register(renderer.material, dynamicAlpha);
+        }
+    }
 }
