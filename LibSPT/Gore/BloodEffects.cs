@@ -97,8 +97,6 @@ public class BloodEffects
         // Emit a squirt purely based on chance
         if (Random.Range(0f, 1f) < squirtChance)
         {
-            // TODO: Check why this is always triggering?
-            ConsoleScreen.Log($"Emitting penetrating squirt {squirtChance}");
             _squirts.EmitRandom(position, flippedNormal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
         }
 
@@ -106,8 +104,6 @@ public class BloodEffects
         var camDir = Orientation.GetCamDir(flippedNormal);
 
         if (!camDir.HasFlag(CamDir.Angled)) return;
-
-        ConsoleScreen.Log($"Emitting penetrating mists/squibs");
 
         var worldDir = Orientation.GetWorldDir(flippedNormal);
         _mists.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, chanceScale);
