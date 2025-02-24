@@ -5,6 +5,7 @@ using Comfort.Common;
 using DeferredDecals;
 using EFT;
 using EFT.Ballistics;
+using EFT.UI;
 using HarmonyLib;
 using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
@@ -205,7 +206,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
 public class EffectsEmitPatch : ModulePatch
 {
-    private static readonly ImpactContext ImpactContext = new();
+    private static readonly ImpactKinetics ImpactKinetics = new();
     
     protected override MethodBase GetTargetMethod()
     {
@@ -225,7 +226,7 @@ public class EffectsEmitPatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        ImpactContext.Update(material, position, normal, isHitPointVisible);
-        Singleton<ImpactController>.Instance.Emit(ImpactContext);
+        ImpactKinetics.Update(material, position, normal, isHitPointVisible);
+        Singleton<ImpactController>.Instance.Emit(ImpactKinetics);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using EFT.Ballistics;
+using HollywoodFX.Gore;
 using Systems.Effects;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ internal class ImpactController
 {
     private readonly BattleAmbience _battleAmbience;
     private readonly ImpactEffects _impactEffects;
+    private readonly GoreEffects _goreEffects;
 
     public ImpactController(Effects eftEffects)
     {
@@ -17,30 +19,33 @@ internal class ImpactController
         
         var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
         _impactEffects = new ImpactEffects(eftEffects, impactsPrefab);
+
+        var bloodEffectsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood");
+        _goreEffects = new GoreEffects(eftEffects, bloodEffectsPrefab);
     }
 
-    public void Emit(ImpactContext impactContext)
+    public void Emit(ImpactKinetics kinetics)
     {
-        var isBodyShot = (impactContext.Material is
-            MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet or MaterialType.None);
+        var isBodyShot = (kinetics.Material is
+            MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet);
 
-        if (impactContext.IsHitPointVisible)
+        if (kinetics.IsHitPointVisible)
         {
-            _impactEffects.Emit(impactContext);
+            _impactEffects.Emit(kinetics);
 
             if (isBodyShot)
             {
-                RagdollEffects.Apply(impactContext);
+                 _goreEffects.Apply(kinetics);
             }
             else if (Plugin.BattleAmbienceEnabled.Value)
             {
-                _battleAmbience.Emit(impactContext);
+                _battleAmbience.Emit(kinetics);
             }
         }
         else
         {
-            if (!isBodyShot && Plugin.BattleAmbienceEnabled.Value && impactContext.DistanceToImpact < Plugin.AmbientSimulationRange.Value)
-                _battleAmbience.Emit(impactContext);
+            if (!isBodyShot && Plugin.BattleAmbienceEnabled.Value && kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value)
+                _battleAmbience.Emit(kinetics);
         }
     }
 }

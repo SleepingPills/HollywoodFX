@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using EFT.AssetsManager;
 using EFT.Interactive;
-using EFT.UI;
-using HarmonyLib;
 using SPT.Reflection.Patching;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Patches;
 
@@ -117,7 +116,7 @@ internal class AttachWeaponPostfixPatch : ModulePatch
         var component = weaponRigidbody.gameObject.GetComponent<SpringJoint>();
         if (component != null)
         {
-            UnityEngine.Object.Destroy(component);
+            Object.Destroy(component);
             return;
         }
 
@@ -125,7 +124,23 @@ internal class AttachWeaponPostfixPatch : ModulePatch
     }
 }
 
-public class LootItemIsRigidBodyDonePrefixPatch : ModulePatch
+internal class RagdollAmplyImpulsePrefixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.method_8));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable InconsistentNaming
+    public static bool Prefix(Rigidbody rigidbody, Vector3 direction, Vector3 point, float thrust)
+    {
+        rigidbody.AddForceAtPosition(direction * thrust * 2, point, ForceMode.Impulse);
+        return false;
+    }
+}
+
+internal class LootItemIsRigidBodyDonePrefixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {

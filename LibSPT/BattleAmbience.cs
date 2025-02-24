@@ -33,22 +33,22 @@ internal class BattleAmbience
         _suspendedDust = [effectMap["Dust_1"], effectMap["Glitter_1"]];
     }
 
-    public void Emit(ImpactContext context)
+    public void Emit(ImpactKinetics kinetics)
     {
         var emission = Singleton<EmissionController>.Instance;
 
-        var emissionChance = 0.4 * (context.KineticEnergy / 2500f);
+        var emissionChance = 0.4 * (kinetics.Energy / 2500f);
 
         if (Random.Range(0f, 1f) < emissionChance)
         {
             var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
-            emission.Emit(smokeEffect, context.Position, context.Normal);
+            emission.Emit(smokeEffect, kinetics.Position, kinetics.Normal);
         }
 
         if (!(Random.Range(0f, 1f) < emissionChance)) return;
 
         var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
-        emission.Emit(dustEffect, context.Position, context.Normal);
+        emission.Emit(dustEffect, kinetics.Position, kinetics.Normal);
     }
 
     private static void ScaleEffect(ParticleSystem particleSystem, float lifetimeScaling, float limitScaling, float emissionScaling)

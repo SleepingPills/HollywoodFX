@@ -78,3 +78,6 @@ if (player != null)
 }
 
 ```
+
+playerHitInfo.Penetrated shows whether the shot penetrated the player
+Use this to check if we hit a bodypart and not a backpack: component is BodyPartCollider

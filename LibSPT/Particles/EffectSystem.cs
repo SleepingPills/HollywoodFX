@@ -1,0 +1,68 @@
+﻿using System.Runtime.CompilerServices;
+using JetBrains.Annotations;
+using UnityEngine;
+
+namespace HollywoodFX.Particles;
+
+internal readonly struct DirectionalEffect(
+    EffectBundle effect,
+    float chance = 1f,
+    bool isChanceScaledByKinetics = false,
+    CamDir camDir = CamDir.None,
+    WorldDir worldDir = WorldDir.None
+)
+{
+    public readonly EffectBundle Effect = effect;
+    public readonly WorldDir WorldDir = worldDir;
+    public readonly CamDir CamDir = camDir;
+    public readonly float Chance = chance;
+    public readonly bool IsChanceScaledByKinetics = isChanceScaledByKinetics;
+}
+
+internal class EffectSystem(
+    DirectionalEffect[] directional,
+    [CanBeNull] EffectBundle generic = null,
+    float forceGeneric = 0f
+)
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(ImpactKinetics kinetics, float sizeScale=1f, float chanceScale=1f)
+    {
+        Emit(kinetics, kinetics.CamDir, kinetics.WorldDir, kinetics.Position, kinetics.RandNormal, sizeScale, chanceScale);
+    }
+    
+    public void Emit(ImpactKinetics kinetics, CamDir camDir, WorldDir worldDir, Vector3 position, Vector3 normal, float sizeScale, float chanceScale)
+    {
+        var sizeScaleFull = kinetics.SizeScale * sizeScale;
+        
+        EffectBundle genericImpact = null;
+
+        if (generic != null && camDir.HasFlag(CamDir.Angled))
+        {
+            genericImpact = generic;
+
+            if (Random.Range(0f, 1f) < forceGeneric)
+            {
+                genericImpact.EmitRandom(position, normal, sizeScaleFull);
+                return;
+            }
+        }
+
+        var hasEmitted = false;
+
+        foreach (var impact in directional)
+        {
+            if (!camDir.HasFlag(impact.CamDir) || !worldDir.HasFlag(impact.WorldDir)) continue;
+
+            var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * kinetics.ChanceScale : impact.Chance);
+            if (!(Random.Range(0f, 1f) < impactChance)) continue;
+
+            impact.Effect.EmitRandom(position, normal, sizeScaleFull);
+            hasEmitted = true;
+        }
+
+        if (hasEmitted || genericImpact == null) return;
+
+        genericImpact.EmitRandom(position, normal, sizeScaleFull);
+    }
+}
