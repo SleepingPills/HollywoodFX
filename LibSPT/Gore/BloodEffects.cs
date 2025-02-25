@@ -19,70 +19,66 @@ public class BloodEffects
      */
 
     private readonly EffectSystem _mists;
-    private readonly EffectSystem _mistsSide;
+    // private readonly EffectSystem _mistsSide;
     private readonly EffectSystem _sprays;
     private readonly EffectSystem _squibs;
-    private readonly EffectSystem _squibsSide;
+    // private readonly EffectSystem _squibsSide;
 
     // Attached to rigidbodies
-    private readonly EffectBundle _squirts;
+    private readonly RigidbodyEffects _squirts;
 
     // Attached to rigidbodies and played as a final splash in Ragdoll.AmplyImpulse
-    private readonly EffectBundle _finishers;
+    // private readonly EffectBundle _finishers;
 
-    public BloodEffects(Effects eftEffects, GameObject prefab)
+    public BloodEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts)
     {
-        var effectMap = EffectBundle.LoadPrefab(eftEffects, prefab);
+        var effectMap = EffectBundle.LoadPrefab(eftEffects, prefabMain, false);
 
         var puffSide = new DirectionalEffect(effectMap["Puff_Blood"], camDir: CamDir.Angled);
 
         Plugin.Log.LogInfo($"Building blood mists");
-        _mists = new(directional: [new DirectionalEffect(effectMap["Puff_Blood_Front"]), puffSide]);
-        _mistsSide = new(directional: [puffSide]);
+        _mists = new EffectSystem(directional: [new DirectionalEffect(effectMap["Puff_Blood_Front"]), puffSide]);
+        // _mistsSide = new(directional: [puffSide]);
 
         Plugin.Log.LogInfo($"Building blood sprays");
-        _sprays = new(directional: [new DirectionalEffect(effectMap["Spray_Blood"])]);
+        _sprays = new EffectSystem(directional: [new DirectionalEffect(effectMap["Spray_Blood"])]);
 
         Plugin.Log.LogInfo($"Building blood squibs");
-        _squibs = new(directional: [new DirectionalEffect(effectMap["Squib_Blood_Front"], isChanceScaledByKinetics: true)]);
-        _squibsSide = new(directional: []);
+        _squibs = new EffectSystem(directional: [new DirectionalEffect(effectMap["Squib_Blood_Front"], isChanceScaledByKinetics: true)]);
+        // _squibsSide = new(directional: []);
 
         Plugin.Log.LogInfo($"Building blood squirts");
-        _squirts = effectMap["Squirt_Blood"];
-
-        foreach (var squirt in _squirts.ParticleSystems)
-        {
-            squirt.gameObject.AddComponent<BloodSquirtCollisionHandler>();
-        }
+        _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
+        _squirts.Setup(eftEffects, prefabSquirts, 1);
     }
 
-    public void Emit(ImpactKinetics kinetics)
+    public void Emit(ImpactKinetics kinetics, Rigidbody rigidbody)
     {
         var penetrated = ImpactStatic.PlayerHitInfo != null && ImpactStatic.PlayerHitInfo.Penetrated;
         var armorHit = kinetics.Material != MaterialType.Body;
 
-        float chanceScale;
+        float armorChanceScale;
 
         if (armorHit)
-            chanceScale = penetrated ? 0.5f : 0.25f;
+            armorChanceScale = penetrated ? 0.5f : 0.25f;
         else
-            chanceScale = 1f;
+            armorChanceScale = 1f;
 
         var mistSizeScale = kinetics.SizeScale * Plugin.BloodMistSize.Value;
         var spraySizeScale = kinetics.SizeScale * Plugin.BloodSpraySize.Value;
         var squibSizeScale = kinetics.SizeScale * Plugin.BloodSquibSize.Value;
 
-        var squibChanceScale = 0.5f * chanceScale;
+        var squibChanceScale = 0.5f * armorChanceScale;
 
-        _mists.Emit(kinetics, mistSizeScale, chanceScale);
-        _sprays.Emit(kinetics, spraySizeScale, chanceScale);
+        _mists.Emit(kinetics, mistSizeScale, armorChanceScale);
+        _sprays.Emit(kinetics, spraySizeScale, armorChanceScale);
         _squibs.Emit(kinetics, squibSizeScale, squibChanceScale);
 
-        var squirtChance = 0.5 * chanceScale * kinetics.ChanceScale;
+        var squirtChance = 0.5 * armorChanceScale * kinetics.ChanceScale;
 
         if (Random.Range(0f, 1f) < squirtChance)
         {
-            _squirts.EmitRandom(kinetics.Position, kinetics.Normal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
+            _squirts.Emit(rigidbody, kinetics.Position, kinetics.Normal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
         }
 
         if (!penetrated) return;
@@ -97,7 +93,7 @@ public class BloodEffects
         // Emit a squirt purely based on chance
         if (Random.Range(0f, 1f) < squirtChance)
         {
-            _squirts.EmitRandom(position, flippedNormal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
+            _squirts.Emit(rigidbody, position, flippedNormal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
         }
 
         // Other stuff gets emitted only if the flipped normal is angled (otherwise there's no point) 
@@ -106,38 +102,7 @@ public class BloodEffects
         if (!camDir.HasFlag(CamDir.Angled)) return;
 
         var worldDir = Orientation.GetWorldDir(flippedNormal);
-        _mists.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, chanceScale);
+        _mists.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
         _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, squibChanceScale);
-    }
-}
-
-public class BloodSquirtCollisionHandler : MonoBehaviour
-{
-    private Effects _effects;
-    private ParticleSystem _particleSystem;
-    private List<ParticleCollisionEvent> _collisionEvents;
-
-    public void Start()
-    {
-        _effects = Singleton<Effects>.Instance;
-        _particleSystem = GetComponent<ParticleSystem>();
-        _collisionEvents = [];
-        Plugin.Log.LogInfo("Starting collision handler");
-    }
-
-    public void OnParticleCollision(GameObject other)
-    {
-        if (other == null)
-            return;
-
-        var numEvents = _particleSystem.GetCollisionEvents(other, _collisionEvents);
-
-        for (var i = 0; i < numEvents; i++)
-        {
-            var hitPos = _collisionEvents[i].intersection;
-            var hitNormal = _collisionEvents[i].normal;
-
-            _effects.EmitBleeding(hitPos, hitNormal);
-        }
     }
 }

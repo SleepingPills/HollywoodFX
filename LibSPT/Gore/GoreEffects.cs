@@ -1,13 +1,11 @@
-﻿using System.Collections.Generic;
-using Comfort.Common;
-using Systems.Effects;
+﻿using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX.Gore;
 
-public class GoreEffects(Effects eftEffects, GameObject prefab)
+public class GoreEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts)
 {
-    private readonly BloodEffects _bloodEffects = new(eftEffects, prefab);
+    private readonly BloodEffects _bloodEffects = new(eftEffects, prefabMain, prefabSquirts);
 
     public void Apply(ImpactKinetics kinetics)
     {
@@ -19,14 +17,14 @@ public class GoreEffects(Effects eftEffects, GameObject prefab)
 
         if (rigidbody == null)
             return;
-        
+
         // Find the root transform
         var root = rigidbody.transform;
         while (root.parent != null)
         {
             root = root.parent;
         }
-        
+
         if (Plugin.RagdollEnabled.Value && !rigidbody.isKinematic)
         {
             ApplyRagdollImpulse(kinetics, bulletInfo, root, rigidbody);
@@ -34,9 +32,9 @@ public class GoreEffects(Effects eftEffects, GameObject prefab)
 
         if (Plugin.BloodEnabled.Value)
         {
-            _bloodEffects.Emit(kinetics);
+            _bloodEffects.Emit(kinetics, rigidbody);
         }
-        
+
         // if (Plugin.BulletWoundsEnabled.Value)
         // {
         //     ApplyBulletWounds(context);
@@ -47,7 +45,7 @@ public class GoreEffects(Effects eftEffects, GameObject prefab)
     {
         // TODO
     }
-    
+
     private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody)
     {
         var penetrationFactor = 0.6f;
@@ -58,7 +56,7 @@ public class GoreEffects(Effects eftEffects, GameObject prefab)
         }
 
         var impactImpulse = 11.12f * kinetics.Impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
-        
+
         // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
         // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
         var upThrust = (bulletInfo.HitPoint - root.position);

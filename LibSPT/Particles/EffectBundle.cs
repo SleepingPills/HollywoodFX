@@ -9,21 +9,21 @@ namespace HollywoodFX.Particles;
 
 internal class EffectBundle(ParticleSystem[] particleSystems)
 {
-    internal readonly ParticleSystem[] ParticleSystems = particleSystems;
+    private readonly ParticleSystem[] _particleSystems = particleSystems;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitRandom(Vector3 position, Vector3 normal, float scale)
     {
-        var pick = ParticleSystems[Random.Range(0, ParticleSystems.Length)];
+        var pick = _particleSystems[Random.Range(0, _particleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);
     }
 
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {
-        return new EffectBundle(bundles.SelectMany(b => b.ParticleSystems).ToArray());
+        return new EffectBundle(bundles.SelectMany(b => b._particleSystems).ToArray());
     }
 
-    public static Dictionary<string, EffectBundle> LoadPrefab(Effects eftEffects, GameObject prefab)
+    public static Dictionary<string, EffectBundle> LoadPrefab(Effects eftEffects, GameObject prefab, bool dynamicAlpha)
     {
         Plugin.Log.LogInfo($"Instantiating Effects Prefab {prefab.name}");
         var rootInstance = Object.Instantiate(prefab);
@@ -40,7 +40,7 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
                 if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
 
                 child.parent = eftEffects.transform;
-                Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, false);
+                Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, dynamicAlpha);
                 effects.Add(particleSystem);
             }
 

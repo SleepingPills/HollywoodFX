@@ -33,7 +33,7 @@ namespace HollywoodFX
         
         private static List<EffectSystem>[] DefineEffectSystems(Effects eftEffects, GameObject prefab)
         {
-            var effectMap = EffectBundle.LoadPrefab(eftEffects, prefab);
+            var effectMap = EffectBundle.LoadPrefab(eftEffects, prefab, true);
             
             Plugin.Log.LogInfo("Constructing impact systems");
 

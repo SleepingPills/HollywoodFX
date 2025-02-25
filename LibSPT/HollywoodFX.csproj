@@ -91,6 +91,7 @@
     <Compile Include="BattleAmbience.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="EffectMaterialAmbientLighting.cs" />
+    <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />
     <Compile Include="Gore\GoreEffects.cs" />
     <Compile Include="ImpactKinetics.cs" />

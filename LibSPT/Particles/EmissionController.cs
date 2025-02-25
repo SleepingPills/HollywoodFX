@@ -1,19 +1,9 @@
-﻿using System.Runtime.CompilerServices;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace HollywoodFX.Particles;
 
-internal struct Emission(ParticleSystem system, Vector3 position, Vector3 normal, float scale)
-{
-    public readonly ParticleSystem System = system;
-    public readonly Vector3 Position = position;
-    public readonly Vector3 Normal = normal;
-    public readonly float Scale = scale;
-}
-
 internal class EmissionController : MonoBehaviour
 {
-    // ReSharper disable once CollectionNeverQueried.Local
     private Emission[] _emissions;
     private int _counter;
 
@@ -38,7 +28,7 @@ internal class EmissionController : MonoBehaviour
 
         _counter = 0;
     }
-    
+
     public void Emit(ParticleSystem particleSystem, Vector3 position, Vector3 normal, float scale = 1f)
     {
         if (_counter >= _emissions.Length)
@@ -46,5 +36,13 @@ internal class EmissionController : MonoBehaviour
 
         _emissions[_counter] = new Emission(particleSystem, position, normal, scale);
         _counter++;
+    }
+
+    private struct Emission(ParticleSystem system, Vector3 position, Vector3 normal, float scale)
+    {
+        public readonly ParticleSystem System = system;
+        public readonly Vector3 Position = position;
+        public readonly Vector3 Normal = normal;
+        public readonly float Scale = scale;
     }
 }
