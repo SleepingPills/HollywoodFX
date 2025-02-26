@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Comfort.Common;
 using EFT.AssetsManager;
 using EFT.Interactive;
+using EFT.UI;
+using HollywoodFX.Gore;
 using SPT.Reflection.Patching;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -128,15 +131,26 @@ internal class RagdollAmplyImpulsePrefixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.method_8));
+        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.ApplyImpulse));
     }
 
     [PatchPrefix]
     // ReSharper disable InconsistentNaming
-    public static bool Prefix(Rigidbody rigidbody, Vector3 direction, Vector3 point, float thrust)
+    public static void Prefix(Collider collider, Vector3 direction, Vector3 point, ref float thrust)
     {
-        rigidbody.AddForceAtPosition(direction * thrust * 2, point, ForceMode.Impulse);
-        return false;
+        if (ImpactStatic.BulletInfo == null)
+        {
+            thrust = 2 * thrust;
+        }
+        else
+        {
+            thrust = 12.5f * GoreEffects.CalculateImpactImpulse(ImpactStatic.Kinetics, ImpactStatic.BulletInfo);            
+        }
+        
+        if (collider.attachedRigidbody == null)
+            return;
+        
+        Singleton<BloodEffects>.Instance.EmitFinisher(ImpactStatic.Kinetics, collider.attachedRigidbody, point, -direction.normalized);
     }
 }
 

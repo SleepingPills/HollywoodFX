@@ -1,11 +1,18 @@
-﻿using Systems.Effects;
+﻿using Comfort.Common;
+using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX.Gore;
 
-public class GoreEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts)
+public class GoreEffects
 {
-    private readonly BloodEffects _bloodEffects = new(eftEffects, prefabMain, prefabSquirts);
+    private readonly BloodEffects _bloodEffects;
+
+    public GoreEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts, GameObject prefabFinishers)
+    {
+        _bloodEffects = new BloodEffects(eftEffects, prefabMain, prefabSquirts, prefabFinishers);
+        Singleton<BloodEffects>.Create(_bloodEffects);
+    }
 
     public void Apply(ImpactKinetics kinetics)
     {
@@ -41,21 +48,19 @@ public class GoreEffects(Effects eftEffects, GameObject prefabMain, GameObject p
         // }
     }
 
-    private void ApplyBulletWounds(ImpactKinetics kinetics)
+    // private void ApplyBulletWounds(ImpactKinetics kinetics)
+    // {
+    // }
+
+    public static float CalculateImpactImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo)
     {
-        // TODO
+        var penetrationFactor = 0.3f + 0.7f * Mathf.InverseLerp(50f, 20f, bulletInfo.PenetrationPower);
+        return 11.12f * kinetics.Impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
     }
 
     private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody)
     {
-        var penetrationFactor = 0.6f;
-
-        if (ImpactStatic.BulletInfo != null)
-        {
-            penetrationFactor = (0.3f + 0.7f * Mathf.InverseLerp(50f, 20f, ImpactStatic.BulletInfo.PenetrationPower));
-        }
-
-        var impactImpulse = 11.12f * kinetics.Impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
+        var impactImpulse = CalculateImpactImpulse(kinetics, bulletInfo);
 
         // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
         // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.

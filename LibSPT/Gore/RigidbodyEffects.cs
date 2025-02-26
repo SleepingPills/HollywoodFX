@@ -11,9 +11,9 @@ internal class DetachOnDisable : MonoBehaviour
 {
     private void OnDisable()
     {
-        ConsoleScreen.Log($"Detaching {gameObject.name} from {transform.parent.name}");
         transform.SetParent(Singleton<Effects>.Instance.transform);
         enabled = true;
+        ConsoleScreen.Log($"Detached {gameObject.name} from {transform.parent}");
     }
 }
 

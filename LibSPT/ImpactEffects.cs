@@ -30,11 +30,11 @@ namespace HollywoodFX
                 impactSystem.Emit(kinetics, Plugin.EffectSize.Value);
             }
         }
-        
+
         private static List<EffectSystem>[] DefineEffectSystems(Effects eftEffects, GameObject prefab)
         {
             var effectMap = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-            
+
             Plugin.Log.LogInfo("Constructing impact systems");
 
             // Define major building blocks for systems
@@ -243,7 +243,8 @@ namespace HollywoodFX
                         new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(effectMap["Debris_Wood"], chance: 0.45f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f,
+                            isChanceScaledByKinetics: true),
                         new DirectionalEffect(bulletHoleSmoke, chance: 0.05f, isChanceScaledByKinetics: true)
                     ]
                 )
@@ -271,8 +272,9 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontBody, chance: 0.3f),
-                        new DirectionalEffect(sprayDust, chance: 0.4f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(effectMap["Debris_Armor_Fabric"], chance: 0.4f, isChanceScaledByKinetics: true)
+                        new DirectionalEffect(sprayDust, chance: 0.5f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(EffectBundle.Merge(effectMap["Debris_Armor_Metal"], effectMap["Debris_Armor_Fabric"]),
+                            chance: 0.75f, isChanceScaledByKinetics: true)
                     ]
                 )
             };
@@ -284,7 +286,7 @@ namespace HollywoodFX
                     [
                         new DirectionalEffect(puffFrontBody, chance: 0.55f),
                         new DirectionalEffect(spraySparksLight, chance: 0.4f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(effectMap["Debris_Armor_Metal"], chance: 0.4f, isChanceScaledByKinetics: true)
+                        new DirectionalEffect(effectMap["Debris_Armor_Metal"], chance: 0.5f, isChanceScaledByKinetics: true)
                     ]
                 )
             };

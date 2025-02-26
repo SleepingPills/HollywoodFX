@@ -206,7 +206,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
 public class EffectsEmitPatch : ModulePatch
 {
-    private static readonly ImpactKinetics ImpactKinetics = new();
+    
     
     protected override MethodBase GetTargetMethod()
     {
@@ -226,7 +226,7 @@ public class EffectsEmitPatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        ImpactKinetics.Update(material, position, normal, isHitPointVisible);
-        Singleton<ImpactController>.Instance.Emit(ImpactKinetics);
+        ImpactStatic.Kinetics.Update(material, position, normal, isHitPointVisible);
+        Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
     }
 }
