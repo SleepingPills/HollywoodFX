@@ -89,6 +89,7 @@
   <ItemGroup>
     <Compile Include="AssetRegistry.cs" />
     <Compile Include="BattleAmbience.cs" />
+    <Compile Include="Camera.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="EffectMaterialAmbientLighting.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="changelog.MD" />
     <Content Include="notes.MD" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

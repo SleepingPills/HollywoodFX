@@ -37,7 +37,7 @@ internal class BattleAmbience
     {
         var emission = Singleton<EmissionController>.Instance;
 
-        var emissionChance = 0.4 * (kinetics.Energy / 2500f);
+        var emissionChance = 0.4 * (kinetics.Bullet.Energy / 2500f);
 
         if (Random.Range(0f, 1f) < emissionChance)
         {

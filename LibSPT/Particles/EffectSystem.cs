@@ -33,11 +33,12 @@ internal class EffectSystem(
     
     public void Emit(ImpactKinetics kinetics, CamDir camDir, WorldDir worldDir, Vector3 position, Vector3 normal, float sizeScale, float chanceScale)
     {
-        var sizeScaleFull = kinetics.SizeScale * sizeScale;
+        var bullet = kinetics.Bullet;
+        var sizeScaleFull = bullet.SizeScale * sizeScale;
         
         EffectBundle genericImpact = null;
 
-        if (generic != null && camDir.HasFlag(CamDir.Angled))
+        if (generic != null && camDir.IsSet(CamDir.Angled))
         {
             genericImpact = generic;
 
@@ -52,9 +53,9 @@ internal class EffectSystem(
 
         foreach (var impact in directional)
         {
-            if (!camDir.HasFlag(impact.CamDir) || !worldDir.HasFlag(impact.WorldDir)) continue;
+            if (!camDir.IsSet(impact.CamDir) || !worldDir.IsSet(impact.WorldDir)) continue;
 
-            var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * kinetics.ChanceScale : impact.Chance);
+            var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * bullet.ChanceScale : impact.Chance);
             if (!(Random.Range(0f, 1f) < impactChance)) continue;
 
             impact.Effect.EmitRandom(position, normal, sizeScaleFull);

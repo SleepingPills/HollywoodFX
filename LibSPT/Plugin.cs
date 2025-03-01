@@ -75,6 +75,7 @@ public class Plugin : BaseUnityPlugin
 
         new GameWorldAwakePrefixPatch().Enable();
         new GameWorldStartedPostfixPatch().Enable();
+        new GameWorldShotDelegatePrefixPatch().Enable();
         
         new EffectsAwakePrefixPatch().Enable();
         new EffectsAwakePostfixPatch().Enable();
@@ -89,7 +90,7 @@ public class Plugin : BaseUnityPlugin
             
             new RagdollStartPrefixPatch().Enable();
             new AttachWeaponPostfixPatch().Enable();
-            new RagdollAmplyImpulsePrefixPatch().Enable();
+            new PlayerApplyImpulsePrefixPatch().Enable();
             new LootItemIsRigidBodyDonePrefixPatch().Enable();
             
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;

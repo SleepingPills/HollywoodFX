@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Comfort.Common;
 using EFT;
+using EFT.UI;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Patches;
@@ -37,7 +38,7 @@ public class GameWorldStartedPostfixPatch : ModulePatch
     {
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
-        
+
         if (__instance.LocationId.Contains("factory"))
         {
             Plugin.Log.LogInfo($"Factory location detected, applying static lighting");
@@ -47,5 +48,20 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         {
             __instance.gameObject.AddComponent<DynamicMaterialAmbientLighting>();
         }
+    }
+}
+
+public class GameWorldShotDelegatePrefixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(ClientGameWorld).GetMethod(nameof(ClientGameWorld.ShotDelegate));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable once InconsistentNaming
+    public static void Prefix(EftBulletClass shotResult)
+    {
+        ImpactStatic.Kinetics.Bullet.Update(shotResult);
     }
 }

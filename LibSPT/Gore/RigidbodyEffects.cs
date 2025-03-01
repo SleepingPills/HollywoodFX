@@ -19,14 +19,15 @@ internal class DetachOnDisable : MonoBehaviour
 
 internal class RigidbodyEffects : MonoBehaviour
 {
-    private const float Lifetime = 2f;
+    private float _lifetime = 2f;
 
     private List<ParticleSystem> _pool;
     private Queue<Emission> _active;
     private Effects _eftEffects;
 
-    public void Setup(Effects eftEffects, GameObject prefab, int copyCount)
+    public void Setup(Effects eftEffects, GameObject prefab, int copyCount, float lifetime)
     {
+        _lifetime = lifetime;
         _eftEffects = eftEffects;
         _pool = [];
         _active = new Queue<Emission>();
@@ -50,7 +51,19 @@ internal class RigidbodyEffects : MonoBehaviour
         foreach (var effect in _pool)
         {
             effect.gameObject.AddComponent<DetachOnDisable>();
-            effect.gameObject.AddComponent<BloodSquirtCollisionHandler>();
+
+            var particleSystems = effect.GetComponentsInChildren<ParticleSystem>(true);
+            
+            if (particleSystems == null)
+                continue;
+            
+            foreach (var particleSystem in particleSystems)
+            {
+                if (!particleSystem.collision.enabled)
+                    continue;
+                
+                particleSystem.gameObject.AddComponent<BloodSquirtCollisionHandler>();                
+            }
         }
     }
 
@@ -60,7 +73,7 @@ internal class RigidbodyEffects : MonoBehaviour
         {
             var emission = _active.Peek();
 
-            if (Time.time - emission.Timestamp > Lifetime)
+            if (Time.time - emission.Timestamp > _lifetime)
             {
                 _active.Dequeue();
                 emission.Effect.transform.SetParent(_eftEffects.transform);
@@ -123,7 +136,7 @@ public class BloodSquirtCollisionHandler : MonoBehaviour
         _effects = Singleton<Effects>.Instance;
         _particleSystem = GetComponent<ParticleSystem>();
         _collisionEvents = [];
-        Plugin.Log.LogInfo("Starting collision handler");
+        Plugin.Log.LogInfo($"Starting collision handler for {_particleSystem.name}");
     }
 
     public void OnParticleCollision(GameObject other)

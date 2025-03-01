@@ -19,10 +19,8 @@ public class BloodEffects
      */
 
     private readonly EffectSystem _mists;
-    // private readonly EffectSystem _mistsSide;
     private readonly EffectSystem _sprays;
     private readonly EffectSystem _squibs;
-    // private readonly EffectSystem _squibsSide;
 
     // Attached to rigidbodies
     private readonly RigidbodyEffects _squirts;
@@ -38,22 +36,20 @@ public class BloodEffects
 
         Plugin.Log.LogInfo("Building blood mists");
         _mists = new EffectSystem(directional: [new DirectionalEffect(effectMap["Puff_Blood_Front"]), puffSide]);
-        // _mistsSide = new(directional: [puffSide]);
 
         Plugin.Log.LogInfo("Building blood sprays");
         _sprays = new EffectSystem(directional: [new DirectionalEffect(effectMap["Spray_Blood"])]);
 
         Plugin.Log.LogInfo("Building blood squibs");
         _squibs = new EffectSystem(directional: [new DirectionalEffect(effectMap["Squib_Blood_Front"], isChanceScaledByKinetics: true)]);
-        // _squibsSide = new(directional: []);
 
         Plugin.Log.LogInfo("Building blood squirts");
         _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _squirts.Setup(eftEffects, prefabSquirts, 10);
+        _squirts.Setup(eftEffects, prefabSquirts, 10, 2f);
         
         Plugin.Log.LogInfo("Building finishers");
         _finishers = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _finishers.Setup(eftEffects, prefabFinishers, 10);
+        _finishers.Setup(eftEffects, prefabFinishers, 10, 5f);
     }
 
     public void Emit(ImpactKinetics kinetics, Rigidbody rigidbody)
@@ -68,9 +64,11 @@ public class BloodEffects
         else
             armorChanceScale = 1f;
 
-        var mistSizeScale = kinetics.SizeScale * Plugin.BloodMistSize.Value;
-        var spraySizeScale = kinetics.SizeScale * Plugin.BloodSpraySize.Value;
-        var squibSizeScale = kinetics.SizeScale * Plugin.BloodSquibSize.Value;
+        var bullet = kinetics.Bullet;
+        
+        var mistSizeScale = bullet.SizeScale * Plugin.BloodMistSize.Value;
+        var spraySizeScale = bullet.SizeScale * Plugin.BloodSpraySize.Value;
+        var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
 
         var squibChanceScale = 0.5f * armorChanceScale;
 
@@ -87,29 +85,30 @@ public class BloodEffects
         // Push the position along the flipped normal slightly
         var position = kinetics.Position + 0.1f * flippedNormal;
 
-        var squirtChance = 0.5 * armorChanceScale * kinetics.ChanceScale;
+        var squirtChance = 0.5f * armorChanceScale * bullet.ChanceScale;
 
         if (Random.Range(0f, 1f) < squirtChance)
         {
-            // 25% chance that the squirt goes out the front, otherwise it goes out the exit wound
+            // 50% chance that the squirt goes out the front, otherwise it goes out the exit wound
             if (Random.Range(0f, 1f) < 0.5f)
-                _squirts.Emit(rigidbody, kinetics.Position, kinetics.Normal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
+                _squirts.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
             else
-                _squirts.Emit(rigidbody, position, flippedNormal, kinetics.SizeScale * Plugin.BloodSquirtSize.Value);
+                _squirts.Emit(rigidbody, position, flippedNormal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
         }
         
         // Other stuff gets emitted only if the flipped normal is angled (otherwise there's no point) 
         var camDir = Orientation.GetCamDir(flippedNormal);
 
-        if (!camDir.HasFlag(CamDir.Angled)) return;
+        if (!camDir.IsSet(CamDir.Angled)) return;
 
         var worldDir = Orientation.GetWorldDir(flippedNormal);
         _mists.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
         _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, squibChanceScale);
     }
-
-    public void EmitFinisher(ImpactKinetics kinetics, Rigidbody rigidbody, Vector3 position, Vector3 normal)
+    
+    public void EmitFinisher(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
-        _finishers.Emit(rigidbody, position, normal, kinetics.SizeScale * Plugin.BloodFinisherSize.Value);
+        _finishers.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
     }
+
 }

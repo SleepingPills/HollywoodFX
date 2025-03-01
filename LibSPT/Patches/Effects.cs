@@ -53,16 +53,28 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
     private static void SetDecalsProps(Effects effects)
     {
+        var decalsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
+        Plugin.Log.LogInfo("Instantiating Decal Effects Prefab");
+        var decalsInstance = Object.Instantiate(decalsPrefab);
+        Plugin.Log.LogInfo("Getting Effects Component");
+        var decalsEffects = decalsInstance.GetComponent<Effects>();
+        
         if (Plugin.WoundDecalsEnabled.Value)
         {
             var texDecalsTraverse = Traverse.Create(effects.TexDecals);
-            var bloodDecals = texDecalsTraverse.Field("_bloodDecalTexture").GetValue();
+            
+            Plugin.Log.LogInfo($"Shaders: {texDecalsTraverse.Field("_drawInterceptionShader").GetValue<Shader>()} {texDecalsTraverse.Field("_blitShader").GetValue<Shader>()}");
+            
+            texDecalsTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
+            
+            var bloodDecals = Traverse.Create(decalsEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
             if (bloodDecals != null)
             {
                 Plugin.Log.LogInfo("Overriding blood decal textures");
+                texDecalsTraverse.Field("_bloodDecalTexture").SetValue(bloodDecals);
                 texDecalsTraverse.Field("_vestDecalTexture").SetValue(bloodDecals);
                 texDecalsTraverse.Field("_backDecalTexture").SetValue(bloodDecals);
-                var woundDecalSize = new Vector2(0.25f, 0.25f) * Plugin.WoundDecalsSize.Value;
+                var woundDecalSize = new Vector2(0.125f, 0.125f) * Plugin.WoundDecalsSize.Value;
                 texDecalsTraverse.Field("_decalSize").SetValue(woundDecalSize);
             }            
         }
@@ -70,13 +82,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
         var decalRenderer = effects.DeferredDecals;
 
         if (decalRenderer == null) return;
-            
-        var decalsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
-        Plugin.Log.LogInfo("Instantiating Decal Effects Prefab");
-        var decalsInstance = Object.Instantiate(decalsPrefab);
-        Plugin.Log.LogInfo("Getting Effects Component");
-        var decalsEffects = decalsInstance.GetComponent<Effects>();
-
+        
         var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue() as DeferredDecalRenderer.SingleDecal;
         var bleedingDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_bleedingDecal").GetValue() as DeferredDecalRenderer.SingleDecal;
         
@@ -84,6 +90,15 @@ public class EffectsAwakePrefixPatch : ModulePatch
         
         bleedingDecalOrig.DecalMaterial = bleedingDecalNew.DecalMaterial;
         bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
+        
+        var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
+        var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
+        
+        if (splatterDecalOrig == null || splatterDecalNew == null) return;
+        
+        splatterDecalOrig.DecalMaterial = splatterDecalNew.DecalMaterial;
+        splatterDecalOrig.DynamicDecalMaterial = splatterDecalNew.DynamicDecalMaterial;
+        
         Plugin.Log.LogInfo("Decal overrides complete");
     }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Comfort.Common;
+using EFT;
 using EFT.AssetsManager;
 using EFT.Interactive;
 using EFT.UI;
@@ -24,7 +25,7 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
         { "HumanSpine2", 1.5f },
         { "HumanSpine3", 1.25f },
     };
-    
+
     private static readonly Dictionary<string, float> MassFactors = new()
     {
         { "HumanSpine2", 1.25f },
@@ -32,7 +33,7 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
         { "HumanHead", 1.5f },
     };
 
-    
+
     protected override MethodBase GetTargetMethod()
     {
         return typeof(PlayerPoolObject).GetMethod(nameof(PlayerPoolObject.OnCreatePoolRoleModel));
@@ -50,7 +51,7 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
 
             if (!DragOverrides.TryGetValue(spawner.name, out var drag))
                 drag = 1f;
-            
+
             if (!MassFactors.TryGetValue(spawner.name, out var mass))
                 mass = 1f;
 
@@ -59,8 +60,8 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
             spawner.mass *= mass;
 
             var collider = spawner.GetComponent<Collider>();
-            
-            if(collider == null)
+
+            if (collider == null)
                 continue;
 
             collider.material.bounciness = 0.75f;
@@ -72,16 +73,22 @@ internal class PlayerPoolObjectRoleModelPostfixPatch : ModulePatch
 
         foreach (var spawner in __instance.JointSpawners)
         {
-            spawner.swing1Limit.bounciness = 0.65f;
-            spawner.swing2Limit.bounciness = 0.65f;
-            spawner.highTwistLimit.bounciness = 0.65f;
-            spawner.lowTwistLimit.bounciness = 0.65f;
-            
+            Plugin.Log.LogInfo(
+                $"Adjusting joint spawner: {spawner.name} projection: {spawner.enableProjection} distance: {spawner.projectionDistance} angle: {spawner.projectionAngle}"
+            );
+
+            spawner.enableProjection = true;
+
+            spawner.swing1Limit.bounciness = 0.3f;
+            spawner.swing2Limit.bounciness = 0.3f;
+            spawner.highTwistLimit.bounciness = 0.3f;
+            spawner.lowTwistLimit.bounciness = 0.3f;
+
             spawner.swingLimitSpring.spring = 150f;
             spawner.twistLimitSpring.spring = 150f;
-            
-            spawner.swingLimitSpring.damper = 0.1f;
-            spawner.twistLimitSpring.damper = 0.1f;
+
+            spawner.swingLimitSpring.damper = 0.3f;
+            spawner.twistLimitSpring.damper = 0.3f;
         }
     }
 }
@@ -127,30 +134,39 @@ internal class AttachWeaponPostfixPatch : ModulePatch
     }
 }
 
-internal class RagdollAmplyImpulsePrefixPatch : ModulePatch
+internal class PlayerApplyImpulsePrefixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.ApplyImpulse));
+        return typeof(Player).GetMethod(nameof(Player.OnDead));
     }
 
-    [PatchPrefix]
+    [PatchPostfix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(Collider collider, Vector3 direction, Vector3 point, ref float thrust)
+    public static void Prefix(Player __instance, DamageInfoStruct ___LastDamageInfo, Corpse ___Corpse)
     {
-        if (ImpactStatic.BulletInfo == null)
-        {
-            thrust = 2 * thrust;
-        }
-        else
-        {
-            thrust = 12.5f * GoreEffects.CalculateImpactImpulse(ImpactStatic.Kinetics, ImpactStatic.BulletInfo);            
-        }
+        var bullet = ImpactStatic.Kinetics.Bullet;
         
-        if (collider.attachedRigidbody == null)
+        var thrust = 12.5f * GoreEffects.CalculateImpactImpulse(bullet);
+        ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);
+
+        var attachedRigidbody = ___LastDamageInfo.HitCollider.attachedRigidbody;
+        if (attachedRigidbody == null)
             return;
+
+        var damageType = ___LastDamageInfo.DamageType;
+        if ((damageType & EDamageType.Bullet) != EDamageType.Bullet
+            && (damageType & EDamageType.Sniper) != EDamageType.Sniper
+            && (damageType & EDamageType.GrenadeFragment) != EDamageType.GrenadeFragment
+            || ___LastDamageInfo.DelayedDamage) return;
+
+        if (!CameraClass.Instance.Camera.IsPointVisible(___LastDamageInfo.HitPoint))
+            return;
+
         
-        Singleton<BloodEffects>.Instance.EmitFinisher(ImpactStatic.Kinetics, collider.attachedRigidbody, point, -direction.normalized);
+        var sizeScale = bullet.SizeScale;
+        ConsoleScreen.Log($"Thrust: {thrust} Finisher sizing: {sizeScale}");
+        Singleton<BloodEffects>.Instance.EmitFinisher(attachedRigidbody, ___LastDamageInfo.HitPoint, ___LastDamageInfo.HitNormal, sizeScale);
     }
 }
 

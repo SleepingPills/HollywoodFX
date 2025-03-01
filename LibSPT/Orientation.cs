@@ -26,6 +26,19 @@ public enum WorldDir
     All = ~0
 }
 
+public static class OrientationEnumExtensions
+{
+    public static bool IsSet(this CamDir self, CamDir flag)
+    {
+        return (self & flag) == flag;
+    }
+    
+    public static bool IsSet(this WorldDir self, WorldDir flag)
+    {
+        return (self & flag) == flag;
+    }
+}
+
 public static class Orientation
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

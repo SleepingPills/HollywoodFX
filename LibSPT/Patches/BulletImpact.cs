@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using EFT.UI;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 
@@ -14,7 +15,6 @@ public class BulletImpactPatch : ModulePatch
     [PatchPrefix]
     public static void Prefix(EftBulletClass info, ShotInfoClass playerHitInfo)
     {
-        ImpactStatic.BulletInfo = info;
         ImpactStatic.PlayerHitInfo = playerHitInfo;
     }
 }
