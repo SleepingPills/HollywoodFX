@@ -92,7 +92,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
         bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
         bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
         bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
-        bleedingDecalOrig.DecalSize = 0.5f * bleedingDecalOrig.DecalSize;
+        // bleedingDecalOrig.DecalSize = 0.5f * bleedingDecalOrig.DecalSize;
         
         var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
         var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;

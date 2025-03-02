@@ -9,4 +9,4 @@
 * Removed blood effects appearing when the local player is shot at
 * Performance optimization and improvements across the board
 
-Thanks to Arttumiro for testing and providing feedback, much appreciated! 
+Thanks to Arttumiro, Soren and Devraccoon for testing and providing feedback, much appreciated! 

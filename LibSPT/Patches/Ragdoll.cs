@@ -152,7 +152,7 @@ internal class PlayerApplyImpulsePrefixPatch : ModulePatch
 
         if (___Corpse != null)
         {
-            var thrust = 12.5f * GoreEffects.CalculateImpactImpulse(bullet);
+            var thrust = Mathf.Min(12.5f * GoreEffects.CalculateImpactImpulse(bullet), 400f);
             ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);            
         }
 
