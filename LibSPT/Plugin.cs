@@ -38,7 +38,6 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<bool> RagdollEnabled;
     public static ConfigEntry<bool> RagdollCinematicEnabled;
-    public static ConfigEntry<float> RagdollLifetime;
     public static ConfigEntry<float> RagdollForceMultiplier;
 
     public static ConfigEntry<bool> MiscDecalsEnabled;
@@ -224,19 +223,13 @@ public class Plugin : BaseUnityPlugin
         RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (requires game restart)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 13, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
         ));
         
         RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
-        ));
-
-        RagdollLifetime = Config.Bind(ragdoll, "Ragdoll Lifetime (seconds)", 15f, new ConfigDescription(
-            "Determines how long will ragdolls stay active for. Setting this to a very large number will likely cause increasing CPU load as more corpses pile up.",
-            new AcceptableValueRange<float>(0f, 500f),
-            new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected}
+            new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected }
         ));
 
         RagdollForceMultiplier = Config.Bind(ragdoll, "Ragdoll Force Multiplier", 1f, new ConfigDescription(

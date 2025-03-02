@@ -1,4 +1,8 @@
-﻿using Comfort.Common;
+﻿using System.Collections.Generic;
+using Comfort.Common;
+using EFT;
+using EFT.Interactive;
+using HarmonyLib;
 using Systems.Effects;
 using UnityEngine;
 
@@ -7,7 +11,7 @@ namespace HollywoodFX.Gore;
 public class GoreEffects
 {
     private readonly BloodEffects _bloodEffects;
-
+    
     public GoreEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts, GameObject prefabFinishers)
     {
         _bloodEffects = new BloodEffects(eftEffects, prefabMain, prefabSquirts, prefabFinishers);
@@ -32,9 +36,43 @@ public class GoreEffects
             root = root.parent;
         }
 
-        if (Plugin.RagdollEnabled.Value && !rigidbody.isKinematic)
+        Player player = null;
+        
+        // Don't render blood effects on the local player
+        if (kinetics.DistanceToImpact <= 2f && root.TryGetComponent(out player) && player.IsYourPlayer)
+            return;
+        
+        if (rigidbody.gameObject.layer == LayerMaskClass.DeadbodyLayer)
         {
-            ApplyRagdollImpulse(kinetics, bulletInfo, root, rigidbody);
+            if (Plugin.RagdollEnabled.Value)
+            {
+                // Reactivate static (kinematic) ragdolls
+                if (rigidbody.isKinematic)
+                {
+                    if (player == null)
+                        player = root.GetComponent<Player>();
+            
+                    if (!player.IsYourPlayer && player.TryGetComponent(out Corpse corpse))
+                    {
+                        corpse.Ragdoll.Start();
+                    }                    
+                }
+                
+                // Apply the impulse to all dead bodies
+                ApplyRagdollImpulse(kinetics, bulletInfo, root, rigidbody);                
+            }
+            
+            // Hackery for adding decals to dead bodies 
+            if (player == null)
+                player = root.GetComponent<Player>();
+            
+            var playerTraverse = Traverse.Create(player);
+            var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<GStruct56>>();
+            var playerBody = playerTraverse.Field("_playerBody").GetValue<PlayerBody>();
+            
+            preAllocatedRenderersList.Clear();
+            playerBody.GetBodyRenderersNonAlloc(preAllocatedRenderersList);
+            Singleton<Effects>.Instance.EffectsCommutator.PlayerMeshesHit(preAllocatedRenderersList, kinetics.Position, -kinetics.Normal);
         }
 
         if (Plugin.BloodEnabled.Value)

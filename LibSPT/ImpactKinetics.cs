@@ -65,8 +65,8 @@ public class ImpactKinetics
     
         DistanceToImpact = Vector3.Distance(CameraClass.Instance.Camera.transform.position, Position);
 
-        // Render things closer than 3 meters but further than 1 of the camera even if the impact location is not directly in the viewport
-        if (DistanceToImpact is <= 3f and >= 1f)
+        // Render things closer than 3 meters, so that impacts near the player add to the ambience
+        if (DistanceToImpact <= 3f)
         {
             IsHitPointVisible = true;
         }

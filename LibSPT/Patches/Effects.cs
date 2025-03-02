@@ -90,6 +90,9 @@ public class EffectsAwakePrefixPatch : ModulePatch
         
         bleedingDecalOrig.DecalMaterial = bleedingDecalNew.DecalMaterial;
         bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
+        bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
+        bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
+        bleedingDecalOrig.DecalSize = 0.5f * bleedingDecalOrig.DecalSize;
         
         var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
         var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
@@ -98,6 +101,9 @@ public class EffectsAwakePrefixPatch : ModulePatch
         
         splatterDecalOrig.DecalMaterial = splatterDecalNew.DecalMaterial;
         splatterDecalOrig.DynamicDecalMaterial = splatterDecalNew.DynamicDecalMaterial;
+        splatterDecalOrig.TileSheetRows = splatterDecalNew.TileSheetRows;
+        splatterDecalOrig.TileSheetColumns = splatterDecalNew.TileSheetColumns;
+        splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize;
         
         Plugin.Log.LogInfo("Decal overrides complete");
     }

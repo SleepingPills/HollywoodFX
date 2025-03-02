@@ -5,7 +5,6 @@ using Comfort.Common;
 using EFT;
 using EFT.AssetsManager;
 using EFT.Interactive;
-using EFT.UI;
 using HollywoodFX.Gore;
 using SPT.Reflection.Patching;
 using UnityEngine;
@@ -109,7 +108,7 @@ internal class RagdollStartPrefixPatch : ModulePatch
 
     private static bool CheckCorpseIsStill(bool sleeping, float timePassed)
     {
-        return timePassed >= Plugin.RagdollLifetime.Value;
+        return timePassed >= 15f;
     }
 }
 
@@ -143,12 +142,19 @@ internal class PlayerApplyImpulsePrefixPatch : ModulePatch
 
     [PatchPostfix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(Player __instance, DamageInfoStruct ___LastDamageInfo, Corpse ___Corpse)
+    public static void Postfix(Player __instance, DamageInfoStruct ___LastDamageInfo, Corpse ___Corpse)
     {
+        // Don't try to enhance our own death lel
+        if (__instance.IsYourPlayer)
+            return;
+
         var bullet = ImpactStatic.Kinetics.Bullet;
-        
-        var thrust = 12.5f * GoreEffects.CalculateImpactImpulse(bullet);
-        ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);
+
+        if (___Corpse != null)
+        {
+            var thrust = 12.5f * GoreEffects.CalculateImpactImpulse(bullet);
+            ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);            
+        }
 
         var attachedRigidbody = ___LastDamageInfo.HitCollider.attachedRigidbody;
         if (attachedRigidbody == null)
@@ -162,10 +168,8 @@ internal class PlayerApplyImpulsePrefixPatch : ModulePatch
 
         if (!CameraClass.Instance.Camera.IsPointVisible(___LastDamageInfo.HitPoint))
             return;
-
         
         var sizeScale = bullet.SizeScale;
-        ConsoleScreen.Log($"Thrust: {thrust} Finisher sizing: {sizeScale}");
         Singleton<BloodEffects>.Instance.EmitFinisher(attachedRigidbody, ___LastDamageInfo.HitPoint, ___LastDamageInfo.HitNormal, sizeScale);
     }
 }
@@ -183,7 +187,7 @@ internal class LootItemIsRigidBodyDonePrefixPatch : ModulePatch
         if (__instance.RigidBody.IsSleeping())
             __result = true;
 
-        __result = ____currentPhysicsTime >= Plugin.RagdollLifetime.Value;
+        __result = ____currentPhysicsTime >= 15f;
 
         return false;
     }
