@@ -45,6 +45,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
+    public static ConfigEntry<float> KineticsScaling;
 
     private static ConfigEntry<bool> _loggingEnabled;
 
@@ -88,6 +89,7 @@ public class Plugin : BaseUnityPlugin
                 new PlayerPoolObjectRoleModelPostfixPatch().Enable();
             
             new RagdollStartPrefixPatch().Enable();
+            new RagdollStartPostfixPatch().Enable();
             new AttachWeaponPostfixPatch().Enable();
             new PlayerApplyImpulsePrefixPatch().Enable();
             new LootItemIsRigidBodyDonePrefixPatch().Enable();
@@ -205,7 +207,7 @@ public class Plugin : BaseUnityPlugin
         ));
 
         WoundDecalsEnabled = Config.Bind(battleAmbience, "Enable New Wound Decals on Bodies", true, new ConfigDescription(
-            "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects.",
+            "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects. Philistine.",
             null,
             new ConfigurationManagerAttributes { Order = 32 }
         ));
@@ -271,6 +273,13 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
+        
+        KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
+            "Scales the overall kinetic energy, impulse, etc.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 4 }
+        ));
+        
         MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
 
         /*

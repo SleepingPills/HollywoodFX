@@ -101,7 +101,7 @@ internal class RagdollStartPrefixPatch : ModulePatch
 
     [PatchPrefix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(RagdollClass __instance, ref Func<bool, float, bool> ___func_0, RigidbodySpawner[] ___rigidbodySpawner_0)
+    public static void Prefix(RagdollClass __instance, ref Func<bool, float, bool> ___func_0)
     {
         ___func_0 = CheckCorpseIsStill;
     }
@@ -111,6 +111,25 @@ internal class RagdollStartPrefixPatch : ModulePatch
         return timePassed >= 15f;
     }
 }
+
+internal class RagdollStartPostfixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.Start));
+    }
+
+    [PatchPostfix]
+    // ReSharper disable InconsistentNaming
+    public static void Postfix(RagdollClass __instance, RigidbodySpawner[] ___rigidbodySpawner_0)
+    {
+        foreach (var spawner in ___rigidbodySpawner_0)
+        {
+            spawner.Rigidbody.maxDepenetrationVelocity = 1f;
+        }
+    }
+}
+
 
 internal class AttachWeaponPostfixPatch : ModulePatch
 {
@@ -152,8 +171,8 @@ internal class PlayerApplyImpulsePrefixPatch : ModulePatch
 
         if (___Corpse != null)
         {
-            var thrust = Mathf.Min(12.5f * GoreEffects.CalculateImpactImpulse(bullet), 400f);
-            ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);            
+            var thrust = Mathf.Min(10f * GoreEffects.CalculateImpactImpulse(bullet), 350f);
+            ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);
         }
 
         var attachedRigidbody = ___LastDamageInfo.HitCollider.attachedRigidbody;

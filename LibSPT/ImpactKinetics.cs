@@ -26,6 +26,11 @@ public class BulletKinetics
         // NB: We floor the bullet weight for KE calculations as BSG specified that buckshot pellets weigh 0.1g for example. IRL it's 3.5g
         var mass = Mathf.Max(bulletInfo.BulletMassGram, 3.5f) / 1000;
         var speed = bulletInfo.CurrentVelocity.magnitude;
+
+        // Only apply this to the local player
+        if (bulletInfo.Player.iPlayer.IsYourPlayer)
+            speed *= Plugin.KineticsScaling.Value;
+        
         Impulse = mass * speed;
         Energy = Impulse * speed / 2;
         
