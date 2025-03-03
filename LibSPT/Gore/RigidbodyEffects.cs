@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
-using EFT.UI;
 using Systems.Effects;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -13,8 +12,7 @@ internal class DetachOnDisable : MonoBehaviour
     {
         transform.SetParent(Singleton<Effects>.Instance.transform);
         enabled = true;
-        ConsoleScreen.Log($"Detached {gameObject.name} from {transform.parent}");
-    }
+   }
 }
 
 internal class RigidbodyEffects : MonoBehaviour
