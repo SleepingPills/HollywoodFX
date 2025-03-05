@@ -32,12 +32,12 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> BloodSquibSize;
     public static ConfigEntry<float> BloodSquirtSize;
     public static ConfigEntry<float> BloodFinisherSize;
-    public static ConfigEntry<float> BloodWoundSize;
     public static ConfigEntry<bool> WoundDecalsEnabled;
     public static ConfigEntry<float> WoundDecalsSize;
 
     public static ConfigEntry<bool> RagdollEnabled;
     public static ConfigEntry<bool> RagdollCinematicEnabled;
+    public static ConfigEntry<bool> RagdollDropWeaponEnabled;
     public static ConfigEntry<float> RagdollForceMultiplier;
 
     public static ConfigEntry<bool> MiscDecalsEnabled;
@@ -90,9 +90,14 @@ public class Plugin : BaseUnityPlugin
             
             new RagdollStartPrefixPatch().Enable();
             new RagdollStartPostfixPatch().Enable();
-            new AttachWeaponPostfixPatch().Enable();
+
+            if (RagdollDropWeaponEnabled.Value)
+            {
+                new AttachWeaponPostfixPatch().Enable();
+                new LootItemIsRigidBodyDonePrefixPatch().Enable();
+            }
+            
             new PlayerApplyImpulsePrefixPatch().Enable();
-            new LootItemIsRigidBodyDonePrefixPatch().Enable();
             
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
@@ -200,12 +205,6 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 34 }
         ));
 
-        BloodWoundSize = Config.Bind(bloodGore, "3D Wound Size", 1f, new ConfigDescription(
-            "Adjusts the size of the 3d wounds.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 33 }
-        ));
-
         WoundDecalsEnabled = Config.Bind(battleAmbience, "Enable New Wound Decals on Bodies", true, new ConfigDescription(
             "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects. Philistine.",
             null,
@@ -225,11 +224,17 @@ public class Plugin : BaseUnityPlugin
         RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (requires game restart)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 13, ReadOnly = visceralCombatDetected }
         ));
         
         RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
+            new AcceptableValueList<bool>(ragdollAcceptableValues),
+            new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
+        ));
+        
+        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death", true, new ConfigDescription(
+            "Toggles the enemies dropping their weapon on death.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected }
         ));

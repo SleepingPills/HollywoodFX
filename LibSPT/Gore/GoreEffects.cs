@@ -79,16 +79,7 @@ public class GoreEffects
         {
             _bloodEffects.Emit(kinetics, rigidbody);
         }
-
-        // if (Plugin.BulletWoundsEnabled.Value)
-        // {
-        //     ApplyBulletWounds(context);
-        // }
     }
-
-    // private void ApplyBulletWounds(ImpactKinetics kinetics)
-    // {
-    // }
 
     public static float CalculateImpactImpulse(BulletKinetics bullet)
     {
