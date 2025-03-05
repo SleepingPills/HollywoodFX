@@ -14,7 +14,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.4.0";
+    public const string HollywoodFXVersion = "1.4.1";
 
     public static ManualLogSource Log;
 
@@ -34,6 +34,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> BloodFinisherSize;
     public static ConfigEntry<bool> WoundDecalsEnabled;
     public static ConfigEntry<float> WoundDecalsSize;
+    public static ConfigEntry<float> BloodSplatterDecalsSize;
 
     public static ConfigEntry<bool> RagdollEnabled;
     public static ConfigEntry<bool> RagdollCinematicEnabled;
@@ -215,6 +216,12 @@ public class Plugin : BaseUnityPlugin
             "Adjusts the size of the wound decals that appear on bodies.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 31 }
+        ));
+        
+        BloodSplatterDecalsSize = Config.Bind(battleAmbience, "Splatter Decal Size", 1f, new ConfigDescription(
+            "Adjusts the size of the blood splatters on the environment.",
+            new AcceptableValueRange<float>(0f, 5f),
+            new ConfigurationManagerAttributes { Order = 30 }
         ));
 
         /*
