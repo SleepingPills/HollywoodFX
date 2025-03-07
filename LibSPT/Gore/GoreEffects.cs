@@ -36,43 +36,46 @@ public class GoreEffects
             root = root.parent;
         }
 
-        Player player = null;
-        
         // Don't render blood effects on the local player
-        if (kinetics.DistanceToImpact <= 2f && root.TryGetComponent(out player) && player.IsYourPlayer)
+        if (root == ImpactStatic.LocalPlayerTransform)
             return;
         
         if (rigidbody.gameObject.layer == LayerMaskClass.DeadbodyLayer)
         {
+            Player player = null;
+            
             if (Plugin.RagdollEnabled.Value)
             {
                 // Reactivate static (kinematic) ragdolls
                 if (rigidbody.isKinematic)
                 {
-                    if (player == null)
-                        player = root.GetComponent<Player>();
-            
-                    if (!player.IsYourPlayer && player.TryGetComponent(out Corpse corpse))
+                    if (root.TryGetComponent(out player))
                     {
-                        corpse.Ragdoll.Start();
-                    }                    
+                        if (!player.IsYourPlayer && player.TryGetComponent(out Corpse corpse))
+                        {
+                            corpse.Ragdoll.Start();
+                        }
+                    }
                 }
                 
                 // Apply the impulse to all dead bodies
                 ApplyRagdollImpulse(kinetics, bulletInfo, root, rigidbody);                
             }
+
+            if (Plugin.WoundDecalsEnabled.Value)
+            {
+                // Hackery for adding decals to dead bodies 
+                if (player != null || root.TryGetComponent(out player))
+                {
+                    var playerTraverse = Traverse.Create(player);
+                    var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<GStruct56>>();
+                    var playerBody = playerTraverse.Field("_playerBody").GetValue<PlayerBody>();
             
-            // Hackery for adding decals to dead bodies 
-            if (player == null)
-                player = root.GetComponent<Player>();
-            
-            var playerTraverse = Traverse.Create(player);
-            var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<GStruct56>>();
-            var playerBody = playerTraverse.Field("_playerBody").GetValue<PlayerBody>();
-            
-            preAllocatedRenderersList.Clear();
-            playerBody.GetBodyRenderersNonAlloc(preAllocatedRenderersList);
-            Singleton<Effects>.Instance.EffectsCommutator.PlayerMeshesHit(preAllocatedRenderersList, kinetics.Position, -kinetics.Normal);
+                    preAllocatedRenderersList.Clear();
+                    playerBody.GetBodyRenderersNonAlloc(preAllocatedRenderersList);
+                    Singleton<Effects>.Instance.EffectsCommutator.PlayerMeshesHit(preAllocatedRenderersList, kinetics.Position, -kinetics.Normal);                    
+                }
+            }
         }
 
         if (Plugin.BloodEnabled.Value)

@@ -39,9 +39,19 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
+        // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+        foreach (var player in __instance.RegisteredPlayers)
+        {
+            if (!player.IsYourPlayer) continue;
+            
+            Plugin.Log.LogInfo($"Found local player: {player.ProfileId}");
+            ImpactStatic.LocalPlayerTransform = player.Transform.Original;
+            break;
+        }
+        
         if (__instance.LocationId.Contains("factory"))
         {
-            Plugin.Log.LogInfo($"Factory location detected, applying static lighting");
+            Plugin.Log.LogInfo("Factory location detected, applying static lighting");
             StaticMaterialAmbientLighting.AdjustLighting(__instance.LocationId);
         }
         else
