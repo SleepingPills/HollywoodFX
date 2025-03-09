@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using EFT.UI;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 

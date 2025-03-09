@@ -25,7 +25,7 @@ public class GoreEffects
         if (bulletInfo == null) return;
 
         var rigidbody = bulletInfo.HitCollider.attachedRigidbody;
-
+        
         if (rigidbody == null)
             return;
 

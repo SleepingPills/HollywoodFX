@@ -130,7 +130,6 @@ internal class RagdollStartPostfixPatch : ModulePatch
     }
 }
 
-
 internal class AttachWeaponPostfixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
@@ -152,7 +151,7 @@ internal class AttachWeaponPostfixPatch : ModulePatch
     }
 }
 
-internal class PlayerApplyImpulsePrefixPatch : ModulePatch
+internal class PlayerOnDeadPostfixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
@@ -163,30 +162,24 @@ internal class PlayerApplyImpulsePrefixPatch : ModulePatch
     // ReSharper disable InconsistentNaming
     public static void Postfix(Player __instance, DamageInfoStruct ___LastDamageInfo, Corpse ___Corpse)
     {
-        // Don't try to enhance our own death lel
-        if (__instance.IsYourPlayer)
+        // Only apply to deaths resulting from kinetic damage
+        var damageType = ___LastDamageInfo.DamageType;
+        if ((damageType & EDamageType.Bullet) != EDamageType.Bullet
+            && (damageType & EDamageType.Sniper) != EDamageType.Sniper
+            && (damageType & EDamageType.GrenadeFragment) != EDamageType.GrenadeFragment
+            || ___LastDamageInfo.DelayedDamage)
             return;
 
+        var attachedRigidbody = ___LastDamageInfo.HitCollider?.attachedRigidbody;
+        if (attachedRigidbody == null)
+            return;            
+        
         var bullet = ImpactStatic.Kinetics.Bullet;
-
         if (___Corpse != null)
         {
             var thrust = Mathf.Min(10f * GoreEffects.CalculateImpactImpulse(bullet), 350f);
             ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);
         }
-
-        var attachedRigidbody = ___LastDamageInfo.HitCollider.attachedRigidbody;
-        if (attachedRigidbody == null)
-            return;
-
-        var damageType = ___LastDamageInfo.DamageType;
-        if ((damageType & EDamageType.Bullet) != EDamageType.Bullet
-            && (damageType & EDamageType.Sniper) != EDamageType.Sniper
-            && (damageType & EDamageType.GrenadeFragment) != EDamageType.GrenadeFragment
-            || ___LastDamageInfo.DelayedDamage) return;
-
-        if (!CameraClass.Instance.Camera.IsPointVisible(___LastDamageInfo.HitPoint))
-            return;
         
         var sizeScale = bullet.SizeScale;
         Singleton<BloodEffects>.Instance.EmitFinisher(attachedRigidbody, ___LastDamageInfo.HitPoint, ___LastDamageInfo.HitNormal, sizeScale);

@@ -98,7 +98,7 @@ public class Plugin : BaseUnityPlugin
                 new LootItemIsRigidBodyDonePrefixPatch().Enable();
             }
             
-            new PlayerApplyImpulsePrefixPatch().Enable();
+            new PlayerOnDeadPostfixPatch().Enable();
             
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
