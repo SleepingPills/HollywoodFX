@@ -5,7 +5,6 @@ using Comfort.Common;
 using DeferredDecals;
 using EFT;
 using EFT.Ballistics;
-using EFT.UI;
 using HarmonyLib;
 using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
@@ -92,7 +91,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
         bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
         bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
         bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
-        bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.2f) * Plugin.BloodSplatterDecalsSize.Value;
+        bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
         
         var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
         var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;

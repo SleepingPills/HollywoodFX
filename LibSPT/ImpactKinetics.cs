@@ -7,11 +7,14 @@ namespace HollywoodFX;
 
 public class BulletKinetics
 {
+    private const float SizeNormFactor = 2000f;
+    
     public float Impulse = 3.6f;
     public float Energy = 1620f;
     public float SizeScale = 1f;
     public float ChanceScale = 1f;
     public EftBulletClass Info;
+    public Transform HitColliderRoot;
     
     public void Update(EftBulletClass bulletInfo)
     {
@@ -25,7 +28,7 @@ public class BulletKinetics
         // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
         // NB: We floor the bullet weight for KE calculations as BSG specified that buckshot pellets weigh 0.1g for example. IRL it's 3.5g
         var mass = Mathf.Max(bulletInfo.BulletMassGram, 3.5f) / 1000;
-        var speed = bulletInfo.CurrentVelocity.magnitude;
+        var speed = bulletInfo.VelocityMagnitude;
 
         // Only apply this to the local player
         if (bulletInfo.Player.iPlayer.IsYourPlayer)
@@ -34,10 +37,18 @@ public class BulletKinetics
         Impulse = mass * speed;
         Energy = Impulse * speed / 2;
         
-        SizeScale = Mathf.Clamp(Mathf.Sqrt(Energy / 2000f), 0.5f, 1.15f);
+        SizeScale = Mathf.Clamp(Mathf.Sqrt(Energy / SizeNormFactor), 0.6f, 1.2f);
         // Chance scaling has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
         // things too much for smaller ones.
         ChanceScale = SizeScale < 1f ? SizeScale : Mathf.Pow(SizeScale, 2f);
+
+        if (bulletInfo.HitCollider == null) return;
+        
+        HitColliderRoot = bulletInfo.HitCollider.transform;
+        while (HitColliderRoot.parent != null)
+        {
+            HitColliderRoot = HitColliderRoot.parent;
+        }
     }
 }
 

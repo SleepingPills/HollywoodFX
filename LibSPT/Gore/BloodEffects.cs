@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using Comfort.Common;
-using EFT.Ballistics;
-using EFT.UI;
+﻿using EFT.Ballistics;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;

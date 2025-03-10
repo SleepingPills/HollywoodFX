@@ -16,14 +16,14 @@ internal class ImpactController
         Plugin.Log.LogInfo("Loading Impacts Prefabs");
         var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
         _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
-        
+
         var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
         _impactEffects = new ImpactEffects(eftEffects, impactsPrefab);
 
         var bloodMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Main");
         var bloodSquirtsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Squirts");
         var bloodFinishersPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Finishers");
-        
+
         _goreEffects = new GoreEffects(eftEffects, bloodMainPrefab, bloodSquirtsPrefab, bloodFinishersPrefab);
     }
 
@@ -35,20 +35,13 @@ internal class ImpactController
         if (kinetics.IsHitPointVisible)
         {
             _impactEffects.Emit(kinetics);
-
             if (isBodyShot)
-            {
-                 _goreEffects.Apply(kinetics);
-            }
-            else if (Plugin.BattleAmbienceEnabled.Value)
-            {
-                _battleAmbience.Emit(kinetics);
-            }
+                _goreEffects.Apply(kinetics);
         }
-        else
-        {
-            if (!isBodyShot && Plugin.BattleAmbienceEnabled.Value && kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value)
-                _battleAmbience.Emit(kinetics);
-        }
+
+        if (Plugin.BattleAmbienceEnabled.Value
+            && !isBodyShot
+            && (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value))
+            _battleAmbience.Emit(kinetics);
     }
 }

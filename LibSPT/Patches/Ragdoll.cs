@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Comfort.Common;
-using EFT;
 using EFT.AssetsManager;
 using EFT.Interactive;
-using HollywoodFX.Gore;
 using SPT.Reflection.Patching;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -148,41 +145,6 @@ internal class AttachWeaponPostfixPatch : ModulePatch
         }
 
         weaponRigidbody.gameObject.SetActive(false);
-    }
-}
-
-internal class PlayerOnDeadPostfixPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        return typeof(Player).GetMethod(nameof(Player.OnDead));
-    }
-
-    [PatchPostfix]
-    // ReSharper disable InconsistentNaming
-    public static void Postfix(Player __instance, DamageInfoStruct ___LastDamageInfo, Corpse ___Corpse)
-    {
-        // Only apply to deaths resulting from kinetic damage
-        var damageType = ___LastDamageInfo.DamageType;
-        if ((damageType & EDamageType.Bullet) != EDamageType.Bullet
-            && (damageType & EDamageType.Sniper) != EDamageType.Sniper
-            && (damageType & EDamageType.GrenadeFragment) != EDamageType.GrenadeFragment
-            || ___LastDamageInfo.DelayedDamage)
-            return;
-
-        var attachedRigidbody = ___LastDamageInfo.HitCollider?.attachedRigidbody;
-        if (attachedRigidbody == null)
-            return;            
-        
-        var bullet = ImpactStatic.Kinetics.Bullet;
-        if (___Corpse != null)
-        {
-            var thrust = Mathf.Min(10f * GoreEffects.CalculateImpactImpulse(bullet), 350f);
-            ___Corpse.Ragdoll.ApplyImpulse(___LastDamageInfo.HitCollider, ___LastDamageInfo.Direction, ___LastDamageInfo.HitPoint, thrust);
-        }
-        
-        var sizeScale = bullet.SizeScale;
-        Singleton<BloodEffects>.Instance.EmitFinisher(attachedRigidbody, ___LastDamageInfo.HitPoint, ___LastDamageInfo.HitNormal, sizeScale);
     }
 }
 

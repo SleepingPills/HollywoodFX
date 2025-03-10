@@ -14,30 +14,29 @@ public class GoreEffects
     
     public GoreEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts, GameObject prefabFinishers)
     {
-        _bloodEffects = new BloodEffects(eftEffects, prefabMain, prefabSquirts, prefabFinishers);
-        Singleton<BloodEffects>.Create(_bloodEffects);
+        Singleton<BloodEffects>.Create(_bloodEffects = new BloodEffects(eftEffects, prefabMain, prefabSquirts, prefabFinishers));
     }
 
     public void Apply(ImpactKinetics kinetics)
     {
-        var bulletInfo = ImpactStatic.Kinetics.Bullet.Info;
+        var bullet = kinetics.Bullet;
+        var bulletInfo = bullet.Info;
 
-        if (bulletInfo == null) return;
+        if (bulletInfo == null)
+            return;
+        
+        if (bulletInfo.HitCollider == null)
+            return;
 
+        var hitColliderRoot = bullet.HitColliderRoot;
+        
+        // Don't render blood effects on the local player
+        if (hitColliderRoot == ImpactStatic.LocalPlayerTransform)
+            return;
+        
         var rigidbody = bulletInfo.HitCollider.attachedRigidbody;
         
         if (rigidbody == null)
-            return;
-
-        // Find the root transform
-        var root = rigidbody.transform;
-        while (root.parent != null)
-        {
-            root = root.parent;
-        }
-
-        // Don't render blood effects on the local player
-        if (root == ImpactStatic.LocalPlayerTransform)
             return;
         
         if (rigidbody.gameObject.layer == LayerMaskClass.DeadbodyLayer)
@@ -49,7 +48,7 @@ public class GoreEffects
                 // Reactivate static (kinematic) ragdolls
                 if (rigidbody.isKinematic)
                 {
-                    if (root.TryGetComponent(out player))
+                    if (hitColliderRoot.TryGetComponent(out player))
                     {
                         if (!player.IsYourPlayer && player.TryGetComponent(out Corpse corpse))
                         {
@@ -58,14 +57,14 @@ public class GoreEffects
                     }
                 }
                 
-                // Apply the impulse to all dead bodies
-                ApplyRagdollImpulse(kinetics, bulletInfo, root, rigidbody);                
+                // Apply the impulse to dead bodies
+                ApplyRagdollImpulse(kinetics, bulletInfo, hitColliderRoot, rigidbody);                
             }
 
             if (Plugin.WoundDecalsEnabled.Value)
             {
                 // Hackery for adding decals to dead bodies 
-                if (player != null || root.TryGetComponent(out player))
+                if (player != null || hitColliderRoot.TryGetComponent(out player))
                 {
                     var playerTraverse = Traverse.Create(player);
                     var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<GStruct56>>();
@@ -84,15 +83,15 @@ public class GoreEffects
         }
     }
 
-    public static float CalculateImpactImpulse(BulletKinetics bullet)
+    public static float CalculateImpactImpulse(float impulse, float penetration)
     {
-        var penetrationFactor = 0.7f + 0.3f * Mathf.InverseLerp(50f, 20f, bullet.Info.PenetrationPower);
-        return 8f * bullet.Impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
+        var penetrationFactor = 0.7f + 0.3f * Mathf.InverseLerp(50f, 20f, penetration);
+        return 8f * impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
     }
 
     private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody)
     {
-        var impactImpulse = Mathf.Min(CalculateImpactImpulse(kinetics.Bullet), 100f);
+        var impactImpulse = Mathf.Min(CalculateImpactImpulse(kinetics.Bullet.Impulse, kinetics.Bullet.Info.PenetrationPower), 100f);
         
         // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
         // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.

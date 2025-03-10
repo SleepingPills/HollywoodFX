@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Comfort.Common;
 using EFT;
-using EFT.UI;
+using HollywoodFX.Gore;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Patches;
@@ -20,8 +20,12 @@ public class GameWorldAwakePrefixPatch : ModulePatch
     public static void Prefix(GameWorld __instance)
     {
         IsHideout = __instance is HideoutGameWorld;
-        Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
         Plugin.Log.LogInfo($"Game world hideout flag: {IsHideout}");
+
+        if (IsHideout) return;
+
+        Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
+        Singleton<PlayerDamageRegistry>.Create(new PlayerDamageRegistry());
     }
 }
 
@@ -43,12 +47,12 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         foreach (var player in __instance.RegisteredPlayers)
         {
             if (!player.IsYourPlayer) continue;
-            
+
             Plugin.Log.LogInfo($"Found local player: {player.ProfileId}");
             ImpactStatic.LocalPlayerTransform = player.Transform.Original;
             break;
         }
-        
+
         if (__instance.LocationId.Contains("factory"))
         {
             Plugin.Log.LogInfo("Factory location detected, applying static lighting");
@@ -72,6 +76,16 @@ public class GameWorldShotDelegatePrefixPatch : ModulePatch
     // ReSharper disable once InconsistentNaming
     public static void Prefix(EftBulletClass shotResult)
     {
-        ImpactStatic.Kinetics.Bullet.Update(shotResult);
+        var bullet = ImpactStatic.Kinetics.Bullet;
+
+        bullet.Update(shotResult);
+        var hitCollider = bullet.Info.HitCollider;
+        if (hitCollider == null)
+            return;
+        
+        if (bullet.HitColliderRoot.gameObject.layer != LayerMaskClass.PlayerLayer)
+            return;
+
+        Singleton<PlayerDamageRegistry>.Instance.RegisterDamage(ImpactStatic.Kinetics.Bullet, hitCollider, bullet.HitColliderRoot);
     }
 }

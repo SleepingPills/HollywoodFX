@@ -92,6 +92,7 @@
     <Compile Include="Camera.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="EffectMaterialAmbientLighting.cs" />
+    <Compile Include="Gore\Finisher.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />
     <Compile Include="Gore\GoreEffects.cs" />
@@ -109,7 +110,7 @@
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Effects.cs" />
     <Compile Include="Patches\GameWorld.cs" />
-    <Compile Include="Patches\PlayerCorpse.cs" />
+    <Compile Include="Patches\Player.cs" />
     <Compile Include="Patches\Ragdoll.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
