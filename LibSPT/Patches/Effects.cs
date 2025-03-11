@@ -57,15 +57,15 @@ public class EffectsAwakePrefixPatch : ModulePatch
         var decalsInstance = Object.Instantiate(decalsPrefab);
         Plugin.Log.LogInfo("Getting Effects Component");
         var decalsEffects = decalsInstance.GetComponent<Effects>();
-        
+
         if (Plugin.WoundDecalsEnabled.Value)
         {
             var texDecalsTraverse = Traverse.Create(effects.TexDecals);
-            
+
             Plugin.Log.LogInfo($"Shaders: {texDecalsTraverse.Field("_drawInterceptionShader").GetValue<Shader>()} {texDecalsTraverse.Field("_blitShader").GetValue<Shader>()}");
-            
+
             texDecalsTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
-            
+
             var bloodDecals = Traverse.Create(decalsEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
             if (bloodDecals != null)
             {
@@ -75,35 +75,35 @@ public class EffectsAwakePrefixPatch : ModulePatch
                 texDecalsTraverse.Field("_backDecalTexture").SetValue(bloodDecals);
                 var woundDecalSize = new Vector2(0.1f, 0.15f) * Plugin.WoundDecalsSize.Value;
                 texDecalsTraverse.Field("_decalSize").SetValue(woundDecalSize);
-            }            
+            }
         }
-        
+
         var decalRenderer = effects.DeferredDecals;
 
         if (decalRenderer == null) return;
-        
+
         var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue() as DeferredDecalRenderer.SingleDecal;
         var bleedingDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_bleedingDecal").GetValue() as DeferredDecalRenderer.SingleDecal;
-        
+
         if (bleedingDecalOrig == null || bleedingDecalNew == null) return;
-        
+
         bleedingDecalOrig.DecalMaterial = bleedingDecalNew.DecalMaterial;
         bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
         bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
         bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
         bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
-        
+
         var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
         var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
-        
+
         if (splatterDecalOrig == null || splatterDecalNew == null) return;
-        
+
         splatterDecalOrig.DecalMaterial = splatterDecalNew.DecalMaterial;
         splatterDecalOrig.DynamicDecalMaterial = splatterDecalNew.DynamicDecalMaterial;
         splatterDecalOrig.TileSheetRows = splatterDecalNew.TileSheetRows;
         splatterDecalOrig.TileSheetColumns = splatterDecalNew.TileSheetColumns;
         splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize * Plugin.BloodSplatterDecalsSize.Value;
-        
+
         Plugin.Log.LogInfo("Decal overrides complete");
     }
 
@@ -121,7 +121,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
         var newDecalLimit = Plugin.MiscMaxDecalCount.Value;
 
         var decalRendererTraverse = Traverse.Create(decalRenderer);
-        
+
         var maxStaticDecalsValue = decalRendererTraverse.Field("_maxDecals").GetValue<int>();
         Plugin.Log.LogWarning($"Current static decals limit is: {maxStaticDecalsValue}");
         if (maxStaticDecalsValue != newDecalLimit)
@@ -137,7 +137,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
             Plugin.Log.LogWarning($"Setting max dynamic decals to {newDecalLimit}");
             decalRendererTraverse.Field("_maxDynamicDecals").SetValue(newDecalLimit);
         }
-        
+
         var maxConcurrentParticlesField = Traverse.Create(typeof(Effects)).Field("int_0");
         var maxConcurrentParticles = maxConcurrentParticlesField.GetValue<int>();
 
@@ -160,7 +160,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
                 Plugin.Log.LogInfo($"Skipping {effect.Name}");
                 continue;
             }
-            
+
             Plugin.Log.LogInfo($"Processing {effect.Name}");
             var filteredParticles = new List<Effects.Effect.ParticleSys>();
 
@@ -226,8 +226,6 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
 public class EffectsEmitPatch : ModulePatch
 {
-    
-    
     protected override MethodBase GetTargetMethod()
     {
         // Need to disambiguate the correct emit method

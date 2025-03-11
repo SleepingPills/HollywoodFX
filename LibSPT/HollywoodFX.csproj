@@ -102,7 +102,6 @@
     <Compile Include="ImpactStatic.cs" />
     <Compile Include="Orientation.cs" />
     <Compile Include="LitMaterialRegistry.cs" />
-    <Compile Include="ParticleController.cs" />
     <Compile Include="Particles\EffectSystem.cs" />
     <Compile Include="Particles\EmissionController.cs" />
     <Compile Include="Particles\EffectBundle.cs" />
