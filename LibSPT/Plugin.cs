@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using BepInEx;
 using BepInEx.Bootstrap;
@@ -19,7 +20,8 @@ public class Plugin : BaseUnityPlugin
     public static ManualLogSource Log;
 
     public static ConfigEntry<float> EffectSize;
-
+    public static ConfigEntry<bool> TracerImpactsEnabled;
+    
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
     public static ConfigEntry<float> AmbientEffectDensity;
@@ -118,7 +120,7 @@ public class Plugin : BaseUnityPlugin
 
     private void SetupConfig(bool visceralCombatDetected)
     {
-        const string effectSize = "1. Effect Size (changes have no effect in-raid)";
+        const string general = "1. General (changes have no effect in-raid)";
         const string battleAmbience = "2. Ambient Battle Effects (changes have no effect in-raid)";
         const string bloodGore = "3. Blood/Gore Settings (changes have no effect in-raid)";
         const string ragdoll = "4. Ragdoll Effects (disabled by Visceral Combat)";
@@ -126,12 +128,18 @@ public class Plugin : BaseUnityPlugin
         const string debug = "6. Debug";
 
         /*
-         * Effect sizing
+         * General
          */
-        EffectSize = Config.Bind(effectSize, "Dakka Scale (larger is more dakka)", 1.0f, new ConfigDescription(
+        EffectSize = Config.Bind(general, "Dakka Scale (larger is more dakka)", 1.0f, new ConfigDescription(
             "Scales the size of effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 91 }
+        ));
+
+        TracerImpactsEnabled = Config.Bind(battleAmbience, "Enable Tracer Round Impacts", true, new ConfigDescription(
+            "Toggles special impact effects for tracer rounds.",
+            null,
+            new ConfigurationManagerAttributes { Order = 90 }
         ));
 
         /*

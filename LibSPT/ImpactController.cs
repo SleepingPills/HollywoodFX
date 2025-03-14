@@ -14,11 +14,17 @@ internal class ImpactController
     public ImpactController(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading Impacts Prefabs");
-        var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
-        _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
 
-        var impactsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
-        _impactEffects = new ImpactEffects(eftEffects, impactsPrefab);
+        if (Plugin.BattleAmbienceEnabled.Value)
+        {
+            var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
+            _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
+        }
+
+        var impactsMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
+        var impactsTracerPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts Tracer");
+        
+        _impactEffects = new ImpactEffects(eftEffects, impactsMainPrefab, impactsTracerPrefab);
 
         var bloodMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Main");
         var bloodSquirtsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Squirts");

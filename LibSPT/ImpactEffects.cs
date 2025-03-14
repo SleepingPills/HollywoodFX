@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Comfort.Common;
 using EFT.Ballistics;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -14,13 +13,23 @@ namespace System.Runtime.CompilerServices
 
 namespace HollywoodFX
 {
-    internal class ImpactEffects(Effects eftEffects, GameObject prefab)
+    internal class ImpactEffects
     {
-        private readonly List<EffectSystem>[] _impacts = DefineEffectSystems(eftEffects, prefab);
+        private readonly List<EffectSystem>[] _mainImpacts;
+        private readonly TracerImpactEffects _tracerImpacts;
+
+        public ImpactEffects(Effects eftEffects, GameObject mainPrefab, GameObject tracerPrefab)
+        {
+            var mainEffects = EffectBundle.LoadPrefab(eftEffects, mainPrefab, true);
+            var tracerEffects = EffectBundle.LoadPrefab(eftEffects, tracerPrefab, false);
+
+            _mainImpacts = DefineMainEffects(mainEffects);
+            _tracerImpacts = new TracerImpactEffects(mainEffects, tracerEffects);
+        }
 
         public void Emit(ImpactKinetics kinetics)
         {
-            var currentSystems = _impacts[(int)kinetics.Material];
+            var currentSystems = _mainImpacts[(int)kinetics.Material];
 
             if (currentSystems == null)
                 return;
@@ -29,12 +38,15 @@ namespace HollywoodFX
             {
                 impactSystem.Emit(kinetics, Plugin.EffectSize.Value);
             }
+
+            if (!Plugin.TracerImpactsEnabled.Value) return;
+
+            if (kinetics.Bullet.Info.Ammo is AmmoItemClass { Tracer: true } ammo)
+                _tracerImpacts.Emit(kinetics, ammo);
         }
 
-        private static List<EffectSystem>[] DefineEffectSystems(Effects eftEffects, GameObject prefab)
+        private static List<EffectSystem>[] DefineMainEffects(Dictionary<string, EffectBundle> effectMap)
         {
-            var effectMap = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-
             Plugin.Log.LogInfo("Constructing impact systems");
 
             // Define major building blocks for systems
@@ -87,8 +99,6 @@ namespace HollywoodFX
 
             Plugin.Log.LogInfo("Building misc stuff");
             var bulletHoleSmoke = effectMap["Impact_Smoke"];
-
-            var debrisSparksDrip = effectMap["Drip_Sparks"];
 
             var fallingDust = effectMap["Falling_Dust"];
 
@@ -259,8 +269,7 @@ namespace HollywoodFX
                         new DirectionalEffect(puffLinger, chance: 0.1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.35f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffGeneric, camDir: CamDir.Angled),
-                        new DirectionalEffect(spraySparksMetal, chance: 0.6f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(debrisSparksDrip, chance: 0.3f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(spraySparksMetal, chance: 0.8f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(bulletHoleSmoke, chance: 0.05f, isChanceScaledByKinetics: true)
                     ]
                 )
@@ -287,6 +296,16 @@ namespace HollywoodFX
                         new DirectionalEffect(puffFrontBody, chance: 0.55f),
                         new DirectionalEffect(spraySparksLight, chance: 0.4f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(effectMap["Debris_Armor_Metal"], chance: 0.5f, isChanceScaledByKinetics: true)
+                    ]
+                )
+            };
+
+            var bodyImpact = new List<EffectSystem>
+            {
+                new(
+                    directional:
+                    [
+                        new DirectionalEffect(puffFrontBody, chance: 0.3f),
                     ]
                 )
             };
@@ -327,40 +346,9 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.BodyArmor] = bodyArmorImpact;
             impactSystems[(int)MaterialType.Helmet] = helmetImpact;
             impactSystems[(int)MaterialType.GlassVisor] = helmetImpact;
-            // impactSystems[(int)MaterialType.Body] = bodyImpact;
+            impactSystems[(int)MaterialType.Body] = bodyImpact;
 
             return impactSystems;
-        }
-    }
-
-    public class BloodSquirtCollisionHandler : MonoBehaviour
-    {
-        private Effects _effects;
-        private ParticleSystem _particleSystem;
-        private List<ParticleCollisionEvent> _collisionEvents;
-
-        public void Start()
-        {
-            _effects = Singleton<Effects>.Instance;
-            _particleSystem = GetComponent<ParticleSystem>();
-            _collisionEvents = [];
-            Plugin.Log.LogInfo("Starting collision handler");
-        }
-
-        public void OnParticleCollision(GameObject other)
-        {
-            if (other == null)
-                return;
-
-            var numEvents = _particleSystem.GetCollisionEvents(other, _collisionEvents);
-
-            for (var i = 0; i < numEvents; i++)
-            {
-                var hitPos = _collisionEvents[i].intersection;
-                var hitNormal = _collisionEvents[i].normal;
-
-                _effects.EmitBleeding(hitPos, hitNormal);
-            }
         }
     }
 }

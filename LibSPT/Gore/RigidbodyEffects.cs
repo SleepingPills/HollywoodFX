@@ -134,7 +134,7 @@ public class BloodSquirtCollisionHandler : MonoBehaviour
         _effects = Singleton<Effects>.Instance;
         _particleSystem = GetComponent<ParticleSystem>();
         _collisionEvents = new List<ParticleCollisionEvent>(200);
-        Plugin.Log.LogInfo($"Starting collision handler for {_particleSystem.name}");
+        Plugin.Log.LogInfo($"Starting gore effects collision handler for {_particleSystem.name}");
     }
 
     public void OnParticleCollision(GameObject other)
