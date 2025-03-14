@@ -13,10 +13,10 @@ public class AmmoPoolObjectAutoDestroyPostfixPatch : ModulePatch
     }
 
     [PatchPostfix]
-    // ReSharper disable once InconsistentNaming
-    private static void Prefix(AmmoPoolObject __instance)
+    // ReSharper disable InconsistentNaming
+    private static void Prefix(AmmoPoolObject __instance, ref float ___float_0)
     {
-        Traverse.Create(__instance).Field("float_0").SetValue(Plugin.MiscShellLifetime.Value);
+        ___float_0 = Plugin.MiscShellLifetime.Value;
         __instance.Shell.transform.localScale *= Plugin.MiscShellSize.Value;
     }
 }

@@ -76,7 +76,7 @@ public class Plugin : BaseUnityPlugin
 
         new GameWorldAwakePrefixPatch().Enable();
         new GameWorldStartedPostfixPatch().Enable();
-        new GameWorldShotDelegatePrefixPatch().Enable();
+        new GameWorldShotDelegatePrefixPatch().Enable(); 
         
         new EffectsAwakePrefixPatch().Enable();
         new EffectsAwakePostfixPatch().Enable();
