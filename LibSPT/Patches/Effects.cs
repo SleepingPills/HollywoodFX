@@ -179,10 +179,6 @@ public class EffectsAwakePrefixPatch : ModulePatch
             Plugin.Log.LogInfo(
                 $"Clearing out particles for {effect.Name}: {effect.Particles}, {effect.Flash}, {effect.FlareID}"
             );
-            
-            Plugin.Log.LogInfo(
-                $"Light {effect.Name}: {effect.LightColor}, {effect.LightIntensity}, {effect.LightRange}, {effect.LightTime}, {effect.LightMaxDist}"
-            );
 
             effect.Particles = filteredParticles.ToArray();
             effect.Flash = false;
