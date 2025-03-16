@@ -3,7 +3,7 @@ using Comfort.Common;
 using EFT.Weather;
 using UnityEngine;
 
-namespace HollywoodFX;
+namespace HollywoodFX.Lighting;
 
 public class DynamicMaterialAmbientLighting : MonoBehaviour
 {

@@ -2,6 +2,7 @@
 using Comfort.Common;
 using EFT;
 using HollywoodFX.Gore;
+using HollywoodFX.Lighting;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Patches;

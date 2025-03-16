@@ -24,7 +24,7 @@ namespace HollywoodFX
             var tracerEffects = EffectBundle.LoadPrefab(eftEffects, tracerPrefab, false);
 
             _mainImpacts = DefineMainEffects(mainEffects);
-            _tracerImpacts = new TracerImpactEffects(mainEffects, tracerEffects);
+            _tracerImpacts = new TracerImpactEffects(eftEffects, mainEffects, tracerEffects);
         }
 
         public void Emit(ImpactKinetics kinetics)

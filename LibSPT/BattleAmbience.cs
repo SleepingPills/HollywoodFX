@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
+using HollywoodFX.Lighting;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;

@@ -196,7 +196,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
     [PatchPostfix]
     // ReSharper disable once InconsistentNaming
-    public static void Prefix(Effects __instance)
+    public static void Postfix(Effects __instance)
     {
         if (__instance.name.Contains("HFX"))
         {

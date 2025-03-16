@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
+using HollywoodFX.Lighting;
 using Systems.Effects;
 using UnityEngine;
 using Random = UnityEngine.Random;

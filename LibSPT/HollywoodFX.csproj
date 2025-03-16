@@ -91,7 +91,6 @@
     <Compile Include="BattleAmbience.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
-    <Compile Include="EffectMaterialAmbientLighting.cs" />
     <Compile Include="Gore\Finisher.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />
@@ -100,8 +99,9 @@
     <Compile Include="ImpactController.cs" />
     <Compile Include="ImpactEffects.cs" />
     <Compile Include="ImpactStatic.cs" />
+    <Compile Include="Lighting\EffectMaterialAmbientLighting.cs" />
+    <Compile Include="Lighting\LitMaterialRegistry.cs" />
     <Compile Include="Orientation.cs" />
-    <Compile Include="LitMaterialRegistry.cs" />
     <Compile Include="Particles\EffectSystem.cs" />
     <Compile Include="Particles\EmissionController.cs" />
     <Compile Include="Particles\EffectBundle.cs" />

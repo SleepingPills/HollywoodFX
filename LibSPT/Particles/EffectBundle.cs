@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Comfort.Common;
+using HollywoodFX.Lighting;
 using Systems.Effects;
 using UnityEngine;
 
@@ -9,18 +10,18 @@ namespace HollywoodFX.Particles;
 
 internal class EffectBundle(ParticleSystem[] particleSystems)
 {
-    public readonly ParticleSystem[] ParticleSystems = particleSystems;
+    private readonly ParticleSystem[] _particleSystems = particleSystems;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitRandom(Vector3 position, Vector3 normal, float scale)
     {
-        var pick = ParticleSystems[Random.Range(0, ParticleSystems.Length)];
+        var pick = _particleSystems[Random.Range(0, _particleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);
     }
 
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {
-        return new EffectBundle(bundles.SelectMany(b => b.ParticleSystems).ToArray());
+        return new EffectBundle(bundles.SelectMany(b => b._particleSystems).ToArray());
     }
 
     public static Dictionary<string, EffectBundle> LoadPrefab(Effects eftEffects, GameObject prefab, bool dynamicAlpha)

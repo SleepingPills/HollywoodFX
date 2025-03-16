@@ -35,7 +35,7 @@ internal class PlayerOnDeadPostfixPatch : ModulePatch
         if (rigidbody == null)
             return;
 
-        var scaledImpulse = Mathf.Min(10f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.Penetration), 350f);
+        var scaledImpulse = Mathf.Min(10f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.Penetration), 575f);
 
         rigidbody.AddForceAtPosition(damage.Direction * scaledImpulse, damage.HitPoint, ForceMode.Impulse);
         

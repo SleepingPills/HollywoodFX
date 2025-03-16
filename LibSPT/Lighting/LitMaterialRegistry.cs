@@ -3,7 +3,7 @@ using HarmonyLib;
 using Systems.Effects;
 using UnityEngine;
 
-namespace HollywoodFX;
+namespace HollywoodFX.Lighting;
 
 public class LitMaterialRegistry
 {
