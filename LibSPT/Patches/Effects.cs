@@ -6,6 +6,7 @@ using DeferredDecals;
 using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
+using HollywoodFX.Decal;
 using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
 using Systems.Effects;
@@ -82,8 +83,8 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
         if (decalRenderer == null) return;
 
-        var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue() as DeferredDecalRenderer.SingleDecal;
-        var bleedingDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_bleedingDecal").GetValue() as DeferredDecalRenderer.SingleDecal;
+        var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
+        var bleedingDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
 
         if (bleedingDecalOrig == null || bleedingDecalNew == null) return;
 
@@ -93,8 +94,8 @@ public class EffectsAwakePrefixPatch : ModulePatch
         bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
         bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
 
-        var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
-        var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue() as DeferredDecalRenderer.SingleDecal;
+        var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
+        var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
 
         if (splatterDecalOrig == null || splatterDecalNew == null) return;
 
@@ -103,6 +104,11 @@ public class EffectsAwakePrefixPatch : ModulePatch
         splatterDecalOrig.TileSheetRows = splatterDecalNew.TileSheetRows;
         splatterDecalOrig.TileSheetColumns = splatterDecalNew.TileSheetColumns;
         splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize * Plugin.BloodSplatterDecalsSize.Value;
+
+        var impactDecals = Traverse.Create(decalsEffects.DeferredDecals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
+
+        Decals.TracerScrorchMark = impactDecals[0];
+        Plugin.Log.LogInfo($"Extracted decal: {Decals.TracerScrorchMark} > {Decals.TracerScrorchMark.DecalMaterial.name}");
 
         Plugin.Log.LogInfo("Decal overrides complete");
     }
@@ -215,6 +221,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
             var emissionController = __instance.gameObject.AddComponent<EmissionController>();
             Singleton<EmissionController>.Create(emissionController);
             Singleton<ImpactController>.Create(new ImpactController(__instance));
+            Singleton<DecalPainter>.Create(new DecalPainter(__instance.DeferredDecals));
         }
         catch (Exception e)
         {
@@ -246,5 +253,28 @@ public class EffectsEmitPatch : ModulePatch
 
         ImpactStatic.Kinetics.Update(material, position, normal, isHitPointVisible);
         Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
+    }
+}
+
+public class DecalTestPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        // Need to disambiguate the correct emit method
+        return typeof(DeferredDecalRenderer).GetMethod(nameof(DeferredDecalRenderer.DrawDecal),
+        [
+            typeof(Vector3), typeof(Vector3), typeof(BallisticCollider), typeof(bool),
+        ]);
+    }
+
+    [PatchPrefix]
+    // ReSharper disable once InconsistentNaming
+    public static bool Prefix(Vector3 position,
+        Vector3 normal,
+        BallisticCollider hitCollider,
+        bool isGrenade)
+    {
+        Plugin.Log.LogInfo($"Decal test: {hitCollider.gameObject.name}");
+        return false;
     }
 }

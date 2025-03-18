@@ -85,6 +85,8 @@ public class Plugin : BaseUnityPlugin
         new BulletImpactPatch().Enable();
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
+        
+        new DecalTestPatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {

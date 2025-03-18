@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using Comfort.Common;
+using DeferredDecals;
 using EFT.Ballistics;
 using HarmonyLib;
+using HollywoodFX.Decal;
 using HollywoodFX.Particles;
 using JsonType;
 using Systems.Effects;
@@ -160,17 +163,24 @@ internal class TracerImpactEffects
 
     public void Emit(ImpactKinetics kinetics, AmmoItemClass ammo)
     {
+        var decals = Singleton<Effects>.Instance.DeferredDecals;
+        
+        var decal = Traverse.Create(decals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
+        
+        Singleton<DecalPainter>.Instance.DrawDecal(
+            Decals.TracerScrorchMark, kinetics.Position, kinetics.Normal, kinetics.Bullet.Info.HittedBallisticCollider
+        );
+        
         var impactDef = _impacts[(int)kinetics.Material];
 
         if (impactDef == null)
             return;
 
-        if (Random.Range(0f, 1f) < impactDef.Chance)
+        if (!(Random.Range(0f, 1f) < impactDef.Chance)) return;
+        
+        foreach (var system in impactDef.Systems)
         {
-            foreach (var system in impactDef.Systems)
-            {
-                system.Emit(kinetics, Plugin.EffectSize.Value);
-            }
+            system.Emit(kinetics, Plugin.EffectSize.Value);
         }
 
         var tracerRicochetChance = impactDef.RicochetChance * kinetics.Bullet.ChanceScale;
@@ -180,7 +190,7 @@ internal class TracerImpactEffects
         var tracerScaling = kinetics.Bullet.SizeScale * Plugin.EffectSize.Value;
 
         var lightColor = Color.white;
-        
+
         switch (ammo.TracerColor)
         {
             case TaxonomyColor.green or TaxonomyColor.tracerGreen:
@@ -204,9 +214,6 @@ internal class TracerImpactEffects
 
         // if (impactDef.Decal)
         // {
-        //     Singleton<Effects>.Instance.DeferredDecals.DrawDecal(
-        //         kinetics.Position, kinetics.Normal, kinetics.Bullet.Info.HittedBallisticCollider, true
-        //     );
         // }
     }
 }

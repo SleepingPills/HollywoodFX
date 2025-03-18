@@ -91,6 +91,8 @@
     <Compile Include="BattleAmbience.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
+    <Compile Include="Decal\DecalPainter.cs" />
+    <Compile Include="Decal\Decals.cs" />
     <Compile Include="Gore\Finisher.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />
