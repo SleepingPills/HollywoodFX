@@ -255,26 +255,3 @@ public class EffectsEmitPatch : ModulePatch
         Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
     }
 }
-
-public class DecalTestPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        // Need to disambiguate the correct emit method
-        return typeof(DeferredDecalRenderer).GetMethod(nameof(DeferredDecalRenderer.DrawDecal),
-        [
-            typeof(Vector3), typeof(Vector3), typeof(BallisticCollider), typeof(bool),
-        ]);
-    }
-
-    [PatchPrefix]
-    // ReSharper disable once InconsistentNaming
-    public static bool Prefix(Vector3 position,
-        Vector3 normal,
-        BallisticCollider hitCollider,
-        bool isGrenade)
-    {
-        Plugin.Log.LogInfo($"Decal test: {hitCollider.gameObject.name}");
-        return false;
-    }
-}
