@@ -46,7 +46,7 @@ public class BloodEffects
         
         Plugin.Log.LogInfo("Building finishers");
         _finishers = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _finishers.Setup(eftEffects, prefabFinishers, 10, 5f);
+        _finishers.Setup(eftEffects, prefabFinishers, 10, 2f);
     }
 
     public void Emit(ImpactKinetics kinetics, Rigidbody rigidbody)
