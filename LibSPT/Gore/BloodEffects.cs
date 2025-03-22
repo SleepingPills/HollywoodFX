@@ -7,25 +7,22 @@ namespace HollywoodFX.Gore;
 
 public class BloodEffects
 {
-    /*
-     * - Apply the core set of mists, sprays and splashes.
-     * - If armor was hit, cut the chances in half if there was penetration, or by 75% if there wasn't
-     * - Apply squirt
-     *  - If penetrated, apply a 50% chance to make the squirt go opposite the normal (ie out the exit wound)
-     * - If the impact is not angled, apply a secondary effect that is tangential to the surface hit (ie normal to the normal vector)
-     */
-
     private readonly EffectSystem _mists;
     private readonly EffectSystem _sprays;
     private readonly EffectSystem _squibs;
 
     // Attached to rigidbodies
     private readonly RigidbodyEffects _squirts;
+    private readonly RigidbodyEffects _bleeds;
 
     // Attached to rigidbodies and played as a final splash in Ragdoll.AmplyImpulse
     private readonly RigidbodyEffects _finishers;
+    private readonly RigidbodyEffects _bleedouts;
 
-    public BloodEffects(Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts, GameObject prefabFinishers)
+    public BloodEffects(
+        Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleeds, GameObject prefabBleedouts,
+        GameObject prefabFinishers
+    )
     {
         var effectMap = EffectBundle.LoadPrefab(eftEffects, prefabMain, false);
 
@@ -43,6 +40,14 @@ public class BloodEffects
         Plugin.Log.LogInfo("Building blood squirts");
         _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _squirts.Setup(eftEffects, prefabSquirts, 10, 2f);
+        
+        Plugin.Log.LogInfo("Building bleeds");
+        _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
+        _bleeds.Setup(eftEffects, prefabBleeds, 30, 10f);
+
+        Plugin.Log.LogInfo("Building bleedouts");
+        _bleedouts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
+        _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 3.5f);
         
         Plugin.Log.LogInfo("Building finishers");
         _finishers = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
@@ -62,7 +67,7 @@ public class BloodEffects
             armorChanceScale = 1f;
 
         var bullet = kinetics.Bullet;
-        
+
         var mistSizeScale = bullet.SizeScale * Plugin.BloodMistSize.Value;
         var spraySizeScale = bullet.SizeScale * Plugin.BloodSpraySize.Value;
         var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
@@ -92,7 +97,12 @@ public class BloodEffects
             else
                 _squirts.Emit(rigidbody, position, flippedNormal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
         }
-        
+        else
+        {
+            // Emit bleeding if a squirt was not generated
+            _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
+        }
+
         // Other stuff gets emitted only if the flipped normal is angled (otherwise there's no point) 
         var camDir = Orientation.GetCamDir(flippedNormal);
 
@@ -102,10 +112,14 @@ public class BloodEffects
         _mists.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
         _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, squibChanceScale);
     }
+
+    public void EmitBleedout(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
+    {
+        _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
+    }
     
     public void EmitFinisher(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
         _finishers.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
     }
-
 }

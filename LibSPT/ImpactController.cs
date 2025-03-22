@@ -28,9 +28,11 @@ internal class ImpactController
 
         var bloodMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Main");
         var bloodSquirtsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Squirts");
+        var bloodBleedPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Bleed");
+        var bloodBleedoutPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Bleedout");
         var bloodFinishersPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Finishers");
 
-        _goreEffects = new GoreEffects(eftEffects, bloodMainPrefab, bloodSquirtsPrefab, bloodFinishersPrefab);
+        _goreEffects = new GoreEffects(eftEffects, bloodMainPrefab, bloodSquirtsPrefab, bloodBleedPrefab, bloodBleedoutPrefab, bloodFinishersPrefab);
     }
 
     public void Emit(ImpactKinetics kinetics)

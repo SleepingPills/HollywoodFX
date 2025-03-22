@@ -152,7 +152,7 @@ namespace HollywoodFX
                         new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.45f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(spraySparksLight, chance: 1f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(debrisGeneric, chance: 0.15f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(debrisGeneric, chance: 0.25f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisRock, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisDirtVert, worldDir: WorldDir.Vertical | WorldDir.Up),
                         new DirectionalEffect(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.1f, isChanceScaledByKinetics: true),

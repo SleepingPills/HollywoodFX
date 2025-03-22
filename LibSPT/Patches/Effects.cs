@@ -74,7 +74,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
                 texDecalsTraverse.Field("_bloodDecalTexture").SetValue(bloodDecals);
                 texDecalsTraverse.Field("_vestDecalTexture").SetValue(bloodDecals);
                 texDecalsTraverse.Field("_backDecalTexture").SetValue(bloodDecals);
-                var woundDecalSize = new Vector2(0.1f, 0.15f) * Plugin.WoundDecalsSize.Value;
+                var woundDecalSize = new Vector2(0.1f, 0.3f) * Plugin.WoundDecalsSize.Value;
                 texDecalsTraverse.Field("_decalSize").SetValue(woundDecalSize);
             }
         }
