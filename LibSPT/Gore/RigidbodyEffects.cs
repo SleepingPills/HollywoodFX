@@ -113,7 +113,7 @@ internal class RigidbodyEffects : MonoBehaviour
         effect.transform.rotation = Quaternion.LookRotation(normal);
         effect.transform.SetParent(rigidbody.transform);
         effect.Play(true);
-
+        
         _active.Enqueue(new Emission(effect, Time.time));
     }
 

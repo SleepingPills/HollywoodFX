@@ -97,7 +97,7 @@ public class BloodEffects
             else
                 _squirts.Emit(rigidbody, position, flippedNormal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
         }
-        else
+        else if (Random.Range(0f, 1f) < squirtChance)
         {
             // Emit bleeding if a squirt was not generated
             _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
