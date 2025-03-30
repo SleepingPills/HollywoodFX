@@ -178,9 +178,10 @@ internal class TracerImpactEffects
                 Decals.TracerScrorchMark, kinetics.Position, kinetics.Normal, kinetics.Bullet.Info.HittedBallisticCollider
             );
         }
-        
-        foreach (var system in impactDef.Systems)
+
+        for (var i = 0; i < impactDef.Systems.Length; i++)
         {
+            var system = impactDef.Systems[i];
             system.Emit(kinetics, Plugin.EffectSize.Value);
         }
 

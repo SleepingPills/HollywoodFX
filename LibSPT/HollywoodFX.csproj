@@ -100,6 +100,7 @@
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />
     <Compile Include="Gore\GoreEffects.cs" />
+    <Compile Include="Helpers\DebugGizmo.cs" />
     <Compile Include="ImpactKinetics.cs" />
     <Compile Include="ImpactController.cs" />
     <Compile Include="ImpactEffects.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Effects.cs" />
     <Compile Include="Patches\GameWorld.cs" />
+    <Compile Include="Patches\MuzzleManager.cs" />
     <Compile Include="Patches\Player.cs" />
     <Compile Include="Patches\Ragdoll.cs" />
     <Compile Include="Plugin.cs" />

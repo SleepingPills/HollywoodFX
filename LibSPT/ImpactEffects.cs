@@ -34,8 +34,9 @@ namespace HollywoodFX
             if (currentSystems == null)
                 return;
 
-            foreach (var impactSystem in currentSystems)
+            for (var i = 0; i < currentSystems.Count; i++)
             {
+                var impactSystem = currentSystems[i];
                 impactSystem.Emit(kinetics, Plugin.EffectSize.Value);
             }
 
@@ -120,7 +121,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontRock),
-                        new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.35f, isChanceScaledByKinetics: true),
@@ -149,7 +150,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontRock),
-                        new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.45f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(spraySparksLight, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.25f, isChanceScaledByKinetics: true),
@@ -178,7 +179,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontDusty),
-                        new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.45f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.35f, isChanceScaledByKinetics: true),
@@ -204,7 +205,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontDusty),
-                        new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.45f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(effectMap["Debris_Grass"], chance: 0.4f, isChanceScaledByKinetics: true),

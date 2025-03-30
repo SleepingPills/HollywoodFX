@@ -85,7 +85,10 @@ public class Plugin : BaseUnityPlugin
         new BulletImpactPatch().Enable();
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
-        
+
+        new MuzzleManagerShotPrefixPatch().Enable();
+        new MuzzleManagerUpdatePostfixPatch().Enable();
+
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
             if (RagdollCinematicEnabled.Value)

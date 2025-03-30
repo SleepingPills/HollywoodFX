@@ -51,8 +51,10 @@ internal class EffectSystem(
 
         var hasEmitted = false;
 
-        foreach (var impact in directional)
+        for (var i = 0; i < directional.Length; i++)
         {
+            var impact = directional[i];
+            
             if (!camDir.IsSet(impact.CamDir) || !worldDir.IsSet(impact.WorldDir)) continue;
 
             var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * bullet.ChanceScale : impact.Chance);
