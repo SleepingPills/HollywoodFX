@@ -107,6 +107,7 @@
     <Compile Include="ImpactStatic.cs" />
     <Compile Include="Lighting\EffectMaterialAmbientLighting.cs" />
     <Compile Include="Lighting\LitMaterialRegistry.cs" />
+    <Compile Include="Muzzle\MuzzleEffects.cs" />
     <Compile Include="Orientation.cs" />
     <Compile Include="Particles\EffectSystem.cs" />
     <Compile Include="Particles\EmissionController.cs" />
@@ -114,6 +115,7 @@
     <Compile Include="Patches\AmmoPoolObject.cs" />
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Effects.cs" />
+    <Compile Include="Patches\FirearmController.cs" />
     <Compile Include="Patches\GameWorld.cs" />
     <Compile Include="Patches\MuzzleManager.cs" />
     <Compile Include="Patches\Player.cs" />

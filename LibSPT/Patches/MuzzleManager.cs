@@ -8,9 +8,43 @@ namespace HollywoodFX.Patches;
 
 /*
  * Player.InitiateShot contains a FireportPosition - might be the way to do things.
+ *
+ * Muzzle Logic:
+ *
+ * 1. A MuzzleEffect struct will manage all the gubbins for a particular muzzle combo
+ * 2. We'll update it in UpdateJetsAndFumes
+ * 3. We'll use the sqrCameraDistance to establish pov. Within 1.5m radius the muzzle effects will be 1x size, and then we lerp it to 2x size at 3m radius.
+ *    This allows neat 3rd person scaling and the muzzle won't dominate the entire screen if fired up close.
+ * 4. Jets will be handled via ParticleSystem.Emit, in the UpdateJetsAndFumes we'll grab out the forward facing jet and calculate angles to other jets.
+ * 5. If the angles are all ~0, it's a simple muzzle or a tri-prong (which have borked jets for some reason).
+ * 6. If there are no jets, or a silencer object is present in the weapon children, we assume a silencer is installed and we use silencer jets.
+ *
+ * Notes:
+ * - The Weapon in CurrentShot has Speedfactor which we can use to determine whether we are using a shortened or longer barrel
+ * - The Weapon has IsSilenced
+ * - To find the forward facing jet, we'll simply find the jet with the lowest angle to the fireport
  */
 
 internal class MuzzleManagerUpdatePostfixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(MuzzleManager).GetMethod(nameof(MuzzleManager.UpdateJetsAndFumes));
+    }
+
+    [PatchPostfix]
+    private static void Postfix(MuzzleManager __instance, MuzzleJet[] ___muzzleJet_0)
+    {
+        /*
+         * 1. Get the fireport transform
+         * 2. Get the jets
+         * 3. Get the smokes
+         * 4. Split the jets into Forward and Side. The forward jet will be the one with the lowest angle to the fireport. If the angles are all >45, we skip the Forward jet.
+         */
+    }
+}
+
+internal class MuzzleManagerDebugPatch1 : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
@@ -25,7 +59,15 @@ internal class MuzzleManagerUpdatePostfixPatch : ModulePatch
         // There's a silencer in the list when a silencer is attached and we also get zero jets
         foreach (var child in __instance.Hierarchy.GetComponentsInChildren<Transform>())
         {
-            ConsoleScreen.Log($"Hierarchy: {child.name}");
+            var collider = child.gameObject.GetComponent<Collider>();
+            Bounds bounds = default;
+
+            if (collider != null)
+            {
+                bounds = collider.bounds;
+            }
+            
+            ConsoleScreen.Log($"Hierarchy: {child.name} {collider} {bounds.extents}");
         }
 
         if (___muzzleJet_0 == null) return;
@@ -37,7 +79,7 @@ internal class MuzzleManagerUpdatePostfixPatch : ModulePatch
     }
 }
 
-internal class MuzzleManagerShotPrefixPatch : ModulePatch
+internal class MuzzleManagerDebugPatch2 : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
@@ -58,22 +100,26 @@ internal class MuzzleManagerShotPrefixPatch : ModulePatch
         if (__instance.JetMaterial != null)
             MuzzleJet.RandomizeMaterial(__instance.JetMaterial, ___vector2_0);
 
-        // foreach (var jet in ___muzzleJet_0)
-        // {
-        //     var color = Color.white;
-        //
-        //     if (jet.name.Contains("000"))
-        //     {
-        //         color = Color.red;
-        //     }
-        //     if (jet.name.Contains("003"))
-        //     {
-        //         color = Color.blue;
-        //     }
-        //     
-        //     DebugGizmos.Ray(jet.transform.position, -1 * jet.transform.up, color, temporary: true, expiretime: 1f);
-        // }
+        for (var i = 0; i < ___muzzleJet_0.Length; i++)
+        {
+            var jet = ___muzzleJet_0[i];
+            var color = Color.white;
+
+            if (jet.name.Contains("000") || i == 0)
+            {
+                color = Color.red;
+            }
+
+            if (i == (___muzzleJet_0.Length - 1))
+            {
+                color = Color.blue;
+            }
+
+            DebugGizmos.Ray(jet.transform.position, -1 * jet.transform.up, color, temporary: true, expiretime: 1f);
+        }
         
+        ConsoleScreen.Log($"Muzzle Manager cam distance: {Mathf.Sqrt(sqrCameraDistance)}");
+
         // foreach (var child in __instance.Hierarchy.GetComponentsInChildren<Transform>())
         // {
         //     if (child.name == "fireport")

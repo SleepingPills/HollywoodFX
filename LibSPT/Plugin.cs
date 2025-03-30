@@ -22,6 +22,8 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> EffectSize;
     public static ConfigEntry<bool> TracerImpactsEnabled;
     
+    public static ConfigEntry<bool> MuzzleEffectsEnabled;
+    
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
     public static ConfigEntry<float> AmbientEffectDensity;
@@ -86,8 +88,13 @@ public class Plugin : BaseUnityPlugin
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
-        new MuzzleManagerShotPrefixPatch().Enable();
-        new MuzzleManagerUpdatePostfixPatch().Enable();
+        new MuzzleManagerDebugPatch2().Enable();
+        new MuzzleManagerDebugPatch1().Enable();
+
+        if (MuzzleEffectsEnabled.Value)
+        {
+            new FirearmControllerInitiateShotPrefixPatch().Enable();
+        }
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
@@ -123,12 +130,13 @@ public class Plugin : BaseUnityPlugin
 
     private void SetupConfig(bool visceralCombatDetected)
     {
-        const string general = "1. General (changes have no effect in-raid)";
-        const string battleAmbience = "2. Ambient Battle Effects (changes have no effect in-raid)";
-        const string bloodGore = "3. Blood/Gore Settings (changes have no effect in-raid)";
-        const string ragdoll = "4. Ragdoll Effects (disabled by Visceral Combat)";
-        const string misc = "5. Miscellaneous Flotsam (changes have no effect in-raid)";
-        const string debug = "6. Debug";
+        const string general = "1. General";
+        const string muzzleEffects = "2. Muzzle Blast Effects";
+        const string battleAmbience = "3. Ambient Battle Effects (changes have no effect in-raid)";
+        const string bloodGore = "4. Blood/Gore Settings";
+        const string ragdoll = "5. Ragdoll Effects (disabled by Visceral Combat)";
+        const string misc = "6. Miscellaneous Flotsam";
+        const string debug = "7. Debug";
 
         /*
          * General
@@ -144,11 +152,20 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 90 }
         ));
-
+        
+        /*
+         * Muzzle Effects
+         */
+        MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Effects (Requires Restart)", true, new ConfigDescription(
+            "Toggles new muzzle blast effects.",
+            null,
+            new ConfigurationManagerAttributes { Order = 64 }
+        ));
+        
         /*
          * Battle Ambience
          */
-        BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects", true, new ConfigDescription(
+        BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects (Requires Restart)", true, new ConfigDescription(
             "Toggles battle ambience effects like lingering smoke, dust and debris.",
             null,
             new ConfigurationManagerAttributes { Order = 64 }
@@ -181,7 +198,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Blood Effects
          */
-        BloodEnabled = Config.Bind(bloodGore, "Enable Blood Effects", true, new ConfigDescription(
+        BloodEnabled = Config.Bind(bloodGore, "Enable Blood Effects (Requires Restart)", true, new ConfigDescription(
             "Toggles whether blood effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
             null,
             new ConfigurationManagerAttributes { Order = 39 }
@@ -217,19 +234,19 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 34 }
         ));
 
-        WoundDecalsEnabled = Config.Bind(battleAmbience, "Enable New Wound Decals on Bodies", true, new ConfigDescription(
+        WoundDecalsEnabled = Config.Bind(battleAmbience, "Wound Decals on Bodies (Requires Restart)", true, new ConfigDescription(
             "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects. Philistine.",
             null,
             new ConfigurationManagerAttributes { Order = 32 }
         ));
 
-        WoundDecalsSize = Config.Bind(battleAmbience, "Wound Decal Size", 1f, new ConfigDescription(
+        WoundDecalsSize = Config.Bind(battleAmbience, "Wound Decal Size (Requires Restart)", 1f, new ConfigDescription(
             "Adjusts the size of the wound decals that appear on bodies.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 31 }
         ));
         
-        BloodSplatterDecalsSize = Config.Bind(battleAmbience, "Splatter Decal Size", 1f, new ConfigDescription(
+        BloodSplatterDecalsSize = Config.Bind(battleAmbience, "Splatter Decal Size (Requires Restart)", 1f, new ConfigDescription(
             "Adjusts the size of the blood splatters on the environment.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 30 }
@@ -239,19 +256,19 @@ public class Plugin : BaseUnityPlugin
          * Ragdolls
          */
         bool[] ragdollAcceptableValues = visceralCombatDetected ? [false] : [false, true];
-        RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (requires game restart)", !visceralCombatDetected, new ConfigDescription(
+        RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (Requires Restart)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 13, ReadOnly = visceralCombatDetected }
         ));
         
-        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls", true, new ConfigDescription(
+        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (Requires Restart)", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
         ));
         
-        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death", true, new ConfigDescription(
+        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (Requires Restart)", true, new ConfigDescription(
             "Toggles the enemies dropping their weapon on death.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected }
@@ -266,7 +283,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Misc
          */
-        MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment", true, new ConfigDescription(
+        MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (Requires Restart)", true, new ConfigDescription(
             "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
             null,
             new ConfigurationManagerAttributes { Order = 9 }
@@ -278,7 +295,7 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 8 }
         ));
 
-        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame", 100, new ConfigDescription(
+        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (Requires Restart)", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
             new ConfigurationManagerAttributes { Order = 7 }
@@ -307,7 +324,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Deboog
          */
-        _loggingEnabled = Config.Bind(debug, "Enable Debug Logging", false, new ConfigDescription(
+        _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (Requires Restart)", false, new ConfigDescription(
             "Duh. Requires restarting the game to take effect.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }

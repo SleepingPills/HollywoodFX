@@ -44,11 +44,7 @@ public class BulletKinetics
 
         if (bulletInfo.HitCollider == null) return;
         
-        HitColliderRoot = bulletInfo.HitCollider.transform;
-        while (HitColliderRoot.parent != null)
-        {
-            HitColliderRoot = HitColliderRoot.parent;
-        }
+        HitColliderRoot = bulletInfo.HitCollider.transform.root;
     }
 }
 
