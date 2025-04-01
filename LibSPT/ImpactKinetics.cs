@@ -20,6 +20,7 @@ public class BulletKinetics
     {
         Impulse = 3.6f;
         Energy = 1620f;
+        HitColliderRoot = null;
 
         if (bulletInfo == null) return;
         

@@ -23,6 +23,9 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> TracerImpactsEnabled;
     
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
+    public static ConfigEntry<float> MuzzleEffectJetsSize;
+    public static ConfigEntry<float> MuzzleEffectSparksSize;
+    public static ConfigEntry<float> MuzzleEffectSmokeSize;
     
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
@@ -88,12 +91,14 @@ public class Plugin : BaseUnityPlugin
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
-        new MuzzleManagerDebugPatch2().Enable();
-        new MuzzleManagerDebugPatch1().Enable();
+        // new MuzzleManagerDebugPatch1().Enable();
+        // new MuzzleManagerDebugPatch2().Enable();
 
         if (MuzzleEffectsEnabled.Value)
         {
             new FirearmControllerInitiateShotPrefixPatch().Enable();
+            new MuzzleManagerUpdatePostfixPatch().Enable();
+            new MuzzleManagerShotPrefixPatch().Enable();
         }
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
@@ -159,7 +164,13 @@ public class Plugin : BaseUnityPlugin
         MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Effects (Requires Restart)", true, new ConfigDescription(
             "Toggles new muzzle blast effects.",
             null,
-            new ConfigurationManagerAttributes { Order = 64 }
+            new ConfigurationManagerAttributes { Order = 80 }
+        ));
+
+        MuzzleEffectJetsSize = Config.Bind(muzzleEffects, "Muzzle Jet Size", 1f, new ConfigDescription(
+            "Adjusts the size of the muzzle flame jets.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 79 }
         ));
         
         /*

@@ -35,10 +35,6 @@ public class GoreEffects
 
         var hitColliderRoot = bullet.HitColliderRoot;
 
-        // Don't render blood effects on the local player
-        if (hitColliderRoot == ImpactStatic.LocalPlayerTransform)
-            return;
-
         var rigidbody = bulletInfo.HitCollider.attachedRigidbody;
 
         if (rigidbody == null)

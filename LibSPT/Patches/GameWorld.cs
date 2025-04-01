@@ -3,6 +3,7 @@ using Comfort.Common;
 using EFT;
 using HollywoodFX.Gore;
 using HollywoodFX.Lighting;
+using HollywoodFX.Muzzle;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Patches;
@@ -27,6 +28,9 @@ public class GameWorldAwakePrefixPatch : ModulePatch
 
         Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
         Singleton<PlayerDamageRegistry>.Create(new PlayerDamageRegistry());
+        
+        if (Plugin.MuzzleEffectsEnabled.Value)
+            Singleton<MuzzleEffects>.Create(new MuzzleEffects());
     }
 }
 

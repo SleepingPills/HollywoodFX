@@ -37,6 +37,12 @@ internal class ImpactController
 
     public void Emit(ImpactKinetics kinetics)
     {
+        var hitColliderRoot = kinetics.Bullet.HitColliderRoot;
+
+        // Don't render effects on the local player
+        if (hitColliderRoot != null && hitColliderRoot == ImpactStatic.LocalPlayerTransform)
+            return;
+        
         var isBodyShot = (kinetics.Material is
             MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet);
 

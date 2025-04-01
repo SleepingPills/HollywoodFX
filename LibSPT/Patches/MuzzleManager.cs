@@ -1,6 +1,9 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using Comfort.Common;
 using EFT.UI;
 using HollywoodFX.Helpers;
+using HollywoodFX.Muzzle;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
@@ -33,14 +36,27 @@ internal class MuzzleManagerUpdatePostfixPatch : ModulePatch
     }
 
     [PatchPostfix]
-    private static void Postfix(MuzzleManager __instance, MuzzleJet[] ___muzzleJet_0)
+    private static void Postfix(MuzzleManager __instance, MuzzleJet[] ___muzzleJet_0, MuzzleSmoke[] ___muzzleSmoke_0)
     {
-        /*
-         * 1. Get the fireport transform
-         * 2. Get the jets
-         * 3. Get the smokes
-         * 4. Split the jets into Forward and Side. The forward jet will be the one with the lowest angle to the fireport. If the angles are all >45, we skip the Forward jet.
-         */
+        if (Singleton<MuzzleEffects>.Instance == null)
+            return;
+        
+        Singleton<MuzzleEffects>.Instance.UpdateMuzzle(__instance, ___muzzleJet_0, ___muzzleSmoke_0);
+    }
+}
+
+internal class MuzzleManagerShotPrefixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(MuzzleManager).GetMethod(nameof(MuzzleManager.Shot));
+    }
+
+    [PatchPrefix]
+    private static bool Prefix(MuzzleManager __instance, bool isVisible, float sqrCameraDistance)
+    {
+        Singleton<MuzzleEffects>.Instance.Emit(__instance, isVisible, sqrCameraDistance);
+        return false;
     }
 }
 
@@ -59,15 +75,17 @@ internal class MuzzleManagerDebugPatch1 : ModulePatch
         // There's a silencer in the list when a silencer is attached and we also get zero jets
         foreach (var child in __instance.Hierarchy.GetComponentsInChildren<Transform>())
         {
-            var collider = child.gameObject.GetComponent<Collider>();
-            Bounds bounds = default;
+            var component = child.gameObject.GetComponent<MeshFilter>();
+            Bounds bounds1 = default;
+            Bounds bounds2 = default;
 
-            if (collider != null)
+            if (component != null)
             {
-                bounds = collider.bounds;
+                bounds1 = component.sharedMesh.bounds;
+                bounds2 = component.mesh.bounds;
             }
             
-            ConsoleScreen.Log($"Hierarchy: {child.name} {collider} {bounds.extents}");
+            ConsoleScreen.Log($"Hierarchy: {child.name} {component} {bounds1.extents} {bounds2.extents}");
         }
 
         if (___muzzleJet_0 == null) return;
@@ -100,25 +118,25 @@ internal class MuzzleManagerDebugPatch2 : ModulePatch
         if (__instance.JetMaterial != null)
             MuzzleJet.RandomizeMaterial(__instance.JetMaterial, ___vector2_0);
 
-        for (var i = 0; i < ___muzzleJet_0.Length; i++)
-        {
-            var jet = ___muzzleJet_0[i];
-            var color = Color.white;
-
-            if (jet.name.Contains("000") || i == 0)
-            {
-                color = Color.red;
-            }
-
-            if (i == (___muzzleJet_0.Length - 1))
-            {
-                color = Color.blue;
-            }
-
-            DebugGizmos.Ray(jet.transform.position, -1 * jet.transform.up, color, temporary: true, expiretime: 1f);
-        }
+        // for (var i = 0; i < ___muzzleJet_0.Length; i++)
+        // {
+        //     var jet = ___muzzleJet_0[i];
+        //     var color = Color.white;
+        //
+        //     if (jet.name.Contains("000") || i == 0)
+        //     {
+        //         color = Color.red;
+        //     }
+        //
+        //     if (i == (___muzzleJet_0.Length - 1))
+        //     {
+        //         color = Color.blue;
+        //     }
+        //
+        //     DebugGizmos.Ray(jet.transform.position, -1 * jet.transform.up, color, temporary: true, expiretime: 1f);
+        // }
         
-        ConsoleScreen.Log($"Muzzle Manager cam distance: {Mathf.Sqrt(sqrCameraDistance)}");
+        // ConsoleScreen.Log($"Muzzle Manager cam distance: {Mathf.Sqrt(sqrCameraDistance)}");
 
         // foreach (var child in __instance.Hierarchy.GetComponentsInChildren<Transform>())
         // {
@@ -130,22 +148,31 @@ internal class MuzzleManagerDebugPatch2 : ModulePatch
         if (___muzzleParticlePivot_0 != null && (isVisible || sqrCameraDistance < 4.0))
         {
             foreach (var t in ___muzzleParticlePivot_0)
+            {
                 t.Play(__instance);
+                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.magenta, temporary: true, expiretime: 1f);                
+            }
         }
 
         // Sparks duh
         if (___muzzleSparks_0 != null && (isVisible || sqrCameraDistance < 4.0))
         {
             foreach (var t in ___muzzleSparks_0)
-                t.Emit(__instance);
+            {
+                t.Emit(__instance);                
+                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.yellow, temporary: true, expiretime: 1f);    
+            }
         }
 
         // This is the lingering smoke cloud after heavy shooting
-        // if (___muzzleFume_0 != null && (isVisible && sqrCameraDistance < 100.0 || !isVisible && sqrCameraDistance < 4.0))
-        // {
-        //     foreach (var t in ___muzzleFume_0)
-        //         t.Emit(__instance);
-        // }
+        if (___muzzleFume_0 != null && (isVisible && sqrCameraDistance < 100.0 || !isVisible && sqrCameraDistance < 4.0))
+        {
+            foreach (var t in ___muzzleFume_0)
+            {
+                t.Emit(__instance);
+                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.white, temporary: true, expiretime: 1f);
+            }
+        }
 
         // This is the smoke trail emitting from the barrel
         if (___muzzleSmoke_0 != null && (isVisible && sqrCameraDistance < 100.0 || !isVisible && sqrCameraDistance < 4.0))

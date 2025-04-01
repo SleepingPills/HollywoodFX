@@ -15,8 +15,8 @@ public class FirearmControllerInitiateShotPrefixPatch : ModulePatch
 
     [PatchPrefix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(IWeapon weapon, AmmoItemClass ammo)
+    public static void Prefix(Player.FirearmController __instance, IWeapon weapon, AmmoItemClass ammo)
     {
-        Singleton<MuzzleEffects>.Instance.UpdateCurrentShot(weapon, ammo);
+        Singleton<MuzzleEffects>.Instance.UpdateCurrentShot(weapon, ammo, __instance.IsSilenced);
     }
 }
