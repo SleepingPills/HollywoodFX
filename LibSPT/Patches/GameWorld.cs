@@ -4,6 +4,7 @@ using EFT;
 using HollywoodFX.Gore;
 using HollywoodFX.Lighting;
 using HollywoodFX.Muzzle;
+using HollywoodFX.Muzzle.Patches;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Patches;
@@ -28,9 +29,12 @@ public class GameWorldAwakePrefixPatch : ModulePatch
 
         Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
         Singleton<PlayerDamageRegistry>.Create(new PlayerDamageRegistry());
-        
+
         if (Plugin.MuzzleEffectsEnabled.Value)
+        {
+            Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
             Singleton<MuzzleEffects>.Create(new MuzzleEffects());
+        }
     }
 }
 
@@ -87,7 +91,7 @@ public class GameWorldShotDelegatePrefixPatch : ModulePatch
         var hitCollider = bullet.Info.HitCollider;
         if (hitCollider == null)
             return;
-        
+
         if (bullet.HitColliderRoot.gameObject.layer != LayerMaskClass.PlayerLayer)
             return;
 

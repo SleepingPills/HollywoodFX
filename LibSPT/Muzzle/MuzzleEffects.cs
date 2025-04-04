@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using EFT;
+using EFT.InventoryLogic;
 using EFT.UI;
+using HarmonyLib;
 using HollywoodFX.Helpers;
 using UnityEngine;
 
@@ -8,8 +11,8 @@ namespace HollywoodFX.Muzzle;
 internal class CurrentShot
 {
     public bool Handled = true;
-    public IWeapon Weapon = null;
-    public AmmoItemClass Ammo = null;
+    
+    public AmmoItemClass Ammo;
     public bool Silenced;
 }
 
@@ -18,6 +21,7 @@ internal class MuzzleState(Transform fireport, List<MuzzleJet> jets, MuzzleSmoke
     public Transform Fireport = fireport;
     public List<MuzzleJet> Jets = jets;
     public MuzzleSmoke[] Smokes = smokes;
+    public Weapon Weapon = null;
 }
 
 public class MuzzleEffects
@@ -31,16 +35,26 @@ public class MuzzleEffects
         _muzzleStates = new Dictionary<int, MuzzleState>();
     }
 
-    public void UpdateCurrentShot(IWeapon weapon, AmmoItemClass ammo, bool silenced)
+    public void UpdateCurrentShot(AmmoItemClass ammo, bool silenced)
     {
-        _currentShot.Weapon = weapon;
+        _currentShot.Handled = false;
+        
         _currentShot.Ammo = ammo;
         _currentShot.Silenced = silenced;
-        
-        _currentShot.Handled = false;
     }
 
-    public void UpdateMuzzle(MuzzleManager manager, MuzzleJet[] jets, MuzzleSmoke[] smokes)
+    public void UpdateWeapon(MuzzleManager manager, Weapon weapon)
+    {
+        var managerId = manager.gameObject.transform.GetInstanceID();
+        
+        // Get or create the muzzle state entry for this manager
+        if (_muzzleStates.TryGetValue(managerId, out var state))
+        {
+            state.Weapon = weapon;
+        }
+    }
+
+    public void UpdateMuzzle(MuzzleManager manager, MuzzleJet[] jets, MuzzleFume[] fumes, MuzzleSmoke[] smokes)
     {
         // Grab the fireport of the current weapon
         Transform fireport = null;
@@ -57,6 +71,27 @@ public class MuzzleEffects
         if (fireport == null)
             return;
 
+        var fireportDir = -1 * fireport.up;
+        
+        // It seems like the smoke emitters are the best way to determine the actual muzzle opening as the fireport doesn't take silencers into account 
+        var candidateAngle = 10f;
+        Transform candidateFireport = null;
+        
+        for (var i = 0; i < fumes.Length; i++)
+        {
+            var fume = fumes[i];
+
+            var angle = Vector3.Angle(fireportDir, -1 * fume.transform.up);
+
+            if (!(angle < candidateAngle)) continue;
+            
+            candidateFireport = fume.transform;
+            candidateAngle = angle;
+        }
+        
+        if (candidateFireport != null)
+            fireport = candidateFireport;
+
         var managerId = manager.gameObject.transform.GetInstanceID();
 
         // Get or create the muzzle state entry for this manager
@@ -68,7 +103,7 @@ public class MuzzleEffects
         {
             _muzzleStates[managerId] = state = new MuzzleState(fireport, [], smokes);
         }
-
+        
         // Update the jets
         state.Jets.Clear();
 
@@ -77,10 +112,10 @@ public class MuzzleEffects
             for (var i = 0; i < jets.Length; i++)
             {
                 var jet = jets[i];
-                var jetAngle = Vector3.Angle(-1 * jet.transform.up, -1 * state.Fireport.up);
-                ConsoleScreen.Log($"Muzzle Jet Angle: {jetAngle}");
+                var jetDir = -1 * jet.transform.up;
+                var jetAngle = Vector3.Angle(jetDir, fireportDir);
 
-                if (jetAngle > 25)
+                if (jetAngle > 20)
                     state.Jets.Add(jet);
             }            
         }
@@ -91,8 +126,6 @@ public class MuzzleEffects
 
     public void Emit(MuzzleManager manager, bool isVisible, float sqrCameraDistance)
     {
-        ConsoleScreen.Log($"Muzzle Emit {manager.gameObject.name}");
-        
         if (_currentShot.Handled)
         {
             // The last bullet fired was already handled. We are seeing muzzle updates for underbarrel stuff or a grenade launcher, etc... 
@@ -105,7 +138,7 @@ public class MuzzleEffects
 
         if (!_muzzleStates.TryGetValue(managerId, out var state))
             return;
-
+        
         // Kinetics
         var kineticsScale = 1f;
         // _currentShot.Silenced;
@@ -145,7 +178,5 @@ public class MuzzleEffects
                 t.Shot();
             }
         }
-        
-        ConsoleScreen.Log($"Muzzle Emit Finished {manager.gameObject.name}");
     }
 }

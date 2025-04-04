@@ -1,32 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using Comfort.Common;
 using EFT.UI;
 using HollywoodFX.Helpers;
-using HollywoodFX.Muzzle;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
-namespace HollywoodFX.Patches;
-
-/*
- * Player.InitiateShot contains a FireportPosition - might be the way to do things.
- *
- * Muzzle Logic:
- *
- * 1. A MuzzleEffect struct will manage all the gubbins for a particular muzzle combo
- * 2. We'll update it in UpdateJetsAndFumes
- * 3. We'll use the sqrCameraDistance to establish pov. Within 1.5m radius the muzzle effects will be 1x size, and then we lerp it to 2x size at 3m radius.
- *    This allows neat 3rd person scaling and the muzzle won't dominate the entire screen if fired up close.
- * 4. Jets will be handled via ParticleSystem.Emit, in the UpdateJetsAndFumes we'll grab out the forward facing jet and calculate angles to other jets.
- * 5. If the angles are all ~0, it's a simple muzzle or a tri-prong (which have borked jets for some reason).
- * 6. If there are no jets, or a silencer object is present in the weapon children, we assume a silencer is installed and we use silencer jets.
- *
- * Notes:
- * - The Weapon in CurrentShot has Speedfactor which we can use to determine whether we are using a shortened or longer barrel
- * - The Weapon has IsSilenced
- * - To find the forward facing jet, we'll simply find the jet with the lowest angle to the fireport
- */
+namespace HollywoodFX.Muzzle.Patches;
 
 internal class MuzzleManagerUpdatePostfixPatch : ModulePatch
 {
@@ -36,12 +15,12 @@ internal class MuzzleManagerUpdatePostfixPatch : ModulePatch
     }
 
     [PatchPostfix]
-    private static void Postfix(MuzzleManager __instance, MuzzleJet[] ___muzzleJet_0, MuzzleSmoke[] ___muzzleSmoke_0)
+    private static void Postfix(MuzzleManager __instance, MuzzleJet[] ___muzzleJet_0, MuzzleFume[] ___muzzleFume_0, MuzzleSmoke[] ___muzzleSmoke_0)
     {
         if (Singleton<MuzzleEffects>.Instance == null)
             return;
         
-        Singleton<MuzzleEffects>.Instance.UpdateMuzzle(__instance, ___muzzleJet_0, ___muzzleSmoke_0);
+        Singleton<MuzzleEffects>.Instance.UpdateMuzzle(__instance, ___muzzleJet_0, ___muzzleFume_0, ___muzzleSmoke_0);
     }
 }
 
@@ -84,7 +63,7 @@ internal class MuzzleManagerDebugPatch1 : ModulePatch
                 bounds1 = component.sharedMesh.bounds;
                 bounds2 = component.mesh.bounds;
             }
-            
+
             ConsoleScreen.Log($"Hierarchy: {child.name} {component} {bounds1.extents} {bounds2.extents}");
         }
 
@@ -135,7 +114,7 @@ internal class MuzzleManagerDebugPatch2 : ModulePatch
         //
         //     DebugGizmos.Ray(jet.transform.position, -1 * jet.transform.up, color, temporary: true, expiretime: 1f);
         // }
-        
+
         // ConsoleScreen.Log($"Muzzle Manager cam distance: {Mathf.Sqrt(sqrCameraDistance)}");
 
         // foreach (var child in __instance.Hierarchy.GetComponentsInChildren<Transform>())
@@ -150,7 +129,7 @@ internal class MuzzleManagerDebugPatch2 : ModulePatch
             foreach (var t in ___muzzleParticlePivot_0)
             {
                 t.Play(__instance);
-                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.magenta, temporary: true, expiretime: 1f);                
+                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.magenta, temporary: true, expiretime: 1f);
             }
         }
 
@@ -159,8 +138,8 @@ internal class MuzzleManagerDebugPatch2 : ModulePatch
         {
             foreach (var t in ___muzzleSparks_0)
             {
-                t.Emit(__instance);                
-                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.yellow, temporary: true, expiretime: 1f);    
+                t.Emit(__instance);
+                DebugGizmos.Ray(t.transform.position, -1 * t.transform.up, Color.yellow, temporary: true, expiretime: 1f);
             }
         }
 

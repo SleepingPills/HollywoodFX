@@ -5,6 +5,7 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.5.2";
+    public const string HollywoodFXVersion = "1.6.0";
 
     public static ManualLogSource Log;
 
@@ -81,6 +82,8 @@ public class Plugin : BaseUnityPlugin
 
         SetupConfig(visceralCombatDetected);
 
+        new GameWorldDisposePostfixPatch().Enable();
+        
         new GameWorldAwakePrefixPatch().Enable();
         new GameWorldStartedPostfixPatch().Enable();
         new GameWorldShotDelegatePrefixPatch().Enable(); 
@@ -99,6 +102,7 @@ public class Plugin : BaseUnityPlugin
             new FirearmControllerInitiateShotPrefixPatch().Enable();
             new MuzzleManagerUpdatePostfixPatch().Enable();
             new MuzzleManagerShotPrefixPatch().Enable();
+            new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
