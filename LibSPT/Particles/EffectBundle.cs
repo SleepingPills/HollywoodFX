@@ -13,7 +13,7 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
     private readonly ParticleSystem[] _particleSystems = particleSystems;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void EmitRandom(Vector3 position, Vector3 normal, float scale)
+    public void Emit(Vector3 position, Vector3 normal, float scale)
     {
         var pick = _particleSystems[Random.Range(0, _particleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);

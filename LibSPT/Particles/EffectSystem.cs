@@ -44,7 +44,7 @@ internal class EffectSystem(
 
             if (Random.Range(0f, 1f) < forceGeneric)
             {
-                genericImpact.EmitRandom(position, normal, sizeScaleFull);
+                genericImpact.Emit(position, normal, sizeScaleFull);
                 return;
             }
         }
@@ -60,12 +60,12 @@ internal class EffectSystem(
             var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * bullet.ChanceScale : impact.Chance);
             if (!(Random.Range(0f, 1f) < impactChance)) continue;
 
-            impact.Effect.EmitRandom(position, normal, sizeScaleFull);
+            impact.Effect.Emit(position, normal, sizeScaleFull);
             hasEmitted = true;
         }
 
         if (hasEmitted || genericImpact == null) return;
 
-        genericImpact.EmitRandom(position, normal, sizeScaleFull);
+        genericImpact.Emit(position, normal, sizeScaleFull);
     }
 }
