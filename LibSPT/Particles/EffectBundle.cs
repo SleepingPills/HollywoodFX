@@ -15,8 +15,15 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Emit(Vector3 position, Vector3 normal, float scale)
     {
-        var pick = _particleSystems[Random.Range(0, _particleSystems.Length)];
+        var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(ParticleSystem.EmitParams emitParams, int count=1)
+    {
+        var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
+        pick.Emit(emitParams, count);
     }
 
     public static EffectBundle Merge(params EffectBundle[] bundles)

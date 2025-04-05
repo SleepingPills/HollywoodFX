@@ -34,8 +34,7 @@ internal class MuzzleManagerShotPrefixPatch : ModulePatch
     [PatchPrefix]
     private static bool Prefix(MuzzleManager __instance, bool isVisible, float sqrCameraDistance)
     {
-        Singleton<MuzzleEffects>.Instance.Emit(__instance, isVisible, sqrCameraDistance);
-        return false;
+        return Singleton<MuzzleEffects>.Instance.Emit(__instance, isVisible, sqrCameraDistance);
     }
 }
 

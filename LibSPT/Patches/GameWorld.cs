@@ -29,12 +29,6 @@ public class GameWorldAwakePrefixPatch : ModulePatch
 
         Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
         Singleton<PlayerDamageRegistry>.Create(new PlayerDamageRegistry());
-
-        if (Plugin.MuzzleEffectsEnabled.Value)
-        {
-            Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
-            Singleton<MuzzleEffects>.Create(new MuzzleEffects());
-        }
     }
 }
 

@@ -7,6 +7,8 @@ using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
 using HollywoodFX.Decal;
+using HollywoodFX.Muzzle;
+using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
 using Systems.Effects;
@@ -222,6 +224,12 @@ public class EffectsAwakePostfixPatch : ModulePatch
             Singleton<EmissionController>.Create(emissionController);
             Singleton<ImpactController>.Create(new ImpactController(__instance));
             Singleton<DecalPainter>.Create(new DecalPainter(__instance.DeferredDecals));
+            
+            if (Plugin.MuzzleEffectsEnabled.Value)
+            {
+                Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
+                Singleton<MuzzleEffects>.Create(new MuzzleEffects(__instance));
+            }
         }
         catch (Exception e)
         {
