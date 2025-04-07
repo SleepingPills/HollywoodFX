@@ -30,15 +30,24 @@ internal class MuzzleState(Transform fireport, List<MuzzleJet> jets, MuzzleSmoke
 
 internal class MuzzleBlast(
     float kineticNormFactor,
-    EffectBundle forwardJet, EffectBundle portJet, EffectBundle forwardSmoke, EffectBundle portSmoke, EffectBundle sparks,
-    float chanceJet, float chanceSmoke, float chanceSparks
-    )
+    EffectBundle mainJet,
+    EffectBundle forwardJet,
+    EffectBundle portJet,
+    EffectBundle forwardSmoke,
+    EffectBundle portSmoke,
+    EffectBundle sparks,
+    float chanceJet,
+    float chanceSmoke,
+    float chanceSparks
+)
 {
     private readonly EffectBundle _forwardSmoke = forwardSmoke;
     private readonly EffectBundle _portSmoke = portSmoke;
-
-    private readonly float _chanceSparks = chanceSparks;
+    
     private readonly EffectBundle _sparks = sparks;
+    
+    private readonly float _chanceSmoke = chanceSmoke;
+    private readonly float _chanceSparks = chanceSparks;
 
     public void Emit(MuzzleState state, AmmoItemClass ammo, float sqrCameraDistance)
     {
@@ -48,24 +57,39 @@ internal class MuzzleBlast(
 
         var impulse = mass * speed;
         var energy = impulse * speed / 2;
-        
+
         var kineticsScale = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
 
         // Reach max size at 1.5m (2.25 = 1.5^2)
-        var proximityScale = 1f + 0.5f * Mathf.Lerp(0f, 2.25f, sqrCameraDistance);
+        var proximityScale = 0.75f + 0.5f * Mathf.Lerp(0f, 2.25f, sqrCameraDistance);
+
+        var adjustMainJet = 1f;
+        var adjustForwardJet = 1f;
+
+        // In 1st person view, the main jet is bigger and the forward jet is smaller
+        if (sqrCameraDistance < 1f)
+        {
+            adjustMainJet = 1.35f;
+            adjustForwardJet = 0.5f;
+        }
+        
+        // TODO: Add the inverse weapon speed factor (ie barrel length) 
 
         var scaleTotal = proximityScale * kineticsScale;
         var scaleJet = scaleTotal * Plugin.MuzzleEffectJetsSize.Value;
 
         if (Random.Range(0f, 1f) < chanceJet)
         {
-            forwardJet.Emit(state.Fireport.position, -1 * state.Fireport.up, scaleJet);
+            var fireportDir = -1 * state.Fireport.up;
             
+            mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet, 1);
+            forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet, 1);
+
             // Side jets
             for (var i = 0; i < state.Jets.Count; i++)
             {
                 var jet = state.Jets[i];
-                
+
                 portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
             }
         }
@@ -93,22 +117,38 @@ public class MuzzleEffects
         _muzzleStates = new Dictionary<int, MuzzleState>();
 
         var muzzleBlastsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Muzzle Blasts");
-        var effectMap = EffectBundle.LoadPrefab(eftEffects, muzzleBlastsPrefab, true);
+        var effectMap = EffectBundle.LoadPrefab(eftEffects, muzzleBlastsPrefab, false);
 
         Plugin.Log.LogInfo("Constructing muzzle blasts");
 
-        var regularForwardSmoke = effectMap["Regular_Forward_Smoke"];
-        var regularPortSmoke = effectMap["Regular_Port_Smoke"];
-        var regularSparks = effectMap["Regular_Sparks"];
+        // var regularForwardSmoke = effectMap["Regular_Forward_Smoke"];
+        // var regularPortSmoke = effectMap["Regular_Port_Smoke"];
+        // var regularSparks = effectMap["Regular_Sparks"];
+
+        var riflePortJet = EffectBundle.Merge(
+            effectMap["Rifle_Port_Jet"], effectMap["Rifle_Port_Jet"], effectMap["Rifle_Port_Jet"],
+            effectMap["Rifle_Port_Jet_Dim"]
+        );
+
+        var rifleForwardJet = EffectBundle.Merge(
+            effectMap["Rifle_Forward_Jet"], effectMap["Rifle_Forward_Jet"], effectMap["Rifle_Forward_Jet"],
+            effectMap["Rifle_Forward_Jet_Dim"]
+        );
 
         var rifleBlast = new MuzzleBlast(
             2000f,
-            effectMap["Regular_Rifle_Forward_Jet"], effectMap["Regular_Rifle_Port_Jet"], regularForwardSmoke, regularPortSmoke,
-            regularSparks, 0.75f, 1f, 0.5f
-            );
+            effectMap["Rifle_Main_Jet"], rifleForwardJet, riflePortJet, null, null,
+            null, 0.85f, 1f, 0.5f
+        );
+        
+        var rifleBlastDim = new MuzzleBlast(
+            2000f,
+            effectMap["Rifle_Main_Jet_Dim"], effectMap["Rifle_Forward_Jet_Dim"], effectMap["Rifle_Port_Jet_Dim"], null, null,
+            null, 0.85f, 1f, 0.5f
+        );
 
         _regularMuzzleBlasts = new MuzzleBlastBundle(rifleBlast, rifleBlast, rifleBlast);
-        _silencedMuzzleBlasts = new MuzzleBlastBundle(rifleBlast, rifleBlast, rifleBlast);
+        _silencedMuzzleBlasts = new MuzzleBlastBundle(rifleBlastDim, rifleBlastDim, rifleBlastDim);
     }
 
     public bool Emit(MuzzleManager manager, bool isVisible, float sqrCameraDistance)
@@ -136,7 +176,7 @@ public class MuzzleEffects
         };
 
         blast.Emit(state, _currentShot.Ammo, sqrCameraDistance);
-        
+
         /*
         // Fireport jet
         DebugGizmos.Ray(state.Fireport.position, -1 * state.Fireport.up, _currentShot.Silenced ? Color.green : Color.red, temporary: true,
@@ -156,7 +196,7 @@ public class MuzzleEffects
         // Smoke puffs
         // TODO:
         */
-        
+
         // Smoke trail
         if (state.Smokes != null && (isVisible && sqrCameraDistance < 100.0 || !isVisible && sqrCameraDistance < 4.0))
         {
@@ -166,7 +206,7 @@ public class MuzzleEffects
                 t.Shot();
             }
         }
-        
+
         return false;
     }
 
@@ -182,7 +222,6 @@ public class MuzzleEffects
     {
         var managerId = manager.gameObject.transform.GetInstanceID();
 
-        // Get or create the muzzle state entry for this manager
         if (_muzzleStates.TryGetValue(managerId, out var state))
         {
             state.Weapon = weapon;

@@ -31,7 +31,7 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
         
         if (__instance.ObjectInHands is not WeaponManagerClass weaponManagerClass)
             return;
-
+        
         var firearmsEffectsId = weaponManagerClass.firearmsEffects_0.transform.GetInstanceID();
         
         if (!cache.TryGetValue(firearmsEffectsId, out var muzzleManager))
