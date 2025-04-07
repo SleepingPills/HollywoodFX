@@ -28,19 +28,47 @@ internal class MuzzleState(Transform fireport, List<MuzzleJet> jets, MuzzleSmoke
     public Weapon Weapon = null;
 }
 
-internal class MuzzleBlast(EffectBundle forwardJet, EffectBundle portJet, EffectBundle forwardSmoke, EffectBundle portSmoke, EffectBundle sparks)
+internal class MuzzleBlast(
+    float kineticNormFactor,
+    EffectBundle forwardJet, EffectBundle portJet, EffectBundle forwardSmoke, EffectBundle portSmoke, EffectBundle sparks,
+    float chanceJet, float chanceSmoke, float chanceSparks
+    )
 {
-    private readonly EffectBundle _forwardJet = forwardJet;
-    private readonly EffectBundle _portJet = portJet;
-
     private readonly EffectBundle _forwardSmoke = forwardSmoke;
     private readonly EffectBundle _portSmoke = portSmoke;
 
+    private readonly float _chanceSparks = chanceSparks;
     private readonly EffectBundle _sparks = sparks;
 
-    public void Emit(MuzzleState state, AmmoItemClass ammo)
+    public void Emit(MuzzleState state, AmmoItemClass ammo, float sqrCameraDistance)
     {
+        // Kinetics
+        var mass = Mathf.Max(ammo.BulletMassGram * ammo.ProjectileCount, 1f) / 1000;
+        var speed = ammo.InitialSpeed;
+
+        var impulse = mass * speed;
+        var energy = impulse * speed / 2;
         
+        var kineticsScale = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
+
+        // Reach max size at 1.5m (2.25 = 1.5^2)
+        var proximityScale = 1f + 0.5f * Mathf.Lerp(0f, 2.25f, sqrCameraDistance);
+
+        var scaleTotal = proximityScale * kineticsScale;
+        var scaleJet = scaleTotal * Plugin.MuzzleEffectJetsSize.Value;
+
+        if (Random.Range(0f, 1f) < chanceJet)
+        {
+            forwardJet.Emit(state.Fireport.position, -1 * state.Fireport.up, scaleJet);
+            
+            // Side jets
+            for (var i = 0; i < state.Jets.Count; i++)
+            {
+                var jet = state.Jets[i];
+                
+                portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
+            }
+        }
     }
 }
 
@@ -69,17 +97,18 @@ public class MuzzleEffects
 
         Plugin.Log.LogInfo("Constructing muzzle blasts");
 
-        var rifleBlast = new MuzzleBlast();
+        var regularForwardSmoke = effectMap["Regular_Forward_Smoke"];
+        var regularPortSmoke = effectMap["Regular_Port_Smoke"];
+        var regularSparks = effectMap["Regular_Sparks"];
+
+        var rifleBlast = new MuzzleBlast(
+            2000f,
+            effectMap["Regular_Rifle_Forward_Jet"], effectMap["Regular_Rifle_Port_Jet"], regularForwardSmoke, regularPortSmoke,
+            regularSparks, 0.75f, 1f, 0.5f
+            );
 
         _regularMuzzleBlasts = new MuzzleBlastBundle(rifleBlast, rifleBlast, rifleBlast);
         _silencedMuzzleBlasts = new MuzzleBlastBundle(rifleBlast, rifleBlast, rifleBlast);
-
-        // Define major building blocks for systems
-        Plugin.Log.LogInfo("Building frontal puffs");
-        var puffFront = effectMap["Puff_Front"];
-        var puffFrontDusty = effectMap["Puff_Dusty_Front"];
-        var puffFrontBody = EffectBundle.Merge(effectMap["Puff_Body_Front"], puffFrontDusty);
-        var puffFrontRock = EffectBundle.Merge(puffFront, puffFrontDusty);
     }
 
     public bool Emit(MuzzleManager manager, bool isVisible, float sqrCameraDistance)
@@ -97,33 +126,16 @@ public class MuzzleEffects
         if (!_muzzleStates.TryGetValue(managerId, out var state))
             return true;
 
-        // Kinetics
-        var kineticsScale = 1f;
-        // _currentShot.Silenced;
-        // TODO: Update the kinetics scaling
-        // state.Scaling =
-        // Use _currentShot.Ammo.ProjectileCount to determine whether we are a shotgun or not
-
-        // Reach max size at 1.5m (2.25 = 1.5^2)
-        var proximityScale = 1f + 0.5f * Mathf.Lerp(0f, 2.25f, sqrCameraDistance);
-
-        var totalScale = proximityScale * kineticsScale;
-        var jetScale = totalScale * Plugin.MuzzleEffectJetsSize.Value;
-
         var bundle = _currentShot.Silenced ? _silencedMuzzleBlasts : _regularMuzzleBlasts;
 
-        var blast = bundle.Rifle;
+        var blast = state.Weapon switch
+        {
+            PistolItemClass or RevolverItemClass or SmgItemClass => bundle.Handgun,
+            ShotgunItemClass => bundle.Shotgun,
+            _ => bundle.Rifle
+        };
 
-        if (state.Weapon is PistolItemClass or RevolverItemClass or SmgItemClass)
-        {
-            blast = bundle.Handgun;
-        }
-        else if (state.Weapon is ShotgunItemClass)
-        {
-            blast = bundle.Shotgun;
-        }
-        
-        blast.Emit(state, _currentShot.Ammo);
+        blast.Emit(state, _currentShot.Ammo, sqrCameraDistance);
         
         /*
         // Fireport jet

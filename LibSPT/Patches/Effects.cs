@@ -221,6 +221,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
         try
         {
             var emissionController = __instance.gameObject.AddComponent<EmissionController>();
+            emissionController.limit = Plugin.MiscMaxConcurrentParticleSys.Value;
             Singleton<EmissionController>.Create(emissionController);
             Singleton<ImpactController>.Create(new ImpactController(__instance));
             Singleton<DecalPainter>.Create(new DecalPainter(__instance.DeferredDecals));

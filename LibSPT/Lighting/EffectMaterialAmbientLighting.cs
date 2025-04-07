@@ -43,10 +43,6 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
         {
-            // Make the ambient effects less oppressive
-            var tintColor = material.GetVector(LitMaterialRegistry.TintColorId);
-            tintColor.Scale(new Vector4(1f, 1f, 1f, 0.5f));
-            material.SetVector(LitMaterialRegistry.TintColorId, tintColor);
             _materials.Add(material);
             _tintAlphaFactors.Add(0f);
         }
@@ -145,7 +141,6 @@ public static class StaticMaterialAmbientLighting
 
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.DynamicAlpha)
         {
-            // Don't molest blood on factory
             if (material.name.ToLower().Contains("blood")) continue;
             ApplyScaling(material, tintColorFactor, ambientLightFactor);
         }
@@ -154,6 +149,7 @@ public static class StaticMaterialAmbientLighting
         tintColorFactor.w = 1f;
         foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
         {
+            if (material.name.ToLower().Contains("blood")) continue;
             ApplyScaling(material, tintColorFactor, ambientLightFactor);
         }
     }

@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Comfort.Common;
 using HollywoodFX.Lighting;
 using Systems.Effects;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace HollywoodFX.Particles;
 
@@ -15,17 +18,36 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Emit(Vector3 position, Vector3 normal, float scale)
     {
-        var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
+        var pick = _particleSystems[Random.Range(0, _particleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(ParticleSystem.EmitParams emitParams, int count=1)
+    public void EmitDirect(Vector3 position, Vector3 normal, float scale)
     {
         var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
-        pick.Emit(emitParams, count);
+        var rotation = Quaternion.LookRotation(normal);
+        
+        pick.transform.position = position;
+        pick.transform.localScale = new Vector3(scale, scale, scale);
+        pick.transform.rotation = rotation;
+        
+        pick.Play(true);
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void EmitDirect(Vector3 position, Vector3 normal, float scale, int count)
+    {
+        var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
+        var rotation = Quaternion.LookRotation(normal);
+        
+        pick.transform.position = position;
+        pick.transform.localScale = new Vector3(scale, scale, scale);
+        pick.transform.rotation = rotation;
 
+        pick.Emit(count);
+    }
+    
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {
         return new EffectBundle(bundles.SelectMany(b => b._particleSystems).ToArray());
@@ -33,29 +55,15 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
 
     public static Dictionary<string, EffectBundle> LoadPrefab(Effects eftEffects, GameObject prefab, bool dynamicAlpha)
     {
-        Plugin.Log.LogInfo($"Instantiating Effects Prefab {prefab.name}");
-        var rootInstance = Object.Instantiate(prefab);
-
         var effectMap = new Dictionary<string, EffectBundle>();
 
-        foreach (var group in rootInstance.transform.GetChildren())
+        foreach (var (name, particleSystems) in ParticleHelpers.EnumerateParticleSystemBundles(eftEffects, prefab, dynamicAlpha))
         {
-            var groupName = group.name;
-            var effects = new List<ParticleSystem>();
-
-            foreach (var child in group.GetChildren())
-            {
-                if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
-
-                child.parent = eftEffects.transform;
-                Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, dynamicAlpha);
-                effects.Add(particleSystem);
-            }
-
-            effectMap[groupName] = new EffectBundle(effects.ToArray());
-            Plugin.Log.LogInfo($"Added effect `{groupName}` with {effects.Count} particle systems");
+            effectMap[name] = new EffectBundle(particleSystems); 
+            
+            Plugin.Log.LogInfo($"Added effect `{name}` with {particleSystems.Length} particle systems");
         }
-
+        
         return effectMap;
     }
 }

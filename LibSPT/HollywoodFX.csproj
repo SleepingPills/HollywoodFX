@@ -115,6 +115,7 @@
     <Compile Include="Particles\EffectSystem.cs" />
     <Compile Include="Particles\EmissionController.cs" />
     <Compile Include="Particles\EffectBundle.cs" />
+    <Compile Include="Particles\ParticleHelpers.cs" />
     <Compile Include="Patches\AmmoPoolObject.cs" />
     <Compile Include="Patches\BulletImpact.cs" />
     <Compile Include="Patches\Dispose.cs" />

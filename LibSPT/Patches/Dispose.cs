@@ -30,6 +30,7 @@ public class GameWorldDisposePostfixPatch : ModulePatch
         Singleton<BloodEffects>.Release(Singleton<BloodEffects>.Instance);
         Singleton<PlayerDamageRegistry>.Release(Singleton<PlayerDamageRegistry>.Instance);
         Singleton<LitMaterialRegistry>.Release(Singleton<LitMaterialRegistry>.Instance);
+        
         Singleton<MuzzleEffects>.Release(Singleton<MuzzleEffects>.Instance);
         Singleton<FirearmsEffectsCache>.Release(Singleton<FirearmsEffectsCache>.Instance);
 
