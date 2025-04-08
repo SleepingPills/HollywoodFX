@@ -177,6 +177,18 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 79 }
         ));
         
+        MuzzleEffectSparksSize = Config.Bind(muzzleEffects, "Muzzle Sparks Size", 1f, new ConfigDescription(
+            "Adjusts the size of the muzzle sparks.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 78 }
+        ));
+        
+        MuzzleEffectSmokeSize = Config.Bind(muzzleEffects, "Muzzle Smoke Size", 1f, new ConfigDescription(
+            "Adjusts the size of the muzzle smoke.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 77 }
+        ));
+        
         /*
          * Battle Ambience
          */
@@ -335,6 +347,9 @@ public class Plugin : BaseUnityPlugin
         ));
         
         MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
+        EFTHardSettings.Instance.Shells.velocityMult = 0.75f;
+        EFTHardSettings.Instance.Shells.velocityRotation = 1.5f;
+        EFTHardSettings.Instance.Shells.bounceSpeedMult = 2.0f;
 
         /*
          * Deboog
