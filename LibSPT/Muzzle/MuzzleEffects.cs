@@ -30,6 +30,7 @@ internal class MuzzleState(Transform fireport, List<MuzzleJet> jets, MuzzleSmoke
 
 internal class MuzzleBlast(
     float kineticNormFactor,
+    EffectBundle coreJet,
     EffectBundle mainJet,
     EffectBundle forwardJet,
     EffectBundle portJet,
@@ -49,7 +50,7 @@ internal class MuzzleBlast(
     private readonly float _chanceSmoke = chanceSmoke;
     private readonly float _chanceSparks = chanceSparks;
 
-    public void Emit(MuzzleState state, AmmoItemClass ammo, float sqrCameraDistance)
+    public void Emit(MuzzleState state, AmmoItemClass ammo, MuzzleLight light, float sqrCameraDistance)
     {
         // Kinetics
         var mass = Mathf.Max(ammo.BulletMassGram * ammo.ProjectileCount, 1f) / 1000;
@@ -62,36 +63,56 @@ internal class MuzzleBlast(
 
         // Reach max size at 1.5m (2.25 = 1.5^2)
         var proximityScale = 0.75f + 0.5f * Mathf.Lerp(0f, 2.25f, sqrCameraDistance);
+        var isThirdPerson = sqrCameraDistance > 0.5f;
 
-        var adjustMainJet = 1f;
         var adjustForwardJet = 1f;
+        var adjustMainJet = 1f;
 
         // In 1st person view, the main jet is bigger and the forward jet is smaller
-        if (sqrCameraDistance < 1f)
+        if (!isThirdPerson)
         {
-            adjustMainJet = 1.35f;
             adjustForwardJet = 0.5f;
         }
         
-        // TODO: Add the inverse weapon speed factor (ie barrel length) 
-
         var scaleTotal = proximityScale * kineticsScale;
         var scaleJet = scaleTotal * Plugin.MuzzleEffectJetsSize.Value;
 
         if (Random.Range(0f, 1f) < chanceJet)
         {
             var fireportDir = -1 * state.Fireport.up;
+
+            if (isThirdPerson)
+            {
+                var camera = CameraClass.Instance.Camera;
+                var camAngle = Vector3.Angle(camera.transform.forward, fireportDir);
+
+                var frontFacingFactor = Mathf.InverseLerp(160f, 140f, camAngle);
             
-            mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet, 1);
-            forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet, 1);
+                // Decrease the size of the forward jet as we approach a full frontal view angle
+                adjustForwardJet *= frontFacingFactor;
+
+                // When the muzzle fully faces the camera, scale the main jet up by 25% to account for the forward jet being de-scaled 
+                adjustMainJet += 0.25f * (1f - frontFacingFactor);
+            
+                // Only emit this in 3rd pov as it generates too much bloom in fpv
+                coreJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
+            }
+            
+            mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
+            
+            if (adjustForwardJet > 0.01f)
+                forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
 
             // Side jets
             for (var i = 0; i < state.Jets.Count; i++)
             {
                 var jet = state.Jets[i];
-
+            
                 portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
             }
+            
+            if (light != null)
+                light.method_0();
         }
     }
 }
@@ -125,9 +146,10 @@ public class MuzzleEffects
         // var regularPortSmoke = effectMap["Regular_Port_Smoke"];
         // var regularSparks = effectMap["Regular_Sparks"];
 
+        var rifleCoreJet = effectMap["Rifle_Core_Jet"];
+        
         var riflePortJet = EffectBundle.Merge(
-            effectMap["Rifle_Port_Jet"], effectMap["Rifle_Port_Jet"], effectMap["Rifle_Port_Jet"],
-            effectMap["Rifle_Port_Jet_Dim"]
+            effectMap["Rifle_Port_Jet"], effectMap["Rifle_Port_Jet"], effectMap["Rifle_Port_Jet_Dim"]
         );
 
         var rifleForwardJet = EffectBundle.Merge(
@@ -136,14 +158,14 @@ public class MuzzleEffects
         );
 
         var rifleBlast = new MuzzleBlast(
-            2000f,
-            effectMap["Rifle_Main_Jet"], rifleForwardJet, riflePortJet, null, null,
+            2500f,
+            rifleCoreJet, effectMap["Rifle_Main_Jet"], rifleForwardJet, riflePortJet, null, null,
             null, 0.85f, 1f, 0.5f
         );
         
         var rifleBlastDim = new MuzzleBlast(
             2000f,
-            effectMap["Rifle_Main_Jet_Dim"], effectMap["Rifle_Forward_Jet_Dim"], effectMap["Rifle_Port_Jet_Dim"], null, null,
+            rifleCoreJet, effectMap["Rifle_Main_Jet_Dim"], effectMap["Rifle_Forward_Jet_Dim"], effectMap["Rifle_Port_Jet_Dim"], null, null,
             null, 0.85f, 1f, 0.5f
         );
 
@@ -153,6 +175,9 @@ public class MuzzleEffects
 
     public bool Emit(MuzzleManager manager, bool isVisible, float sqrCameraDistance)
     {
+        if (!isVisible)
+            return true;
+        
         if (_currentShot.Handled)
         {
             // The last bullet fired was already handled. We are seeing muzzle updates for underbarrel stuff or a grenade launcher, etc... 
@@ -175,30 +200,13 @@ public class MuzzleEffects
             _ => bundle.Rifle
         };
 
-        blast.Emit(state, _currentShot.Ammo, sqrCameraDistance);
-
-        /*
-        // Fireport jet
-        DebugGizmos.Ray(state.Fireport.position, -1 * state.Fireport.up, _currentShot.Silenced ? Color.green : Color.red, temporary: true,
-            expiretime: 1f,
-            length: jetScale * 0.25f, lineWidth: jetScale * 0.05f);
-
-        // Side jets
-        for (var i = 0; i < state.Jets.Count; i++)
-        {
-            var jet = state.Jets[i];
-
-
-            DebugGizmos.Ray(jet.transform.position, -1 * jet.transform.up, Color.blue, temporary: true, expiretime: 1f,
-                length: jetScale * 0.25f, lineWidth: jetScale * 0.05f);
-        }
+        blast.Emit(state, _currentShot.Ammo, manager.Light, sqrCameraDistance);
 
         // Smoke puffs
         // TODO:
-        */
 
         // Smoke trail
-        if (state.Smokes != null && (isVisible && sqrCameraDistance < 100.0 || !isVisible && sqrCameraDistance < 4.0))
+        if (state.Smokes != null && (sqrCameraDistance < 100.0))
         {
             for (var i = 0; i < state.Smokes.Length; i++)
             {
