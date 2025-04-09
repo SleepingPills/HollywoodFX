@@ -13,19 +13,19 @@ namespace HollywoodFX.Particles;
 
 internal class EffectBundle(ParticleSystem[] particleSystems)
 {
-    private readonly ParticleSystem[] _particleSystems = particleSystems;
+    public readonly ParticleSystem[] ParticleSystems = particleSystems;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Emit(Vector3 position, Vector3 normal, float scale)
     {
-        var pick = _particleSystems[Random.Range(0, _particleSystems.Length)];
+        var pick = ParticleSystems[Random.Range(0, ParticleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale)
     {
-        var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
+        var pick = ParticleSystems.Length == 1 ? ParticleSystems[0] : ParticleSystems[Random.Range(0, ParticleSystems.Length)];
         var rotation = Quaternion.LookRotation(normal);
         
         pick.transform.position = position;
@@ -38,7 +38,7 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale, int count)
     {
-        var pick = _particleSystems.Length == 1 ? _particleSystems[0] : _particleSystems[Random.Range(0, _particleSystems.Length)];
+        var pick = ParticleSystems.Length == 1 ? ParticleSystems[0] : ParticleSystems[Random.Range(0, ParticleSystems.Length)];
         var rotation = Quaternion.LookRotation(normal);
         
         pick.transform.position = position;
@@ -50,16 +50,16 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
 
     public void SetParent(Transform parent)
     {
-        for (var i = 0; i < _particleSystems.Length; i++)
+        for (var i = 0; i < ParticleSystems.Length; i++)
         {
-            var particleSystem = _particleSystems[i];
+            var particleSystem = ParticleSystems[i];
             particleSystem.transform.SetParent(parent);
         }
     }
     
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {
-        return new EffectBundle(bundles.SelectMany(b => b._particleSystems).ToArray());
+        return new EffectBundle(bundles.SelectMany(b => b.ParticleSystems).ToArray());
     }
 
     public static Dictionary<string, EffectBundle> LoadPrefab(Effects eftEffects, GameObject prefab, bool dynamicAlpha)

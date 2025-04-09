@@ -230,7 +230,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
             {
                 Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
                 Singleton<MuzzleStatic>.Create(new MuzzleStatic());
-                Singleton<MuzzleEffects>.Create(new MuzzleEffects(__instance));
+                Singleton<MuzzleEffects>.Create(new MuzzleEffects(__instance, true));
                 Singleton<LocalPlayerMuzzleEffects>.Create(new LocalPlayerMuzzleEffects(__instance));
             }
         }
