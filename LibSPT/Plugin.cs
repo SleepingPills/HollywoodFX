@@ -100,7 +100,6 @@ public class Plugin : BaseUnityPlugin
         if (MuzzleEffectsEnabled.Value)
         {
             new FirearmControllerInitiateShotPrefixPatch().Enable();
-            new MuzzleManagerUpdatePostfixPatch().Enable();
             new MuzzleManagerShotPrefixPatch().Enable();
             new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
@@ -347,9 +346,8 @@ public class Plugin : BaseUnityPlugin
         ));
         
         MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
-        EFTHardSettings.Instance.Shells.velocityMult = 0.75f;
+        EFTHardSettings.Instance.Shells.velocityMult = 0.85f;
         EFTHardSettings.Instance.Shells.velocityRotation = 1.5f;
-        EFTHardSettings.Instance.Shells.bounceSpeedMult = 2.0f;
 
         /*
          * Deboog

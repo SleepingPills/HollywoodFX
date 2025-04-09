@@ -108,6 +108,7 @@
     <Compile Include="Lighting\EffectMaterialAmbientLighting.cs" />
     <Compile Include="Lighting\LitMaterialRegistry.cs" />
     <Compile Include="Muzzle\MuzzleEffects.cs" />
+    <Compile Include="Muzzle\MuzzleStatic.cs" />
     <Compile Include="Muzzle\Patches\FirearmController.cs" />
     <Compile Include="Muzzle\Patches\MuzzleManager.cs" />
     <Compile Include="Muzzle\Patches\WeaponPrefab.cs" />

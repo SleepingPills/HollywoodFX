@@ -31,8 +31,10 @@ public class GameWorldDisposePostfixPatch : ModulePatch
         Singleton<PlayerDamageRegistry>.Release(Singleton<PlayerDamageRegistry>.Instance);
         Singleton<LitMaterialRegistry>.Release(Singleton<LitMaterialRegistry>.Instance);
         
+        Singleton<LocalPlayerMuzzleEffects>.Release(Singleton<LocalPlayerMuzzleEffects>.Instance);
         Singleton<MuzzleEffects>.Release(Singleton<MuzzleEffects>.Instance);
         Singleton<FirearmsEffectsCache>.Release(Singleton<FirearmsEffectsCache>.Instance);
+        Singleton<MuzzleStatic>.Release(Singleton<MuzzleStatic>.Instance);
 
         ImpactStatic.Kinetics = new ImpactKinetics();
         ImpactStatic.LocalPlayerTransform = null;

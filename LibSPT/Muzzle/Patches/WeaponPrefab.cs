@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
 using EFT.UI;
 using HarmonyLib;
@@ -19,17 +20,17 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
     }
 
     [PatchPostfix]
-    private static void Postfix(WeaponPrefab __instance, Weapon weapon)
+    private static void Postfix(WeaponPrefab __instance, Weapon weapon, IPlayer ___iplayer_0)
     {
-        if (Singleton<MuzzleEffects>.Instance is null)
-            return;
-
         var cache = Singleton<FirearmsEffectsCache>.Instance;
         
-        if (cache is null)
+        if (cache is null || Singleton<MuzzleStatic>.Instance is null || Singleton<LocalPlayerMuzzleEffects>.Instance is null)
             return;
         
         if (__instance.ObjectInHands is not WeaponManagerClass weaponManagerClass)
+            return;
+        
+        if (___iplayer_0 == null)
             return;
         
         var firearmsEffectsId = weaponManagerClass.firearmsEffects_0.transform.GetInstanceID();
@@ -44,6 +45,12 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
             cache[firearmsEffectsId] = muzzleManager;
         }
         
-        Singleton<MuzzleEffects>.Instance.UpdateWeapon(muzzleManager, weapon);
+        ConsoleScreen.Log($"Updating muzzle state");
+        var muzzleState = Singleton<MuzzleStatic>.Instance.UpdateMuzzleState(muzzleManager, weapon, ___iplayer_0);
+
+        if (!___iplayer_0.IsYourPlayer || muzzleState == null) return;
+        
+        ConsoleScreen.Log($"Updating local player muzzle parents");
+        Singleton<LocalPlayerMuzzleEffects>.Instance.UpdateParents(muzzleState);
     }
 }

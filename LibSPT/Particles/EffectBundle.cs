@@ -47,6 +47,15 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
 
         pick.Emit(count);
     }
+
+    public void SetParent(Transform parent)
+    {
+        for (var i = 0; i < _particleSystems.Length; i++)
+        {
+            var particleSystem = _particleSystems[i];
+            particleSystem.transform.SetParent(parent);
+        }
+    }
     
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {

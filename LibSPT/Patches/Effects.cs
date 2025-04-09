@@ -229,7 +229,9 @@ public class EffectsAwakePostfixPatch : ModulePatch
             if (Plugin.MuzzleEffectsEnabled.Value)
             {
                 Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
+                Singleton<MuzzleStatic>.Create(new MuzzleStatic());
                 Singleton<MuzzleEffects>.Create(new MuzzleEffects(__instance));
+                Singleton<LocalPlayerMuzzleEffects>.Create(new LocalPlayerMuzzleEffects(__instance));
             }
         }
         catch (Exception e)
