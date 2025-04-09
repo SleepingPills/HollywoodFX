@@ -21,26 +21,26 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
         var pick = ParticleSystems[Random.Range(0, ParticleSystems.Length)];
         Singleton<EmissionController>.Instance.Emit(pick, position, normal, scale);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale)
     {
         var pick = ParticleSystems.Length == 1 ? ParticleSystems[0] : ParticleSystems[Random.Range(0, ParticleSystems.Length)];
         var rotation = Quaternion.LookRotation(normal);
-        
+
         pick.transform.position = position;
         pick.transform.localScale = new Vector3(scale, scale, scale);
         pick.transform.rotation = rotation;
-        
+
         pick.Play(true);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale, int count)
     {
         var pick = ParticleSystems.Length == 1 ? ParticleSystems[0] : ParticleSystems[Random.Range(0, ParticleSystems.Length)];
         var rotation = Quaternion.LookRotation(normal);
-        
+
         pick.transform.position = position;
         pick.transform.localScale = new Vector3(scale, scale, scale);
         pick.transform.rotation = rotation;
@@ -48,15 +48,6 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
         pick.Emit(count);
     }
 
-    public void SetParent(Transform parent)
-    {
-        for (var i = 0; i < ParticleSystems.Length; i++)
-        {
-            var particleSystem = ParticleSystems[i];
-            particleSystem.transform.SetParent(parent);
-        }
-    }
-    
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {
         return new EffectBundle(bundles.SelectMany(b => b.ParticleSystems).ToArray());
@@ -68,11 +59,11 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
 
         foreach (var (name, particleSystems) in ParticleHelpers.EnumerateParticleSystemBundles(eftEffects, prefab, dynamicAlpha))
         {
-            effectMap[name] = new EffectBundle(particleSystems); 
-            
+            effectMap[name] = new EffectBundle(particleSystems);
+
             Plugin.Log.LogInfo($"Added effect `{name}` with {particleSystems.Length} particle systems");
         }
-        
+
         return effectMap;
     }
 }

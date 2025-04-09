@@ -18,7 +18,8 @@ internal class MuzzleState
 {
     public Transform Fireport;
     public readonly List<MuzzleJet> Jets = [];
-    public MuzzleSmoke[] Smokes;
+    public List<MuzzleFume> Smokes = [];
+    public MuzzleSmoke[] Trails;
     public Weapon Weapon;
     public IPlayer Player;
 }
@@ -64,12 +65,22 @@ internal class MuzzleStatic
 
         var fireportDir = -1 * fireport.up;
 
-        // It seems like the smoke emitters are the best way to determine the actual muzzle opening as the fireport doesn't take silencers into account 
-        var candidateAngle = 10f;
-        Transform candidateFireport = null;
-
         if (FumeField.GetValue(manager) is not MuzzleFume[] fumes)
             return null;
+        
+        var managerId = manager.gameObject.transform.GetInstanceID();
+
+        // Get or create the muzzle state entry for this manager
+        if (!_muzzleStates.TryGetValue(managerId, out var state))
+        {
+            _muzzleStates[managerId] = state = new MuzzleState();
+        }
+
+        // It seems like the smoke emitters are the best way to determine the actual muzzle opening as the fireport doesn't take silencers into account
+        const float fwdAngle = 25f;
+        var candidateAngle = 10f;
+        
+        state.Smokes.Clear();
         
         for (var i = 0; i < fumes.Length; i++)
         {
@@ -77,21 +88,16 @@ internal class MuzzleStatic
 
             var angle = Vector3.Angle(fireportDir, -1 * fume.transform.up);
 
-            if (!(angle < candidateAngle)) continue;
+            // Add the non-forward fume components
+            if (angle > fwdAngle)
+            {
+                state.Smokes.Add(fume);
+            }
+            if (angle > candidateAngle)
+                continue;
 
-            candidateFireport = fume.transform;
+            fireport = fume.transform;
             candidateAngle = angle;
-        }
-
-        if (candidateFireport != null)
-            fireport = candidateFireport;
-
-        var managerId = manager.gameObject.transform.GetInstanceID();
-
-        // Get or create the muzzle state entry for this manager
-        if (!_muzzleStates.TryGetValue(managerId, out var state))
-        {
-            _muzzleStates[managerId] = state = new MuzzleState();
         }
 
         state.Fireport = fireport;
@@ -115,7 +121,7 @@ internal class MuzzleStatic
         }
 
         // Update the smokes
-        state.Smokes = SmokeField.GetValue(manager) as MuzzleSmoke[];
+        state.Trails = SmokeField.GetValue(manager) as MuzzleSmoke[];
 
         return state;
     }

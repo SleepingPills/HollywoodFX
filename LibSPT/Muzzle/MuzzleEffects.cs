@@ -1,5 +1,4 @@
-﻿using EFT.UI;
-using HollywoodFX.Helpers;
+﻿using System.Collections.Generic;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -82,7 +81,6 @@ internal class MuzzleBlast(
             for (var i = 0; i < state.Jets.Count; i++)
             {
                 var jet = state.Jets[i];
-
                 portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
             }
         }
@@ -99,15 +97,21 @@ internal class MuzzleBlast(
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSmoke)
         {
             forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke);
+
+            // Emit the misc smoke things like shell ejector port puffs 
+            for (var i = 0; i < state.Smokes.Count; i++)
+            {
+                var smoke = state.Smokes[i];
+                portSmoke.EmitDirect(smoke.transform.position, -1 * smoke.transform.up, scaleSmoke, 1);
+            }
         }
         
         if (Random.Range(0f, 1f) < chanceSmoke)
         {   
-            // Side jets
+            // Port smoke emission
             for (var i = 0; i < state.Jets.Count; i++)
             {
                 var jet = state.Jets[i];
-        
                 portSmoke.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleSmoke, 1);
             }
         }
@@ -116,15 +120,6 @@ internal class MuzzleBlast(
         {
             lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke);
         }
-    }
-
-    public void SetParent(Transform parent)
-    {
-        coreJet.SetParent(parent);
-        mainJet.SetParent(parent);
-        forwardJet.SetParent(parent);
-        portJet.SetParent(parent);
-        sparks.SetParent(parent);
     }
 }
 
@@ -138,26 +133,32 @@ internal class MuzzleBlastBundle(MuzzleBlast handgun, MuzzleBlast smg, MuzzleBla
 
 internal class MuzzleEffects
 {
-    protected readonly MuzzleBlastBundle RegularMuzzleBlasts;
-    protected readonly MuzzleBlastBundle SilencedMuzzleBlasts;
+    protected readonly List<ParticleSystem> ParticleSystems;
+    
+    private readonly MuzzleBlastBundle _regularMuzzleBlasts;
+    private readonly MuzzleBlastBundle _silencedMuzzleBlasts;
 
     public MuzzleEffects(Effects eftEffects, bool forceWorldSim)
     {
         var muzzleBlastsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Muzzle Blasts");
         var effectMap = EffectBundle.LoadPrefab(eftEffects, muzzleBlastsPrefab, true);
+        
+        ParticleSystems = [];
 
-        if (forceWorldSim)
+        foreach (var bundle in effectMap.Values)
         {
-            foreach (var bundle in effectMap.Values)
+            foreach (var particleSystem in bundle.ParticleSystems)
             {
-                foreach (var particleSystem in bundle.ParticleSystems)
+                // We only add the top level particle systems as modifying the sub-system parent-child hierarchy breaks things
+                ParticleSystems.Add(particleSystem);
+                
+                if (!forceWorldSim) continue;
+                
+                foreach (var subSystem in particleSystem.GetComponentsInChildren<ParticleSystem>())
                 {
-                    foreach (var subSystem in particleSystem.GetComponentsInChildren<ParticleSystem>())
-                    {
-                        Plugin.Log.LogInfo($"Forcing {subSystem.name} to world space simulation");
-                        var main = subSystem.main;
-                        main.simulationSpace = ParticleSystemSimulationSpace.World;                        
-                    }
+                    Plugin.Log.LogInfo($"Forcing {subSystem.name} to world space simulation");
+                    var main = subSystem.main;
+                    main.simulationSpace = ParticleSystemSimulationSpace.World;
                 }
             }
         }
@@ -207,8 +208,8 @@ internal class MuzzleEffects
             0.5f, 0.85f, 0.85f
         );
 
-        RegularMuzzleBlasts = new MuzzleBlastBundle(rifleBlast, smgBlast, rifleBlast, rifleBlast);
-        SilencedMuzzleBlasts = new MuzzleBlastBundle(rifleBlastDim, smgBlastDim, rifleBlastDim, rifleBlastDim);
+        _regularMuzzleBlasts = new MuzzleBlastBundle(rifleBlast, smgBlast, rifleBlast, rifleBlast);
+        _silencedMuzzleBlasts = new MuzzleBlastBundle(rifleBlastDim, smgBlastDim, rifleBlastDim, rifleBlastDim);
     }
 
     public bool Emit(CurrentShot currentShot, MuzzleState state, bool isVisible, float sqrCameraDistance)
@@ -223,7 +224,7 @@ internal class MuzzleEffects
 
         if (isVisible || sqrCameraDistance < 200f)
         {
-            var bundle = currentShot.Silenced ? SilencedMuzzleBlasts : RegularMuzzleBlasts;
+            var bundle = currentShot.Silenced ? _silencedMuzzleBlasts : _regularMuzzleBlasts;
 
             var blast = state.Weapon switch
             {
@@ -238,13 +239,12 @@ internal class MuzzleEffects
         }
 
         // Smoke trail
-        if (state.Smokes != null && (isVisible || sqrCameraDistance < 16f))
+        if (state.Trails == null || (!isVisible && !(sqrCameraDistance < 16f))) return false;
+        
+        for (var i = 0; i < state.Trails.Length; i++)
         {
-            for (var i = 0; i < state.Smokes.Length; i++)
-            {
-                var t = state.Smokes[i];
-                t.Shot();
-            }
+            var t = state.Trails[i];
+            t.Shot();
         }
 
         return false;
@@ -257,15 +257,22 @@ internal class LocalPlayerMuzzleEffects(Effects eftEffects) : MuzzleEffects(eftE
     {
         var parent = state.Fireport.transform;
         
-        SetParent(RegularMuzzleBlasts, parent);
-        SetParent(SilencedMuzzleBlasts, parent);
-    }
+        // For the local player, locally or custom simulated particle systems need to get the parents and transforms assigned.
+        // This is needed because the particles will lag behind the gun barrel during fast camera movements in first person view.  
+        for (var i = 0; i < ParticleSystems.Count; i++)
+        {
+            var particleSystem = ParticleSystems[i];
+            var main = particleSystem.main;
 
-    private static void SetParent(MuzzleBlastBundle bundle, Transform parent)
-    {
-        bundle.Handgun.SetParent(parent);
-        bundle.Smg.SetParent(parent);
-        bundle.Rifle.SetParent(parent);
-        bundle.Shotgun.SetParent(parent);
+            if (main.simulationSpace == ParticleSystemSimulationSpace.World) continue;
+            
+            particleSystem.transform.SetParent(parent);
+            
+            // Custom space simulated systems also need the simulation space transform assigned 
+            if (main.simulationSpace == ParticleSystemSimulationSpace.Custom)
+            {
+                main.customSimulationSpace = parent;
+            }
+        }
     }
 }
