@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Comfort.Common;
 using EFT;
-using EFT.UI;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Muzzle.Patches;
@@ -17,7 +16,6 @@ public class FirearmControllerInitiateShotPrefixPatch : ModulePatch
     // ReSharper disable InconsistentNaming
     public static void Prefix(Player.FirearmController __instance, AmmoItemClass ammo)
     {
-        ConsoleScreen.Log($"FC.InitateShot: {ammo}");
         Singleton<MuzzleStatic>.Instance.UpdateCurrentShot(ammo, __instance.IsSilenced);
     }
 }

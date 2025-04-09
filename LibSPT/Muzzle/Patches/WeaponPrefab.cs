@@ -3,7 +3,6 @@ using System.Reflection;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
-using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 
@@ -45,12 +44,10 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
             cache[firearmsEffectsId] = muzzleManager;
         }
         
-        ConsoleScreen.Log($"Updating muzzle state");
         var muzzleState = Singleton<MuzzleStatic>.Instance.UpdateMuzzleState(muzzleManager, weapon, ___iplayer_0);
 
         if (!___iplayer_0.IsYourPlayer || muzzleState == null) return;
         
-        ConsoleScreen.Log($"Updating local player muzzle parents");
         Singleton<LocalPlayerMuzzleEffects>.Instance.UpdateParents(muzzleState);
     }
 }
