@@ -118,9 +118,12 @@ public class Plugin : BaseUnityPlugin
                 new LootItemIsRigidBodyDonePrefixPatch().Enable();
             }
             
-            new PlayerOnDeadPostfixPatch().Enable();
-            
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
+        }
+
+        if (BloodEnabled.Value)
+        {
+            new PlayerOnDeadPostfixPatch().Enable();
         }
         
         Log.LogInfo("Initialization finished");
@@ -347,7 +350,7 @@ public class Plugin : BaseUnityPlugin
         
         MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         EFTHardSettings.Instance.Shells.velocityMult = 0.85f;
-        EFTHardSettings.Instance.Shells.velocityRotation = 1.5f;
+        EFTHardSettings.Instance.Shells.velocityRotation = 3f;
 
         /*
          * Deboog

@@ -18,7 +18,7 @@ internal class MuzzleState
 {
     public Transform Fireport;
     public readonly List<MuzzleJet> Jets = [];
-    public List<MuzzleFume> Smokes = [];
+    public readonly List<MuzzleFume> Smokes = [];
     public MuzzleSmoke[] Trails;
     public Weapon Weapon;
     public IPlayer Player;
