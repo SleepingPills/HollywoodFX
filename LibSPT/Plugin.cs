@@ -34,14 +34,26 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> AmbientParticleLimit;
     public static ConfigEntry<float> AmbientParticleLifetime;
 
-    public static ConfigEntry<bool> BloodEnabled;
+    public static ConfigEntry<bool> GoreEnabled;
+    
     public static ConfigEntry<float> BloodMistSize;
-    public static ConfigEntry<float> BloodSpraySize;
     public static ConfigEntry<float> BloodSquibSize;
+    
+    public static ConfigEntry<float> BloodSpraySize;
+    public static ConfigEntry<float> BloodSprayEmission;
+    
+    public static ConfigEntry<float> BloodBleedSize;
+    public static ConfigEntry<float> BloodBleedEmission;
+    
     public static ConfigEntry<float> BloodSquirtSize;
+    public static ConfigEntry<float> BloodSquirtEmission;
+    
     public static ConfigEntry<float> BloodFinisherSize;
+    public static ConfigEntry<float> BloodFinisherEmission;
+    
     public static ConfigEntry<bool> WoundDecalsEnabled;
     public static ConfigEntry<float> WoundDecalsSize;
+    public static ConfigEntry<bool> BloodSplatterDecalsEnabled;
     public static ConfigEntry<float> BloodSplatterDecalsSize;
 
     public static ConfigEntry<bool> RagdollEnabled;
@@ -121,7 +133,7 @@ public class Plugin : BaseUnityPlugin
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
 
-        if (BloodEnabled.Value)
+        if (GoreEnabled.Value)
         {
             new PlayerOnDeadPostfixPatch().Enable();
         }
@@ -141,19 +153,21 @@ public class Plugin : BaseUnityPlugin
 
     private void SetupConfig(bool visceralCombatDetected)
     {
-        const string general = "1. General";
+        const string general = "1. Impact Effects";
         const string muzzleEffects = "2. Muzzle Blast Effects";
-        const string battleAmbience = "3. Ambient Battle Effects (changes have no effect in-raid)";
-        const string bloodGore = "4. Blood/Gore Settings";
-        const string ragdoll = "5. Ragdoll Effects (disabled by Visceral Combat)";
-        const string misc = "6. Miscellaneous Flotsam";
-        const string debug = "7. Debug";
+        const string battleAmbience = "3. Ambient Battle Effects (REQUIRES RESTART)";
+        const string goreEmission = "4. Gore Emission (REQUIRES RESTART)";
+        const string goreSize = "5. Gore Size";
+        const string goreDecals = "6. Gore Decals";
+        const string ragdoll = "7. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
+        const string misc = "8. Miscellaneous Flotsam";
+        const string debug = "9. Debug";
 
         /*
          * General
          */
-        EffectSize = Config.Bind(general, "Dakka Scale (larger is more dakka)", 1.0f, new ConfigDescription(
-            "Scales the size of effects.",
+        EffectSize = Config.Bind(general, "Impact Effect Size", 1.0f, new ConfigDescription(
+            "Scales the size of impact effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 91 }
         ));
@@ -194,7 +208,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Battle Ambience
          */
-        BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects (Requires Restart)", true, new ConfigDescription(
+        BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects", true, new ConfigDescription(
             "Toggles battle ambience effects like lingering smoke, dust and debris.",
             null,
             new ConfigurationManagerAttributes { Order = 64 }
@@ -206,7 +220,7 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 63 }
         ));
 
-        AmbientEffectDensity = Config.Bind(battleAmbience, "Ambient Effect Density", 1f, new ConfigDescription(
+        AmbientEffectDensity = Config.Bind(battleAmbience, "Ambient Effect Emission Rate", 1f, new ConfigDescription(
             "Adjusts the density of ambient effects. The bigger this number, the denser the smoke, debris, glitter etc...",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 62 }
@@ -225,79 +239,121 @@ public class Plugin : BaseUnityPlugin
         ));
 
         /*
-         * Blood Effects
+         * Gore Emission
          */
-        BloodEnabled = Config.Bind(bloodGore, "Enable Blood Effects (Requires Restart)", true, new ConfigDescription(
-            "Toggles whether blood effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
+        GoreEnabled = Config.Bind(goreEmission, "Enable Gore Effects", true, new ConfigDescription(
+            "Toggles whether gore effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
             null,
             new ConfigurationManagerAttributes { Order = 39 }
         ));
-
-        BloodMistSize = Config.Bind(bloodGore, "Mist Size", 1f, new ConfigDescription(
-            "Adjusts the size of blood mists/puffs.",
+        
+        BloodSprayEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 0.5f, new ConfigDescription(
+            "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 38 }
         ));
-
-        BloodSpraySize = Config.Bind(bloodGore, "Spray Size", 1f, new ConfigDescription(
-            "Adjusts the size of fine blood sprays.",
+        
+        BloodBleedEmission = Config.Bind(goreEmission, "Bleed Emission Rate", 1f, new ConfigDescription(
+            "Adjusts the quantity of particles open wound bleeding effects on live targets. Above 2 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 37 }
         ));
-
-        BloodSquibSize = Config.Bind(bloodGore, "Squib Size", 1f, new ConfigDescription(
-            "Adjusts the size of blood sqquibs.",
+        
+        BloodSquirtEmission = Config.Bind(goreEmission, "Squirt Emission Rate", 0.5f, new ConfigDescription(
+            "Adjusts the quantity of the blood squirt particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 36 }
         ));
-        
-        BloodSquirtSize = Config.Bind(bloodGore, "Squirt Size", 1f, new ConfigDescription(
-            "Adjusts the size of the blood squirts.",
+
+        BloodFinisherEmission = Config.Bind(goreEmission, "Finisher Emission Rate", 0.3f, new ConfigDescription(
+            "Adjusts the quantity of particles in finisher effects. Reduce if you get stutters. Above 0.5 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 35 }
         ));
-
-        BloodFinisherSize = Config.Bind(bloodGore, "Finisher Gore Size", 1f, new ConfigDescription(
-            "Adjusts the size of the gore generated by finisher shots.",
+        
+        /*
+         * Gore Size
+         */
+        BloodMistSize = Config.Bind(goreSize, "Mist Size", 1f, new ConfigDescription(
+            "Adjusts the size of blood mists/puffs.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 34 }
         ));
 
-        WoundDecalsEnabled = Config.Bind(battleAmbience, "Wound Decals on Bodies (Requires Restart)", true, new ConfigDescription(
-            "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects. Philistine.",
-            null,
+        BloodSpraySize = Config.Bind(goreSize, "Spray Size", 1f, new ConfigDescription(
+            "Adjusts the size of fine blood sprays.",
+            new AcceptableValueRange<float>(0f, 5f),
+            new ConfigurationManagerAttributes { Order = 33 }
+        ));
+       
+        BloodBleedSize = Config.Bind(goreSize, "Bleed Drop Size", 1f, new ConfigDescription(
+            "Adjusts the size of open wound bleeding on live targets.",
+            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 32 }
         ));
 
-        WoundDecalsSize = Config.Bind(battleAmbience, "Wound Decal Size (Requires Restart)", 1f, new ConfigDescription(
-            "Adjusts the size of the wound decals that appear on bodies.",
+        BloodSquibSize = Config.Bind(goreSize, "Squib Size", 1f, new ConfigDescription(
+            "Adjusts the size of blood sqquibs.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 31 }
         ));
-        
-        BloodSplatterDecalsSize = Config.Bind(battleAmbience, "Splatter Decal Size (Requires Restart)", 1f, new ConfigDescription(
-            "Adjusts the size of the blood splatters on the environment.",
+
+        BloodSquirtSize = Config.Bind(goreSize, "Squirt Size", 1f, new ConfigDescription(
+            "Adjusts the size of the blood squirts.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 30 }
+        ));
+
+        BloodFinisherSize = Config.Bind(goreSize, "Finisher Gore Size", 1f, new ConfigDescription(
+            "Adjusts the size of the gore generated by finisher shots.",
+            new AcceptableValueRange<float>(0f, 5f),
+            new ConfigurationManagerAttributes { Order = 29 }
+        ));
+
+        /*
+         * Gore Decals
+         */
+        WoundDecalsEnabled = Config.Bind(goreDecals, "Wound Decals on Bodies", true, new ConfigDescription(
+            "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects. Philistine.",
+            null,
+            new ConfigurationManagerAttributes { Order = 28 }
+        ));
+
+        WoundDecalsSize = Config.Bind(goreDecals, "Wound Decal Size", 1f, new ConfigDescription(
+            "Adjusts the size of the wound decals that appear on bodies.",
+            new AcceptableValueRange<float>(0f, 5f),
+            new ConfigurationManagerAttributes { Order = 27 }
+        ));
+        
+        BloodSplatterDecalsEnabled = Config.Bind(goreDecals, "Blood Splatter on Environment", true, new ConfigDescription(
+            "Toggles the new blood splashes appearing on the environment for penetrating hits. If toggled off, you'll get the shonky EFT defaults. Philistine.",
+            null,
+            new ConfigurationManagerAttributes { Order = 26 }
+        ));
+        
+        BloodSplatterDecalsSize = Config.Bind(goreDecals, "Blood Splatter Decal Size", 1f, new ConfigDescription(
+            "Adjusts the size of the blood splatters on the environment.",
+            new AcceptableValueRange<float>(0f, 5f),
+            new ConfigurationManagerAttributes { Order = 25 }
         ));
 
         /*
          * Ragdolls
          */
         bool[] ragdollAcceptableValues = visceralCombatDetected ? [false] : [false, true];
-        RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (Requires Restart)", !visceralCombatDetected, new ConfigDescription(
+        RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (REQUIRES RESTART)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 13, ReadOnly = visceralCombatDetected }
         ));
         
-        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (Requires Restart)", true, new ConfigDescription(
+        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (REQUIRES RESTART)", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
         ));
         
-        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (Requires Restart)", true, new ConfigDescription(
+        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (REQUIRES RESTART)", true, new ConfigDescription(
             "Toggles the enemies dropping their weapon on death.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected }
@@ -312,7 +368,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Misc
          */
-        MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (Requires Restart)", true, new ConfigDescription(
+        MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (REQUIRES RESTART)", true, new ConfigDescription(
             "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
             null,
             new ConfigurationManagerAttributes { Order = 9 }
@@ -324,7 +380,7 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 8 }
         ));
 
-        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (Requires Restart)", 100, new ConfigDescription(
+        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (REQUIRES RESTART)", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
             new ConfigurationManagerAttributes { Order = 7 }
@@ -355,8 +411,8 @@ public class Plugin : BaseUnityPlugin
         /*
          * Deboog
          */
-        _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (Requires Restart)", false, new ConfigDescription(
-            "Duh. Requires restarting the game to take effect.",
+        _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (REQUIRES RESTART)", false, new ConfigDescription(
+            "Duh. REQUIRES RESTARTing the game to take effect.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));

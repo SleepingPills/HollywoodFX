@@ -53,65 +53,66 @@ public class EffectsAwakePrefixPatch : ModulePatch
         }
     }
 
-    private static void SetDecalsProps(Effects effects)
+    private static void SetDecalsProps(Effects eftEffects)
     {
-        var decalsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
+        var decalsHfxPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
         Plugin.Log.LogInfo("Instantiating Decal Effects Prefab");
-        var decalsInstance = Object.Instantiate(decalsPrefab);
+        var decalsHfxInstance = Object.Instantiate(decalsHfxPrefab);
         Plugin.Log.LogInfo("Getting Effects Component");
-        var decalsEffects = decalsInstance.GetComponent<Effects>();
+        var decalsHfxEffects = decalsHfxInstance.GetComponent<Effects>();
 
         if (Plugin.WoundDecalsEnabled.Value)
         {
-            var texDecalsTraverse = Traverse.Create(effects.TexDecals);
+            var texDecalsOrigTraverse = Traverse.Create(eftEffects.TexDecals);
 
-            Plugin.Log.LogInfo($"Shaders: {texDecalsTraverse.Field("_drawInterceptionShader").GetValue<Shader>()} {texDecalsTraverse.Field("_blitShader").GetValue<Shader>()}");
+            Plugin.Log.LogInfo($"Shaders: {texDecalsOrigTraverse.Field("_drawInterceptionShader").GetValue<Shader>()} {texDecalsOrigTraverse.Field("_blitShader").GetValue<Shader>()}");
 
-            texDecalsTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
+            texDecalsOrigTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
 
-            var bloodDecals = Traverse.Create(decalsEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
-            if (bloodDecals != null)
+            var bloodDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
+            if (bloodDecalsHfx != null)
             {
                 Plugin.Log.LogInfo("Overriding blood decal textures");
-                texDecalsTraverse.Field("_bloodDecalTexture").SetValue(bloodDecals);
-                texDecalsTraverse.Field("_vestDecalTexture").SetValue(bloodDecals);
-                texDecalsTraverse.Field("_backDecalTexture").SetValue(bloodDecals);
-                var woundDecalSize = new Vector2(0.1f, 0.3f) * Plugin.WoundDecalsSize.Value;
-                texDecalsTraverse.Field("_decalSize").SetValue(woundDecalSize);
+                texDecalsOrigTraverse.Field("_bloodDecalTexture").SetValue(bloodDecalsHfx);
+                texDecalsOrigTraverse.Field("_vestDecalTexture").SetValue(bloodDecalsHfx);
+                texDecalsOrigTraverse.Field("_backDecalTexture").SetValue(bloodDecalsHfx);
+                texDecalsOrigTraverse.Field("_decalSize").SetValue(new Vector2(0.1f, 0.3f) * Plugin.WoundDecalsSize.Value);
             }
         }
 
-        var decalRenderer = effects.DeferredDecals;
+        if (Plugin.BloodSplatterDecalsEnabled.Value)
+        {
+            var decalRenderer = eftEffects.DeferredDecals;
 
-        if (decalRenderer == null) return;
+            if (decalRenderer == null) return;
 
-        var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
-        var bleedingDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
+            var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
+            var bleedingDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
 
-        if (bleedingDecalOrig == null || bleedingDecalNew == null) return;
+            if (bleedingDecalOrig == null || bleedingDecalNew == null) return;
 
-        bleedingDecalOrig.DecalMaterial = bleedingDecalNew.DecalMaterial;
-        bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
-        bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
-        bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
-        bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
+            bleedingDecalOrig.DecalMaterial = bleedingDecalNew.DecalMaterial;
+            bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
+            bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
+            bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
+            bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
 
-        var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
-        var splatterDecalNew = Traverse.Create(decalsEffects.DeferredDecals).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
+            var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
+            var splatterDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
 
-        if (splatterDecalOrig == null || splatterDecalNew == null) return;
+            if (splatterDecalOrig == null || splatterDecalNew == null) return;
 
-        splatterDecalOrig.DecalMaterial = splatterDecalNew.DecalMaterial;
-        splatterDecalOrig.DynamicDecalMaterial = splatterDecalNew.DynamicDecalMaterial;
-        splatterDecalOrig.TileSheetRows = splatterDecalNew.TileSheetRows;
-        splatterDecalOrig.TileSheetColumns = splatterDecalNew.TileSheetColumns;
-        splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize * Plugin.BloodSplatterDecalsSize.Value;
-
-        var impactDecals = Traverse.Create(decalsEffects.DeferredDecals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
-
+            splatterDecalOrig.DecalMaterial = splatterDecalNew.DecalMaterial;
+            splatterDecalOrig.DynamicDecalMaterial = splatterDecalNew.DynamicDecalMaterial;
+            splatterDecalOrig.TileSheetRows = splatterDecalNew.TileSheetRows;
+            splatterDecalOrig.TileSheetColumns = splatterDecalNew.TileSheetColumns;
+            splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize * Plugin.BloodSplatterDecalsSize.Value;
+        }
+        
+        var impactDecals = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
         Decals.TracerScrorchMark = impactDecals[0];
         Plugin.Log.LogInfo($"Extracted decal: {Decals.TracerScrorchMark} > {Decals.TracerScrorchMark.DecalMaterial.name}");
-
+        
         Plugin.Log.LogInfo("Decal overrides complete");
     }
 

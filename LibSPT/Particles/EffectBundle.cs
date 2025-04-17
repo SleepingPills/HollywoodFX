@@ -57,7 +57,7 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
     {
         var effectMap = new Dictionary<string, EffectBundle>();
 
-        foreach (var (name, particleSystems) in ParticleHelpers.EnumerateParticleSystemBundles(eftEffects, prefab, dynamicAlpha))
+        foreach (var (name, particleSystems) in ParticleHelpers.LoadParticleSystemBundles(eftEffects, prefab, dynamicAlpha))
         {
             effectMap[name] = new EffectBundle(particleSystems);
 
@@ -65,5 +65,18 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
         }
 
         return effectMap;
+    }
+
+    public void ScaleDensity(float density)
+    {
+        if (Mathf.Approximately(density, 1f)) return;
+        
+        foreach (var system in ParticleSystems)
+        {
+            foreach (var subSystem in system.GetComponentsInChildren<ParticleSystem>()) 
+            {
+                ParticleHelpers.ScaleEmissionRate(subSystem, Plugin.BloodSprayEmission.Value);
+            }
+        }
     }
 }

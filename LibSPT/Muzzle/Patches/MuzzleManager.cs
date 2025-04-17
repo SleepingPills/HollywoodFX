@@ -1,9 +1,7 @@
 ﻿using System.Reflection;
 using Comfort.Common;
-using EFT.UI;
-using HollywoodFX.Helpers;
+using HollywoodFX.Patches;
 using SPT.Reflection.Patching;
-using UnityEngine;
 
 namespace HollywoodFX.Muzzle.Patches;
 
@@ -18,6 +16,9 @@ internal class MuzzleManagerShotPrefixPatch : ModulePatch
     // ReSharper disable once InconsistentNaming
     private static bool Prefix(MuzzleManager __instance, bool isVisible, float sqrCameraDistance)
     {
+        if (GameWorldAwakePrefixPatch.IsHideout)
+            return true;
+        
         var muzzleStatic = Singleton<MuzzleStatic>.Instance;
         
         if (!muzzleStatic.TryGetMuzzleState(__instance, out var state))

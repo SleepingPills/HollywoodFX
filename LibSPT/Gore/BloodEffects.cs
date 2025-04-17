@@ -32,26 +32,24 @@ public class BloodEffects
         _mists = new EffectSystem(directional: [new DirectionalEffect(effectMap["Puff_Blood_Front"]), puffSide]);
 
         Plugin.Log.LogInfo("Building blood sprays");
-        _sprays = new EffectSystem(directional: [new DirectionalEffect(effectMap["Spray_Blood"])]);
+        var bloodSprays = effectMap["Spray_Blood"];
+        bloodSprays.ScaleDensity(Plugin.BloodSprayEmission.Value);
+        _sprays = new EffectSystem(directional: [new DirectionalEffect(bloodSprays)]);
 
         Plugin.Log.LogInfo("Building blood squibs");
         _squibs = new EffectSystem(directional: [new DirectionalEffect(effectMap["Squib_Blood_Front"], isChanceScaledByKinetics: true)]);
 
-        Plugin.Log.LogInfo("Building blood squirts");
         _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _squirts.Setup(eftEffects, prefabSquirts, 10, 2f);
+        _squirts.Setup(eftEffects, prefabSquirts, 10, 2f, Plugin.BloodSquirtEmission.Value);
         
-        Plugin.Log.LogInfo("Building bleeds");
         _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _bleeds.Setup(eftEffects, prefabBleeds, 30, 10f);
+        _bleeds.Setup(eftEffects, prefabBleeds, 30, 10f, Plugin.BloodBleedEmission.Value);
 
-        Plugin.Log.LogInfo("Building bleedouts");
         _bleedouts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 3.5f);
+        _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 3.5f, Plugin.BloodFinisherEmission.Value);
         
-        Plugin.Log.LogInfo("Building finishers");
         _finishers = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _finishers.Setup(eftEffects, prefabFinishers, 10, 2f);
+        _finishers.Setup(eftEffects, prefabFinishers, 10, 2f, Plugin.BloodFinisherEmission.Value);
     }
 
     public void Emit(ImpactKinetics kinetics, Rigidbody rigidbody)
@@ -100,7 +98,7 @@ public class BloodEffects
         else if (Random.Range(0f, 1f) < squirtChance)
         {
             // Emit bleeding if a squirt was not generated
-            _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
+            _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodBleedSize.Value);
         }
 
         // Other stuff gets emitted only if the flipped normal is angled (otherwise there's no point) 

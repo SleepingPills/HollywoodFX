@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
 using HollywoodFX.Lighting;
+using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -13,7 +14,7 @@ internal class DetachOnDisable : MonoBehaviour
     {
         transform.SetParent(Singleton<Effects>.Instance.transform);
         enabled = true;
-   }
+    }
 }
 
 internal class RigidbodyEffects : MonoBehaviour
@@ -24,18 +25,21 @@ internal class RigidbodyEffects : MonoBehaviour
     private Queue<Emission> _active;
     private Effects _eftEffects;
 
-    public void Setup(Effects eftEffects, GameObject prefab, int copyCount, float lifetime)
+    public void Setup(Effects eftEffects, GameObject prefab, int copyCount, float lifetime, float density)
     {
         _lifetime = lifetime;
         _eftEffects = eftEffects;
         _pool = [];
         _active = new Queue<Emission>();
 
+        Plugin.Log.LogInfo($"Creating RigidbodyEffects for {prefab.name} lifetime {_lifetime}");
+
         for (var i = 0; i < copyCount; i++)
         {
             Plugin.Log.LogInfo($"Instantiating Effects Prefab {prefab.name} installment {i + 1}");
 
             var rootInstance = Instantiate(prefab);
+
             foreach (var child in rootInstance.transform.GetChildren())
             {
                 if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
@@ -43,7 +47,13 @@ internal class RigidbodyEffects : MonoBehaviour
                 child.parent = eftEffects.transform;
                 Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, false);
                 _pool.Add(particleSystem);
-                Plugin.Log.LogInfo($"Adding Effect {child.name}");
+
+                foreach (var subSystem in particleSystem.GetComponentsInChildren<ParticleSystem>())
+                {
+                    ParticleHelpers.ScaleEmissionRate(subSystem, density);
+                }
+
+                Plugin.Log.LogInfo($"Adding Effect {child.name} density {density}");
             }
         }
 
@@ -52,16 +62,16 @@ internal class RigidbodyEffects : MonoBehaviour
             effect.gameObject.AddComponent<DetachOnDisable>();
 
             var particleSystems = effect.GetComponentsInChildren<ParticleSystem>(true);
-            
+
             if (particleSystems == null)
                 continue;
-            
+
             foreach (var particleSystem in particleSystems)
             {
                 if (!particleSystem.collision.enabled)
                     continue;
-                
-                particleSystem.gameObject.AddComponent<BloodSquirtCollisionHandler>();                
+
+                particleSystem.gameObject.AddComponent<BloodSquirtCollisionHandler>();
             }
         }
     }
@@ -113,7 +123,7 @@ internal class RigidbodyEffects : MonoBehaviour
         effect.transform.rotation = Quaternion.LookRotation(normal);
         effect.transform.SetParent(rigidbody.transform);
         effect.Play(true);
-        
+
         _active.Enqueue(new Emission(effect, Time.time));
     }
 

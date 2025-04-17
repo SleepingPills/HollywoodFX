@@ -4,6 +4,7 @@ using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
+using HollywoodFX.Patches;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Muzzle.Patches;
@@ -21,6 +22,9 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
     [PatchPostfix]
     private static void Postfix(WeaponPrefab __instance, Weapon weapon, IPlayer ___iplayer_0)
     {
+        if (GameWorldAwakePrefixPatch.IsHideout)
+            return;
+        
         var cache = Singleton<FirearmsEffectsCache>.Instance;
         
         if (cache is null || Singleton<MuzzleStatic>.Instance is null || Singleton<LocalPlayerMuzzleEffects>.Instance is null)

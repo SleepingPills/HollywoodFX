@@ -75,10 +75,12 @@ internal class MuzzleBlast(
 
             mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
 
-            if (adjustForwardJet > 0.01f)
-                forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
+            // if (adjustForwardJet > 0.01f)
+            //     forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
             
-            // Side jets
+            // Port jets
+            
+                
             for (var i = 0; i < state.Jets.Count; i++)
             {
                 var jet = state.Jets[i];
@@ -179,8 +181,8 @@ internal class MuzzleEffects
         var rifleMainJet = effectMap["Rifle_Main_Jet"];
         var rifleMainJetDim = effectMap["Rifle_Main_Jet_Dim"];
 
+        var riflePortJet = effectMap["Rifle_Port_Jet"];
         var riflePortJetDim = effectMap["Rifle_Port_Jet_Dim"];
-        var riflePortJet = EffectBundle.Merge(effectMap["Rifle_Port_Jet"], riflePortJetDim);
 
         var rifleForwardJetDim = effectMap["Rifle_Forward_Jet_Dim"];
         var rifleForwardJet = EffectBundle.Merge(

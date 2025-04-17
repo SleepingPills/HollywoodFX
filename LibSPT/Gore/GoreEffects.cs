@@ -78,7 +78,7 @@ public class GoreEffects
             }
         }
 
-        if (Plugin.BloodEnabled.Value)
+        if (Plugin.GoreEnabled.Value)
         {
             _bloodEffects.Emit(kinetics, rigidbody);
         }
