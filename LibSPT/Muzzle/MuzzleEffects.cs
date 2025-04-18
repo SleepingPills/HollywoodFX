@@ -12,6 +12,8 @@ internal class MuzzleBlast(
     EffectBundle mainJet,
     EffectBundle forwardJet,
     EffectBundle portJet,
+    EffectBundle portJetBase,
+    EffectBundle portJetBright,
     EffectBundle forwardSmoke,
     EffectBundle ringSmoke,
     EffectBundle portSmoke,
@@ -41,7 +43,7 @@ internal class MuzzleBlast(
         var adjustForwardJet = 1f;
         var adjustMainJet = 1f;
 
-        // In 1st person view, the main jet is bigger and the forward jet is smaller
+        // In 1st person view the forward jet is smaller
         if (!isThirdPerson)
         {
             adjustForwardJet = 0.5f;
@@ -65,6 +67,9 @@ internal class MuzzleBlast(
 
                 // Decrease the size of the forward jet as we approach a full frontal view angle
                 adjustForwardJet *= frontFacingFactor;
+                
+                // Add an extra variation to the forward jet size
+                adjustForwardJet *= Random.Range(0.75f, 1.1f);
 
                 // When the muzzle fully faces the camera, scale the main jet up by 25% to account for the forward jet being de-scaled 
                 adjustMainJet += 0.25f * (1f - frontFacingFactor);
@@ -75,16 +80,27 @@ internal class MuzzleBlast(
 
             mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
 
-            // if (adjustForwardJet > 0.01f)
-            //     forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
+            if (adjustForwardJet > 0.01f)
+                forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
             
-            // Port jets
-            
-                
-            for (var i = 0; i < state.Jets.Count; i++)
+            // Port jets, 20% chance to emit brighter jets
+            if (portJetBright != null && Random.Range(0f, 1f) < 0.2f)
             {
-                var jet = state.Jets[i];
-                portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
+                for (var i = 0; i < state.Jets.Count; i++)
+                {
+                    var jet = state.Jets[i];
+                    portJetBright.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
+                    portJetBase.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
+                }
+            }
+            else
+            {
+                for (var i = 0; i < state.Jets.Count; i++)
+                {
+                    var jet = state.Jets[i];
+                    portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
+                    portJetBase.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleJet, 1);
+                }
             }
         }
 
@@ -182,6 +198,8 @@ internal class MuzzleEffects
         var rifleMainJetDim = effectMap["Rifle_Main_Jet_Dim"];
 
         var riflePortJet = effectMap["Rifle_Port_Jet"];
+        var riflePortJetBase = effectMap["Rifle_Port_Jet_Base"];
+        var riflePortJetBright = effectMap["Rifle_Port_Jet_Bright"];
         var riflePortJetDim = effectMap["Rifle_Port_Jet_Dim"];
 
         var rifleForwardJetDim = effectMap["Rifle_Forward_Jet_Dim"];
@@ -199,25 +217,29 @@ internal class MuzzleEffects
 
         var rifleBlast = new MuzzleBlast(
             2500f,
-            rifleCoreJet, rifleMainJet, rifleForwardJet, riflePortJet, rifleForwardSmoke, rifleRingSmoke,riflePortSmoke, rifleLingerSmoke, rifleSparks,
+            rifleCoreJet, rifleMainJet, rifleForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright, 
+            rifleForwardSmoke, rifleRingSmoke,riflePortSmoke, rifleLingerSmoke, rifleSparks,
             0.85f, 0.5f, 0.5f
         );
 
         var rifleBlastDim = new MuzzleBlast(
             2000f,
-            rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
+            rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null, 
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
             0.5f, 0.85f,0.85f
         );
 
         var smgBlast = new MuzzleBlast(
             1000f,
-            rifleCoreJet, rifleMainJet, rifleForwardJet, riflePortJet, rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
+            rifleCoreJet, rifleMainJet, rifleForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright, 
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
             0.85f, 0.5f, 0.5f
         );
 
         var smgBlastDim = new MuzzleBlast(
             500f,
-            rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
+            rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null, 
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
             0.5f, 0.85f, 0.85f
         );
 

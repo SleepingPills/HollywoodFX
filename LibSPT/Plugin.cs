@@ -5,6 +5,8 @@ using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using Comfort.Common;
+using EFT.UI;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
 using UnityEngine;
@@ -66,7 +68,10 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
+    public static ConfigEntry<float> MiscShellVelocity;
     public static ConfigEntry<float> KineticsScaling;
+    
+    private static ConfigEntry<bool> _peenEnabled;
 
     private static ConfigEntry<bool> _loggingEnabled;
 
@@ -397,6 +402,15 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
+        MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
+        
+        MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 0.9f, new ConfigDescription(
+            "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 5 }
+        ));
+        MiscShellVelocity.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellSize.Value;
+        EFTHardSettings.Instance.Shells.velocityRotation = 3f;
         
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
@@ -404,17 +418,26 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 4 }
         ));
         
-        MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
-        EFTHardSettings.Instance.Shells.velocityMult = 0.85f;
-        EFTHardSettings.Instance.Shells.velocityRotation = 3f;
-
         /*
          * Deboog
          */
         _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (REQUIRES RESTART)", false, new ConfigDescription(
-            "Duh. REQUIRES RESTARTing the game to take effect.",
+            "Duh. Requires restarting the game to take effect.",
+            null,
+            new ConfigurationManagerAttributes { Order = 3 }
+        ));
+        
+        _peenEnabled = Config.Bind(debug, "Peen", false, new ConfigDescription(
+            "Made you look.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
+        _peenEnabled.SettingChanged += (s, e) => ErrorPlayerFeedback("Made you look!");
+    }
+    
+    public static void ErrorPlayerFeedback(string message)
+    {
+        NotificationManagerClass.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
+        Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.ErrorMessage);
     }
 }
