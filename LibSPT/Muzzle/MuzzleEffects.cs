@@ -230,56 +230,56 @@ internal class MuzzleEffects
             2500f,
             rifleCoreJet, rifleMainJet, rifleForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
-            0.65f, 0.5f, 0.5f
+            0.5f, 0.5f, 0.5f
         );
 
         var rifleBlastDim = new MuzzleBlast(
             2500f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
-            0.5f, 0.85f, 0.85f, mainJetTpSize: 1.0f
+            0.4f, 0.85f, 0.85f, mainJetTpSize: 1.0f
         );
 
         var smgBlast = new MuzzleBlast(
             750f,
             rifleCoreJet, handgunMainJet, smgForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
-            0.65f, 0.5f, 0.5f, mainJetFpSize: 1.5f, mainJetTpSize: 1.0f
+            0.35f, 0.5f, 0.5f, mainJetFpSize: 1.25f, mainJetTpSize: 1.0f
         );
 
         var smgBlastDim = new MuzzleBlast(
             750f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
-            0.5f, 0.85f, 0.85f
+            0.2f, 0.85f, 0.85f
         );
 
         var shotgunBlast = new MuzzleBlast(
             2000f,
             rifleCoreJet, rifleMainJet, shotgunForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, shotgunSparks,
-            0.75f, 0.75f, 0.75f, mainJetFpSize: 2f
+            0.9f, 0.75f, 0.75f, mainJetFpSize: 2f, mainJetTpSize: 1.25f
         );
 
         var shotgunBlastDim = new MuzzleBlast(
             2500f, // Larger norm factor to force smaller muzzle blast
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
-            0.65f, 0.85f, 0.85f, mainJetFpSize: 2f
+            0.65f, 0.85f, 0.85f, mainJetFpSize: 2f, mainJetTpSize: 1.25f
         );
 
         var handgunBlast = new MuzzleBlast(
             1000f,
             rifleCoreJet, handgunMainJet, handgunForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
-            0.85f, 0.85f, 0.5f, mainJetFpSize: 2f
+            0.9f, 0.85f, 0.5f, mainJetFpSize: 2f
         );
 
         var handgunBlastDim = new MuzzleBlast(
             1000f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
-            0.6f, 0.85f, 0.85f
+            0.65f, 0.85f, 0.85f
         );
 
         _regularMuzzleBlasts = new MuzzleBlastBundle(handgunBlast, smgBlast, rifleBlast, shotgunBlast);
