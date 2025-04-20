@@ -404,13 +404,14 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         
-        MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 0.9f, new ConfigDescription(
+        MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        MiscShellVelocity.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellSize.Value;
-        EFTHardSettings.Instance.Shells.velocityRotation = 3f;
+        MiscShellVelocity.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
+        EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
+        // EFTHardSettings.Instance.Shells.velocityRotation = 100f;
         
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
