@@ -111,9 +111,6 @@ public class Plugin : BaseUnityPlugin
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
-        // new MuzzleManagerDebugPatch1().Enable();
-        // new MuzzleManagerDebugPatch2().Enable();
-
         if (MuzzleEffectsEnabled.Value)
         {
             new FirearmControllerInitiateShotPrefixPatch().Enable();
@@ -402,16 +399,16 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        MiscShellSize.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
+        MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        MiscShellVelocity.SettingChanged += (s, e) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
+        MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
-        // EFTHardSettings.Instance.Shells.velocityRotation = 100f;
+        EFTHardSettings.Instance.Shells.velocityRotation = 35f;
         
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
@@ -433,7 +430,7 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        _peenEnabled.SettingChanged += (s, e) => ErrorPlayerFeedback("Made you look!");
+        _peenEnabled.SettingChanged += (_, _) => ErrorPlayerFeedback("Made you look!");
     }
     
     public static void ErrorPlayerFeedback(string message)
