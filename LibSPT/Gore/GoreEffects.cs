@@ -92,7 +92,8 @@ public class GoreEffects
 
     private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody)
     {
-        var impactImpulse = Mathf.Min(CalculateImpactImpulse(kinetics.Bullet.Impulse, kinetics.Bullet.Info.PenetrationPower), 100f);
+        var impactImpulse = CalculateImpactImpulse(kinetics.Bullet.Impulse, kinetics.Bullet.Info.PenetrationPower);
+        impactImpulse = Mathf.Clamp(impactImpulse, 25f, 75f);
 
         // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
         // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
