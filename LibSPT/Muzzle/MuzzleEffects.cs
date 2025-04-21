@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using EFT.UI;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -70,8 +69,6 @@ internal class MuzzleBlast(
             if (state.Jets.Count <= 2)
             {
                 var jetCountFactor = 3 - state.Jets.Count;
-                
-                ConsoleScreen.Log($"Jet count factor: {jetCountFactor}");
                 
                 scalePortJet *= 1f + 0.25f * jetCountFactor;
                 adjustMainJet *= 1f + 0.15f * jetCountFactor;
