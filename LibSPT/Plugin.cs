@@ -69,6 +69,9 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
     public static ConfigEntry<float> MiscShellVelocity;
+    public static ConfigEntry<int> MiscShellPhysics;
+    public static ConfigEntry<float> MiscShellBounciness;
+    
     public static ConfigEntry<float> KineticsScaling;
     
     private static ConfigEntry<bool> _peenEnabled;
@@ -110,6 +113,8 @@ public class Plugin : BaseUnityPlugin
         new BulletImpactPatch().Enable();
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
+
+        // new LampControllerAwakePostfixPatch().Enable();
 
         if (MuzzleEffectsEnabled.Value)
         {
@@ -404,16 +409,35 @@ public class Plugin : BaseUnityPlugin
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
         MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
+        
+        MiscShellPhysics = Config.Bind(misc, "Spent Shell Physics Resolution", 100, new ConfigDescription(
+            "Adjust how finely the spent casing physics are simulated. Higher numbers mean the simulation will go on longer before stopping.",
+            new AcceptableValueRange<int>(1, 500),
+            new ConfigurationManagerAttributes { Order = 3 }
+        ));
+        MiscShellPhysics.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.maxCastCount = MiscShellPhysics.Value;
+        EFTHardSettings.Instance.Shells.maxCastCount = MiscShellPhysics.Value;
+        
+        MiscShellBounciness = Config.Bind(misc, "Spent Shell Bounciness", 1.15f, new ConfigDescription(
+            "Adjust how bouncy the spent casings are. Values above 1.2f result in the physics system breaking down unfortunately.",
+            new AcceptableValueRange<float>(0.5f, 5f),
+            new ConfigurationManagerAttributes { Order = 3 }
+        ));
+        MiscShellBounciness.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.bounceSpeedMult = MiscShellBounciness.Value;
+        EFTHardSettings.Instance.Shells.bounceSpeedMult = MiscShellBounciness.Value;
+        
+        // EFTHardSettings.Instance.Shells.deltaTimeStep = 0.05f;
+        
         EFTHardSettings.Instance.Shells.velocityRotation = 35f;
         
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
         
         /*
@@ -422,13 +446,13 @@ public class Plugin : BaseUnityPlugin
         _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (REQUIRES RESTART)", false, new ConfigDescription(
             "Duh. Requires restarting the game to take effect.",
             null,
-            new ConfigurationManagerAttributes { Order = 3 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
         
         _peenEnabled = Config.Bind(debug, "Peen", false, new ConfigDescription(
             "Made you look.",
             null,
-            new ConfigurationManagerAttributes { Order = 1 }
+            new ConfigurationManagerAttributes { Order = 0 }
         ));
         _peenEnabled.SettingChanged += (_, _) => ErrorPlayerFeedback("Made you look!");
     }

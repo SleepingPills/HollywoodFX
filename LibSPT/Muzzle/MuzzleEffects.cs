@@ -42,56 +42,68 @@ internal class MuzzleBlast(
         var kineticsScale = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
 
         // Reach max size at 1.5m (2.25 = 1.5^2)
-        var proximityScale = 0.75f + 0.5f * Mathf.Lerp(0f, 2.25f, sqrCameraDistance);
         var isThirdPerson = sqrCameraDistance > 0.5f;
+
+        var proximityFactor = Mathf.InverseLerp(100f, 1225f, sqrCameraDistance);
 
         var adjustForwardJet = 1f;
         var adjustMainJet = mainJetTpSize;
+        var perspectiveScale = 1.875f;
 
-        // In 1st person view the forward jet is smaller
+        // In 1st person view the jets are generall smaller
         if (!isThirdPerson)
         {
             adjustForwardJet = 0.5f;
             adjustMainJet = mainJetFpSize;
+            perspectiveScale = 0.75f;
         }
 
         var jetEmitted = false;
-        var scaleTotal = proximityScale * kineticsScale;
+        var scaleTotal = perspectiveScale * kineticsScale;
         var fireportDir = -1 * state.Fireport.up;
 
-        if (Random.Range(0f, 1f) < chanceJet)
+        var camera = CameraClass.Instance.Camera;
+        var camAngle = Vector3.Angle(camera.transform.forward, fireportDir);
+        var frontFacingFactor = Mathf.InverseLerp(160f, 140f, camAngle);
+
+        // Slightly boost the emission chance for far away jets
+        if (Random.Range(0f, 1f) < chanceJet * (1 + 0.25f * proximityFactor))
         {
             jetEmitted = true;
             var scaleJet = scaleTotal * Plugin.MuzzleEffectJetsSize.Value;
-            
-            var scalePortJet = scaleJet;
+
+            // Scale the port jets up by the proximity factor
+            var scalePortJet = scaleJet * (1f + 0.5f * proximityFactor);
 
             if (state.Jets.Count <= 2)
             {
                 var jetCountFactor = 3 - state.Jets.Count;
-                
+
                 scalePortJet *= 1f + 0.25f * jetCountFactor;
                 adjustMainJet *= 1f + 0.15f * jetCountFactor;
             }
 
             if (isThirdPerson)
             {
-                var camera = CameraClass.Instance.Camera;
-                var camAngle = Vector3.Angle(camera.transform.forward, fireportDir);
-
-                var frontFacingFactor = Mathf.InverseLerp(160f, 140f, camAngle);
-
                 // Decrease the size of the forward jet as we approach a full frontal view angle
                 adjustForwardJet *= frontFacingFactor;
 
                 // Add an extra variation to the forward jet size
                 adjustForwardJet *= Random.Range(0.75f, 1.1f);
 
+                adjustForwardJet *= 1f + 0.5f * proximityFactor;
+
                 // When the muzzle fully faces the camera, scale the main jet up by 25% to account for the forward jet being de-scaled 
                 adjustMainJet += 0.25f * (1f - frontFacingFactor);
 
+                // The core should not be affected by the proximity scaling to avoid blowing up suppressed weapon visibility
+                var adjustCoreJet = adjustMainJet;
+
+                // Beyond 10m distance, scale the main jet up, reaching 2x extra scaling at 35m
+                adjustMainJet *= 1f + proximityFactor;
+
                 // Only emit this in 3rd pov as it generates too much bloom in fpv
-                coreJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
+                coreJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustCoreJet);
             }
 
             mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
@@ -131,7 +143,9 @@ internal class MuzzleBlast(
 
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSmoke)
         {
-            forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke);
+            // Only emit the smoke if it's not directly facing the camera
+            if (frontFacingFactor >= 0.09)
+                forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(7f, 10f) * frontFacingFactor));
 
             var scaleSmokeMisc = scaleSmoke * 0.5f;
 
@@ -156,13 +170,14 @@ internal class MuzzleBlast(
             }
             else
             {
-                ringSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke);
+                ringSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, Random.Range(10, 20));
             }
         }
 
-        if (Random.Range(0f, 1f) < (0.5 * chanceSmoke))
+        if (Random.Range(0f, 1f) < 0.5 * chanceSmoke)
         {
-            lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, Random.Range(10, 15));
+            if (frontFacingFactor >= 0.05)
+                lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
         }
     }
 }
