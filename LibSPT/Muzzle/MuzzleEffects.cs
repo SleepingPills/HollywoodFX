@@ -19,6 +19,7 @@ internal class MuzzleBlast(
     EffectBundle portSmoke,
     EffectBundle lingerSmoke,
     EffectBundle sparks,
+    EffectBundle lights,
     float chanceJet,
     float chanceSmoke,
     float chanceSparks,
@@ -30,116 +31,87 @@ internal class MuzzleBlast(
     {
         // Kinetics
         var mass = Mathf.Max(ammo.BulletMassGram, 1f) * ammo.ProjectileCount / 1000;
-        var speed = ammo.InitialSpeed;
-
-        // Adjustment for shotguns
-        if (ammo.ProjectileCount > 1)
-            speed *= 2;
-
+        var speed = ammo.InitialSpeed * (ammo.ProjectileCount > 1 ? 2 : 1); // Adjustment for shotguns
         var impulse = mass * speed;
         var energy = impulse * speed / 2;
 
-        var kineticsScale = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
-
-        // Reach max size at 1.5m (2.25 = 1.5^2)
-        var isThirdPerson = sqrCameraDistance > 0.5f;
-
-        var proximityFactor = Mathf.InverseLerp(100f, 1225f, sqrCameraDistance);
-
-        var adjustForwardJet = 1f;
-        var adjustMainJet = mainJetTpSize;
-        var perspectiveScale = 1.875f;
-
-        // In 1st person view the jets are generall smaller
-        if (!isThirdPerson)
-        {
-            adjustForwardJet = 0.5f;
-            adjustMainJet = mainJetFpSize;
-            perspectiveScale = 0.75f;
-        }
-
-        var jetEmitted = false;
-        var scaleTotal = perspectiveScale * kineticsScale;
+        // Viewport
         var fireportDir = -1 * state.Fireport.up;
-
+        var isThirdPerson = sqrCameraDistance > 0.5f;
         var camera = CameraClass.Instance.Camera;
         var camAngle = Vector3.Angle(camera.transform.forward, fireportDir);
+
+        // Core scale factors
+        var kineticsFactor = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
         var frontFacingFactor = Mathf.InverseLerp(160f, 140f, camAngle);
+        var proximityFactor = Mathf.InverseLerp(100f, 1225f, sqrCameraDistance);
+        var perspectiveFactor = isThirdPerson ? 1.875f : 0.75f;
+        var scaleBase = perspectiveFactor * kineticsFactor;
 
-        // Slightly boost the emission chance for far away jets
-        if (Random.Range(0f, 1f) < chanceJet * (1 + 0.25f * proximityFactor))
-        {
-            jetEmitted = true;
-            var scaleJet = scaleTotal * Plugin.MuzzleEffectJetsSize.Value;
-
-            // Scale the port jets up by the proximity factor
-            var scalePortJet = scaleJet * (1f + 0.5f * proximityFactor);
-
-            if (state.Jets.Count <= 2)
-            {
-                var jetCountFactor = 3 - state.Jets.Count;
-
-                scalePortJet *= 1f + 0.25f * jetCountFactor;
-                adjustMainJet *= 1f + 0.15f * jetCountFactor;
-            }
-
-            if (isThirdPerson)
-            {
-                // Decrease the size of the forward jet as we approach a full frontal view angle
-                adjustForwardJet *= frontFacingFactor;
-
-                // Add an extra variation to the forward jet size
-                adjustForwardJet *= Random.Range(0.75f, 1.1f);
-
-                adjustForwardJet *= 1f + 0.5f * proximityFactor;
-
-                // When the muzzle fully faces the camera, scale the main jet up by 25% to account for the forward jet being de-scaled 
-                adjustMainJet += 0.25f * (1f - frontFacingFactor);
-
-                // The core should not be affected by the proximity scaling to avoid blowing up suppressed weapon visibility
-                var adjustCoreJet = adjustMainJet;
-
-                // Beyond 10m distance, scale the main jet up, reaching 2x extra scaling at 35m
-                adjustMainJet *= 1f + proximityFactor;
-
-                // Only emit this in 3rd pov as it generates too much bloom in fpv
-                coreJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustCoreJet);
-            }
-
-            mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
-
-            if (adjustForwardJet > 0.01f)
-                forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
-
-            // Port jets, 20% chance to emit brighter jets
-            if (portJetBright != null && Random.Range(0f, 1f) < 0.2f)
-            {
-                for (var i = 0; i < state.Jets.Count; i++)
-                {
-                    var jet = state.Jets[i];
-                    portJetBright.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
-                    portJetBase.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
-                }
-            }
-            else
-            {
-                for (var i = 0; i < state.Jets.Count; i++)
-                {
-                    var jet = state.Jets[i];
-                    portJet.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
-                    portJetBase.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
-                }
-            }
-        }
+        var jetEmitted = EmitJets(state, scaleBase, proximityFactor, frontFacingFactor, fireportDir, isThirdPerson);
 
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSparks)
         {
             // Add a bit of randomness to the spark size
-            var scaleSparks = scaleTotal * Plugin.MuzzleEffectSparksSize.Value * Random.Range(0.75f, 1.25f);
+            var scaleSparks = scaleBase * Plugin.MuzzleEffectSparksSize.Value * Random.Range(0.75f, 1.25f);
             sparks.EmitDirect(state.Fireport.position, fireportDir, scaleSparks);
         }
 
-        var scaleSmoke = Mathf.Min(scaleTotal * Plugin.MuzzleEffectSmokeSize.Value * Random.Range(0.75f, 1f), 1.25f);
+        EmitSmoke(state, scaleBase, frontFacingFactor, fireportDir, jetEmitted);
+    }
+
+    private bool EmitJets(MuzzleState state, float scaleBase, float proximityFactor, float frontFacingFactor, Vector3 fireportDir, bool isThirdPerson)
+    {
+        // Slightly boost the emission chance for far away jets
+        var chanceJetAdjusted = chanceJet * (1 + 0.25f * proximityFactor);
+        
+        if (!(Random.Range(0f, 1f) < chanceJetAdjusted)) return false;
+        
+        var scaleJet = scaleBase * Plugin.MuzzleEffectJetsSize.Value;
+
+        var proximityFactor50 = (1f + 0.5f * proximityFactor);
+        var scalePortJet = scaleJet * proximityFactor50;
+
+        var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - frontFacingFactor));
+        var adjustForwardJet = isThirdPerson ? frontFacingFactor * proximityFactor50 * Random.Range(0.75f, 1.1f) : 0.5f;
+        var adjustMainJet = isThirdPerson ? adjustCoreJet * (1f + proximityFactor) : mainJetFpSize;
+            
+        if (state.Jets.Count <= 2)
+        {
+            var jetCountFactor = 3 - state.Jets.Count;
+
+            scalePortJet *= 1f + 0.25f * jetCountFactor;
+            adjustMainJet *= 1f + 0.15f * jetCountFactor;
+        }
+
+        // Only emit this in 3rd pov as it generates too much bloom in fpv
+        if (isThirdPerson)
+            coreJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustCoreJet);
+
+        mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
+
+        if (adjustForwardJet > 0.01f)
+            forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
+
+        // 20% chance to emit brighter port jets
+        var portJetMain = Random.Range(0f, 1f) < 0.2f && portJetBright != null ? portJetBright : portJet;
+            
+        for (var i = 0; i < state.Jets.Count; i++)
+        {
+            var jet = state.Jets[i];
+            portJetMain.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
+            portJetBase.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
+        }
+            
+        // Lights
+        lights.EmitDirect(state.Fireport.position, fireportDir, scaleJet);
+
+        return true;
+    }
+
+    private void EmitSmoke(MuzzleState state, float scaleBase, float frontFacingFactor, Vector3 fireportDir, bool jetEmitted)
+    {
+        var scaleSmoke = Mathf.Min(scaleBase * Plugin.MuzzleEffectSmokeSize.Value * Random.Range(0.75f, 1f), 1.25f);
 
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSmoke)
         {
@@ -174,11 +146,10 @@ internal class MuzzleBlast(
             }
         }
 
-        if (Random.Range(0f, 1f) < 0.5 * chanceSmoke)
-        {
-            if (frontFacingFactor >= 0.05)
-                lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
-        }
+        if (!(Random.Range(0f, 1f) < 0.5 * chanceSmoke)) return;
+        
+        if (frontFacingFactor >= 0.05)
+            lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
     }
 }
 
@@ -250,60 +221,63 @@ internal class MuzzleEffects
         var handgunMainJet = effectMap["Handgun_Main_Jet"];
         var handgunForwardJet = effectMap["Handgun_Forward_Jet"];
         var smgForwardJet = EffectBundle.Merge(handgunForwardJet, rifleForwardJet);
+        
+        var light = effectMap["Muzzle_Light"];
+        var lightDim = effectMap["Muzzle_Light_Dim"];
 
         var rifleBlast = new MuzzleBlast(
             2500f,
             rifleCoreJet, rifleMainJet, rifleForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
             0.5f, 0.5f, 0.5f
         );
 
         var rifleBlastDim = new MuzzleBlast(
             2500f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
             0.4f, 0.85f, 0.85f
         );
 
         var smgBlast = new MuzzleBlast(
             750f,
             rifleCoreJet, handgunMainJet, smgForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
             0.35f, 0.5f, 0.5f
         );
 
         var smgBlastDim = new MuzzleBlast(
             750f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
             0.2f, 0.85f, 0.85f
         );
 
         var shotgunBlast = new MuzzleBlast(
             2000f,
             rifleCoreJet, rifleMainJet, shotgunForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, shotgunSparks,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, shotgunSparks, light,
             0.9f, 0.75f, 0.75f, mainJetFpSize: 1.25f
         );
 
         var shotgunBlastDim = new MuzzleBlast(
             2500f, // Larger norm factor to force smaller muzzle blast
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
             0.65f, 0.85f, 0.85f, mainJetFpSize: 1.25f
         );
 
         var handgunBlast = new MuzzleBlast(
             1000f,
             rifleCoreJet, handgunMainJet, handgunForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
             0.9f, 0.85f, 0.5f, mainJetFpSize: 1.4f
         );
 
         var handgunBlastDim = new MuzzleBlast(
             1000f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
-            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks,
+            rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, lightDim,
             0.65f, 0.85f, 0.85f
         );
 
