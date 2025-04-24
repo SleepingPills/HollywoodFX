@@ -24,7 +24,8 @@ internal class MuzzleBlast(
     float chanceSmoke,
     float chanceSparks,
     float mainJetFpSize = 1f,
-    float mainJetTpSize = 0.75f
+    float mainJetTpSize = 0.75f,
+    float proximityContrib = 1f
 )
 {
     public void Emit(MuzzleState state, AmmoItemClass ammo, float sqrCameraDistance)
@@ -44,7 +45,7 @@ internal class MuzzleBlast(
         // Core scale factors
         var kineticsFactor = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
         var frontFacingFactor = Mathf.InverseLerp(160f, 140f, camAngle);
-        var proximityFactor = Mathf.InverseLerp(100f, 1225f, sqrCameraDistance);
+        var proximityFactor = proximityContrib * Mathf.InverseLerp(100f, 1225f, sqrCameraDistance);
         var perspectiveFactor = isThirdPerson ? 1.875f : 0.75f;
         var scaleBase = perspectiveFactor * kineticsFactor;
 
@@ -171,6 +172,11 @@ internal class MuzzleEffects
     public MuzzleEffects(Effects eftEffects, bool forceWorldSim)
     {
         var muzzleBlastsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Muzzle Blasts");
+
+        var lightPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Muzzle Light");
+        var lightComponent = lightPrefab.GetComponent<Light>();
+        lightComponent.shadows = Plugin.MuzzleLightShadowEnabled.Value ? LightShadows.Hard : LightShadows.None;
+        
         var effectMap = EffectBundle.LoadPrefab(eftEffects, muzzleBlastsPrefab, true);
 
         ParticleSystems = [];
@@ -236,21 +242,21 @@ internal class MuzzleEffects
             2500f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
-            0.4f, 0.85f, 0.85f
+            0.4f, 0.85f, 0.85f, proximityContrib: 0.5f
         );
 
         var smgBlast = new MuzzleBlast(
             750f,
             rifleCoreJet, handgunMainJet, smgForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
-            0.35f, 0.5f, 0.5f
+            0.35f, 0.5f, 0.5f, proximityContrib: 0.75f
         );
 
         var smgBlastDim = new MuzzleBlast(
             750f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
-            0.2f, 0.85f, 0.85f
+            0.2f, 0.85f, 0.85f, proximityContrib: 0.5f
         );
 
         var shotgunBlast = new MuzzleBlast(
@@ -264,21 +270,21 @@ internal class MuzzleEffects
             2500f, // Larger norm factor to force smaller muzzle blast
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
-            0.65f, 0.85f, 0.85f, mainJetFpSize: 1.25f
+            0.65f, 0.85f, 0.85f, mainJetFpSize: 1.25f, proximityContrib: 0.5f
         );
 
         var handgunBlast = new MuzzleBlast(
             1000f,
             rifleCoreJet, handgunMainJet, handgunForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
-            0.9f, 0.85f, 0.5f, mainJetFpSize: 1.4f
+            0.9f, 0.85f, 0.5f, mainJetFpSize: 1.4f, proximityContrib: 0.5f
         );
 
         var handgunBlastDim = new MuzzleBlast(
             1000f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, lightDim,
-            0.65f, 0.85f, 0.85f
+            0.65f, 0.85f, 0.85f, proximityContrib: 0.5f
         );
 
         _regularMuzzleBlasts = new MuzzleBlastBundle(handgunBlast, smgBlast, rifleBlast, shotgunBlast);

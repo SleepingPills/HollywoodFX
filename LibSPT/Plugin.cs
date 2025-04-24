@@ -7,6 +7,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using Comfort.Common;
 using EFT.UI;
+using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
 using UnityEngine;
@@ -29,6 +30,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> MuzzleEffectJetsSize;
     public static ConfigEntry<float> MuzzleEffectSparksSize;
     public static ConfigEntry<float> MuzzleEffectSmokeSize;
+    public static ConfigEntry<bool> MuzzleLightShadowEnabled;
     
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
@@ -66,6 +68,8 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> MiscDecalsEnabled;
     public static ConfigEntry<int> MiscMaxDecalCount;
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
+    public static ConfigEntry<float> LightFlareIntensity;
+    public static ConfigEntry<float> LightFlareSize;
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
     public static ConfigEntry<float> MiscShellVelocity;
@@ -114,7 +118,7 @@ public class Plugin : BaseUnityPlugin
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
-        // new LampControllerAwakePostfixPatch().Enable();
+        new LampControllerAwakePostfixPatch().Enable();
 
         if (MuzzleEffectsEnabled.Value)
         {
@@ -162,8 +166,8 @@ public class Plugin : BaseUnityPlugin
     {
         const string general = "1. Impact Effects";
         const string muzzleEffects = "2. Muzzle Blast Effects";
-        const string battleAmbience = "3. Ambient Battle Effects (REQUIRES RESTART)";
-        const string goreEmission = "4. Gore Emission (REQUIRES RESTART)";
+        const string battleAmbience = "3. Ambient Battle Effects (REQ. RESTART)";
+        const string goreEmission = "4. Gore Emission (REQ. RESTART)";
         const string goreSize = "5. Gore Size";
         const string goreDecals = "6. Gore Decals";
         const string ragdoll = "7. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
@@ -188,7 +192,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Muzzle Effects
          */
-        MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Effects (Requires Restart)", true, new ConfigDescription(
+        MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Effects (REQ. RESTART)", true, new ConfigDescription(
             "Toggles new muzzle blast effects.",
             null,
             new ConfigurationManagerAttributes { Order = 80 }
@@ -210,6 +214,12 @@ public class Plugin : BaseUnityPlugin
             "Adjusts the size of the muzzle smoke.",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 77 }
+        ));
+        
+        MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Light Shadow (REQ. RESTART)", true, new ConfigDescription(
+            "Toggles shadow casting for muzzle lights.",
+            null,
+            new ConfigurationManagerAttributes { Order = 76 }
         ));
         
         /*
@@ -348,102 +358,113 @@ public class Plugin : BaseUnityPlugin
          * Ragdolls
          */
         bool[] ragdollAcceptableValues = visceralCombatDetected ? [false] : [false, true];
-        RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (REQUIRES RESTART)", !visceralCombatDetected, new ConfigDescription(
+        RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (REQ. RESTART)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 13, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 20, ReadOnly = visceralCombatDetected }
         ));
         
-        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (REQUIRES RESTART)", true, new ConfigDescription(
+        RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (REQ. RESTART)", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 12, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 19, ReadOnly = visceralCombatDetected }
         ));
         
-        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (REQUIRES RESTART)", true, new ConfigDescription(
+        RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (REQ. RESTART)", true, new ConfigDescription(
             "Toggles the enemies dropping their weapon on death.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 11, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 18, ReadOnly = visceralCombatDetected }
         ));
 
         RagdollForceMultiplier = Config.Bind(ragdoll, "Ragdoll Force Multiplier", 1f, new ConfigDescription(
             "Multiplies the force that is applied to ragdolls when enemies die.",
             new AcceptableValueRange<float>(0f, 100f),
-            new ConfigurationManagerAttributes { Order = 10, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 17, ReadOnly = visceralCombatDetected }
         ));
 
         /*
          * Misc
          */
-        MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (REQUIRES RESTART)", true, new ConfigDescription(
+        MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (REQ. RESTART)", true, new ConfigDescription(
             "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
             null,
-            new ConfigurationManagerAttributes { Order = 9 }
+            new ConfigurationManagerAttributes { Order = 15 }
         ));
 
         MiscMaxDecalCount = Config.Bind(misc, "Decal Limits", 2048, new ConfigDescription(
             "Adjusts the maximum number of decals that the game will render. The vanilla number is a puny 200.",
             new AcceptableValueRange<int>(1, 2048),
-            new ConfigurationManagerAttributes { Order = 8 }
+            new ConfigurationManagerAttributes { Order = 14 }
         ));
 
-        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (REQUIRES RESTART)", 100, new ConfigDescription(
+        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (REQ. RESTART)", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
-            new ConfigurationManagerAttributes { Order = 7 }
+            new ConfigurationManagerAttributes { Order = 13 }
         ));
 
+        LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (REQ. RESTART", 2.5f, new ConfigDescription(
+            "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 12 }
+        ));
+        
+        LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (REQ. RESTART", 0.65f, new ConfigDescription(
+            "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 12 }
+        ));
+        
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
             "How long do spent shells stay on the ground before despawning (game default is 1 second).",
             new AcceptableValueRange<float>(0f, 3600f),
-            new ConfigurationManagerAttributes { Order = 6 }
+            new ConfigurationManagerAttributes { Order = 10 }
         ));
         
         MiscShellSize = Config.Bind(misc, "Spent Shells Size", 1.5f, new ConfigDescription(
             "Adjusts the size of spent shells multiplicatively (2 means 2x the size).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 0 }
         ));
         MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 9 }
         ));
         MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         
-        MiscShellPhysics = Config.Bind(misc, "Spent Shell Physics Resolution", 100, new ConfigDescription(
-            "Adjust how finely the spent casing physics are simulated. Higher numbers mean the simulation will go on longer before stopping.",
-            new AcceptableValueRange<int>(1, 500),
-            new ConfigurationManagerAttributes { Order = 3 }
-        ));
-        MiscShellPhysics.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.maxCastCount = MiscShellPhysics.Value;
-        EFTHardSettings.Instance.Shells.maxCastCount = MiscShellPhysics.Value;
-        
-        MiscShellBounciness = Config.Bind(misc, "Spent Shell Bounciness", 1.15f, new ConfigDescription(
-            "Adjust how bouncy the spent casings are. Values above 1.2f result in the physics system breaking down unfortunately.",
-            new AcceptableValueRange<float>(0.5f, 5f),
-            new ConfigurationManagerAttributes { Order = 3 }
-        ));
-        MiscShellBounciness.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.bounceSpeedMult = MiscShellBounciness.Value;
-        EFTHardSettings.Instance.Shells.bounceSpeedMult = MiscShellBounciness.Value;
-        
-        // EFTHardSettings.Instance.Shells.deltaTimeStep = 0.05f;
+        // MiscShellPhysics = Config.Bind(misc, "Spent Shell Physics Resolution", 100, new ConfigDescription(
+        //     "Adjust how finely the spent casing physics are simulated. Higher numbers mean the simulation will go on longer before stopping.",
+        //     new AcceptableValueRange<int>(1, 500),
+        //     new ConfigurationManagerAttributes { Order = 3 }
+        // ));
+        // MiscShellPhysics.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.maxCastCount = MiscShellPhysics.Value;
+        // EFTHardSettings.Instance.Shells.maxCastCount = MiscShellPhysics.Value;
+        //
+        // MiscShellBounciness = Config.Bind(misc, "Spent Shell Bounciness", 1.15f, new ConfigDescription(
+        //     "Adjust how bouncy the spent casings are. Values above 1.2f result in the physics system breaking down unfortunately.",
+        //     new AcceptableValueRange<float>(0.5f, 5f),
+        //     new ConfigurationManagerAttributes { Order = 3 }
+        // ));
+        // MiscShellBounciness.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.bounceSpeedMult = MiscShellBounciness.Value;
+        // EFTHardSettings.Instance.Shells.bounceSpeedMult = MiscShellBounciness.Value;
+        // EFTHardSettings.Instance.Shells.deltaTimeStep = 0.01f;
         
         EFTHardSettings.Instance.Shells.velocityRotation = 35f;
         
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 2 }
+            new ConfigurationManagerAttributes { Order = 8 }
         ));
         
         /*
          * Deboog
          */
-        _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (REQUIRES RESTART)", false, new ConfigDescription(
+        _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (REQ. RESTART)", false, new ConfigDescription(
             "Duh. Requires restarting the game to take effect.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }
