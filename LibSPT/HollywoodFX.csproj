@@ -125,6 +125,7 @@
     <Compile Include="Patches\GameWorld.cs" />
     <Compile Include="Patches\Player.cs" />
     <Compile Include="Patches\Ragdoll.cs" />
+    <Compile Include="Patches\Shell.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TracerImpactEffects.cs" />
