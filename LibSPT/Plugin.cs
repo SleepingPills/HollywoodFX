@@ -446,10 +446,6 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
-        
-        // EFTHardSettings.Instance.Shells.maxCastCount = 100;
-        // EFTHardSettings.Instance.Shells.deltaTimeStep = 0.01f;
-        // EFTHardSettings.Instance.Shells.bounceSpeedMult = 1.25f;
 
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
