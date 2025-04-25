@@ -429,6 +429,7 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 9 }
         ));
         MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
+        EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
