@@ -246,14 +246,14 @@ internal class MuzzleEffects
         );
 
         var smgBlast = new MuzzleBlast(
-            750f,
+            1000f,
             rifleCoreJet, handgunMainJet, smgForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
             0.35f, 0.5f, 0.5f, proximityContrib: 0.75f
         );
 
         var smgBlastDim = new MuzzleBlast(
-            750f,
+            1000f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparksDim, lightDim,
             0.2f, 0.85f, 0.85f, proximityContrib: 0.5f

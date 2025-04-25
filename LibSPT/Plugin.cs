@@ -19,7 +19,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.6.1";
+    public const string HollywoodFXVersion = "1.6.2";
 
     public static ManualLogSource Log;
 
@@ -68,6 +68,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> MiscDecalsEnabled;
     public static ConfigEntry<int> MiscMaxDecalCount;
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
+    public static ConfigEntry<bool> LightFlareEnabled;
     public static ConfigEntry<float> LightFlareIntensity;
     public static ConfigEntry<float> LightFlareSize;
     public static ConfigEntry<float> MiscShellLifetime;
@@ -117,7 +118,8 @@ public class Plugin : BaseUnityPlugin
         new EffectsEmitPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
-        new LampControllerAwakePostfixPatch().Enable();
+        if (LightFlareEnabled.Value)
+            new LampControllerAwakePostfixPatch().Enable();
         
         if (MiscShellPhysicsEnabled.Value)
             new ShellOnBouncePrefixPatch().Enable();
@@ -405,28 +407,34 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 13 }
         ));
 
-        LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (RESTART)", 2.5f, new ConfigDescription(
-            "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
-            new AcceptableValueRange<float>(0f, 10f),
+        LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
+            "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
+            null,
             new ConfigurationManagerAttributes { Order = 12 }
         ));
         
-        LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (RESTART)", 1f, new ConfigDescription(
-            "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
+        LightFlareIntensity = Config.Bind(misc, "Env. Light Flares Intensity (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 11 }
+        ));
+        
+        LightFlareSize = Config.Bind(misc, "Env. Light Flares Size (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 10 }
         ));
         
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
             "How long do spent shells stay on the ground before despawning (game default is 1 second).",
             new AcceptableValueRange<float>(0f, 3600f),
-            new ConfigurationManagerAttributes { Order = 10 }
+            new ConfigurationManagerAttributes { Order = 9 }
         ));
         
         MiscShellSize = Config.Bind(misc, "Spent Shells Size", 1.5f, new ConfigDescription(
             "Adjusts the size of spent shells multiplicatively (2 means 2x the size).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 9 }
+            new ConfigurationManagerAttributes { Order = 8 }
         ));
         MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
@@ -434,7 +442,7 @@ public class Plugin : BaseUnityPlugin
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 8 }
+            new ConfigurationManagerAttributes { Order = 7 }
         ));
         MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
@@ -443,7 +451,7 @@ public class Plugin : BaseUnityPlugin
         MiscShellPhysicsEnabled = Config.Bind(misc, "Enhanced Shell Physics (RESTART)", true, new ConfigDescription(
             "Toggles whether to enhance the spent shell physics, resulting in finer grained simulation of bouncing and rolling.",
             null,
-            new ConfigurationManagerAttributes { Order = 7 }
+            new ConfigurationManagerAttributes { Order = 6 }
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
@@ -451,7 +459,7 @@ public class Plugin : BaseUnityPlugin
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 6 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
         
         /*
@@ -483,15 +491,15 @@ public class Plugin : BaseUnityPlugin
         {
             Log.LogInfo("Enabling Enhanced Shell Physics");
             EFTHardSettings.Instance.Shells.maxCastCount = 100;
-            EFTHardSettings.Instance.Shells.deltaTimeStep = 0.01f;
-            EFTHardSettings.Instance.Shells.bounceSpeedMult = 1.25f;
+            EFTHardSettings.Instance.Shells.deltaTimeStep = 0.15f;
+            // EFTHardSettings.Instance.Shells.bounceSpeedMult = 1.0f;
         }
         else
         {
             Log.LogInfo("Disabling Enhanced Shell Physics");
             EFTHardSettings.Instance.Shells.maxCastCount = 10;
             EFTHardSettings.Instance.Shells.deltaTimeStep = 0.3f;
-            EFTHardSettings.Instance.Shells.bounceSpeedMult = 1.0f;
+            // EFTHardSettings.Instance.Shells.bounceSpeedMult = 1.0f;
         }
     }
 }

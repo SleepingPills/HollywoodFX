@@ -19,7 +19,7 @@ public class ShellOnBouncePrefixPatch : ModulePatch
         // Only does some debug crap and can be safely ignored
         // base.OnBounce(collider);
 
-        ___vector3_2 = 2.5f * __instance.VelocitySqrMagnitude * new Vector3(
+        ___vector3_2 = 5f * __instance.VelocitySqrMagnitude * new Vector3(
             EFTHardSettings.Instance.Shells.ReboundRotationX.Random(true),
             EFTHardSettings.Instance.Shells.ReboundRotationY.Random(true),
             EFTHardSettings.Instance.Shells.ReboundRotationZ.Random(true)
