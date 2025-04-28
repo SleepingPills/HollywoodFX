@@ -19,7 +19,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.6.2";
+    public const string HollywoodFXVersion = "1.6.3";
 
     public static ManualLogSource Log;
 
@@ -406,35 +406,17 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<int>(10, 1000),
             new ConfigurationManagerAttributes { Order = 13 }
         ));
-
-        LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
-            "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
-            null,
-            new ConfigurationManagerAttributes { Order = 12 }
-        ));
-        
-        LightFlareIntensity = Config.Bind(misc, "Env. Light Flares Intensity (RESTART)", 1f, new ConfigDescription(
-            "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
-            new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 11 }
-        ));
-        
-        LightFlareSize = Config.Bind(misc, "Env. Light Flares Size (RESTART)", 1f, new ConfigDescription(
-            "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
-            new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 10 }
-        ));
         
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
             "How long do spent shells stay on the ground before despawning (game default is 1 second).",
             new AcceptableValueRange<float>(0f, 3600f),
-            new ConfigurationManagerAttributes { Order = 9 }
+            new ConfigurationManagerAttributes { Order = 12 }
         ));
         
         MiscShellSize = Config.Bind(misc, "Spent Shells Size", 1.5f, new ConfigDescription(
             "Adjusts the size of spent shells multiplicatively (2 means 2x the size).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 8 }
+            new ConfigurationManagerAttributes { Order = 11 }
         ));
         MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
@@ -442,19 +424,37 @@ public class Plugin : BaseUnityPlugin
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 7 }
+            new ConfigurationManagerAttributes { Order = 10 }
         ));
         MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
-        EFTHardSettings.Instance.Shells.velocityRotation = 35f;
+        // EFTHardSettings.Instance.Shells.velocityRotation = 35f;
         
         MiscShellPhysicsEnabled = Config.Bind(misc, "Enhanced Shell Physics (RESTART)", true, new ConfigDescription(
             "Toggles whether to enhance the spent shell physics, resulting in finer grained simulation of bouncing and rolling.",
             null,
-            new ConfigurationManagerAttributes { Order = 6 }
+            new ConfigurationManagerAttributes { Order = 9 }
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
+        
+        LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
+            "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
+            null,
+            new ConfigurationManagerAttributes { Order = 8 }
+        ));
+        
+        LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 7 }
+        ));
+        
+        LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 6 }
+        ));
 
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",

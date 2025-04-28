@@ -149,7 +149,7 @@ internal class MuzzleBlast(
 
         if (!(Random.Range(0f, 1f) < 0.5 * chanceSmoke)) return;
         
-        if (frontFacingFactor >= 0.05)
+        if (frontFacingFactor >= 0.09)
             lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
     }
 }
