@@ -63,20 +63,24 @@ internal class MuzzleBlast(
 
     private bool EmitJets(MuzzleState state, float scaleBase, float proximityFactor, float frontFacingFactor, Vector3 fireportDir, bool isThirdPerson)
     {
-        // Slightly boost the emission chance for far away jets
-        var chanceJetAdjusted = chanceJet * (1 + 0.25f * proximityFactor);
+        var deltaTimeLastShot = Time.unscaledTime - state.Time;
+        
+        // Boost the emission chance for far away jets and if there wasn't any shot fired for a while.
+        var chanceProximityScale = 1 + 0.25f * proximityFactor;
+        var chanceShotDeltaTimeScale = 1 + 0.5f * Mathf.InverseLerp(0f, 10f, deltaTimeLastShot);
+        var chanceJetAdjusted = chanceJet * chanceProximityScale * chanceShotDeltaTimeScale;
         
         if (!(Random.Range(0f, 1f) < chanceJetAdjusted)) return false;
-        
+
         var scaleJet = scaleBase * Plugin.MuzzleEffectJetsSize.Value;
 
-        var proximityFactor50 = (1f + 0.5f * proximityFactor);
+        var proximityFactor50 = 1f + 0.5f * proximityFactor;
         var scalePortJet = scaleJet * proximityFactor50;
 
         var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - frontFacingFactor));
         var adjustForwardJet = isThirdPerson ? frontFacingFactor * proximityFactor50 * Random.Range(0.75f, 1.1f) : 0.5f;
         var adjustMainJet = isThirdPerson ? adjustCoreJet * (1f + proximityFactor) : mainJetFpSize;
-            
+
         if (state.Jets.Count <= 2)
         {
             var jetCountFactor = 3 - state.Jets.Count;
@@ -96,14 +100,14 @@ internal class MuzzleBlast(
 
         // 20% chance to emit brighter port jets
         var portJetMain = Random.Range(0f, 1f) < 0.2f && portJetBright != null ? portJetBright : portJet;
-            
+
         for (var i = 0; i < state.Jets.Count; i++)
         {
             var jet = state.Jets[i];
             portJetMain.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
             portJetBase.EmitDirect(jet.transform.position, -1 * jet.transform.up, scalePortJet, 1);
         }
-            
+
         // Lights
         lights.EmitDirect(state.Fireport.position, fireportDir, scaleJet);
 
@@ -114,10 +118,11 @@ internal class MuzzleBlast(
     {
         var scaleSmoke = Mathf.Min(scaleBase * Plugin.MuzzleEffectSmokeSize.Value * Random.Range(0.75f, 1f), 1.25f);
 
+        var notFrontFacing = frontFacingFactor >= 0.09;
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSmoke)
         {
             // Only emit the smoke if it's not directly facing the camera
-            if (frontFacingFactor >= 0.09)
+            if (notFrontFacing)
                 forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(7f, 10f) * frontFacingFactor));
 
             var scaleSmokeMisc = scaleSmoke * 0.5f;
@@ -147,10 +152,17 @@ internal class MuzzleBlast(
             }
         }
 
-        if (!(Random.Range(0f, 1f) < 0.5 * chanceSmoke)) return;
+        var smokeLingerDeltaTime = Time.unscaledTime - state.TimeSmokeEmitted;
+
+        var smokeLingerRoll = Random.Range(0f, 1f) < 0.5 * chanceSmoke;
+        var smokeLingerPacing = smokeLingerDeltaTime >= state.TimeSmokeThreshold;
         
-        if (frontFacingFactor >= 0.09)
-            lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
+        if (!(smokeLingerRoll && smokeLingerPacing && notFrontFacing)) return;
+        
+        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
+        state.TimeSmokeEmitted = Time.unscaledTime;
+        // The next smoke emission can happen in a random time between 250 and 500ms;
+        state.TimeSmokeThreshold = Random.Range(0.25f, 0.5f);
     }
 }
 
@@ -176,7 +188,7 @@ internal class MuzzleEffects
         var lightPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Muzzle Light");
         var lightComponent = lightPrefab.GetComponent<Light>();
         lightComponent.shadows = Plugin.MuzzleLightShadowEnabled.Value ? LightShadows.Hard : LightShadows.None;
-        
+
         var effectMap = EffectBundle.LoadPrefab(eftEffects, muzzleBlastsPrefab, true);
 
         ParticleSystems = [];
@@ -227,7 +239,7 @@ internal class MuzzleEffects
         var handgunMainJet = effectMap["Handgun_Main_Jet"];
         var handgunForwardJet = effectMap["Handgun_Forward_Jet"];
         var smgForwardJet = EffectBundle.Merge(handgunForwardJet, rifleForwardJet);
-        
+
         var light = effectMap["Muzzle_Light"];
         var lightDim = effectMap["Muzzle_Light_Dim"];
 

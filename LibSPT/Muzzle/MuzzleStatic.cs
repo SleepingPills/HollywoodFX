@@ -22,13 +22,17 @@ internal class MuzzleState
     public MuzzleSmoke[] Trails;
     public Weapon Weapon;
     public IPlayer Player;
+    
+    public float Time;
+    public float TimeSmokeEmitted = 0f;
+    public float TimeSmokeThreshold = 0.25f;
 }
 
 internal class MuzzleStatic
 {
     public readonly CurrentShot CurrentShot = new();
     private readonly Dictionary<int, MuzzleState> _muzzleStates = new();
-    
+
     private static readonly FieldInfo JetField = typeof(MuzzleManager).GetField("muzzleJet_0", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo FumeField = typeof(MuzzleManager).GetField("muzzleFume_0", BindingFlags.NonPublic | BindingFlags.Instance);
     private static readonly FieldInfo SmokeField = typeof(MuzzleManager).GetField("muzzleSmoke_0", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -67,21 +71,22 @@ internal class MuzzleStatic
 
         if (FumeField.GetValue(manager) is not MuzzleFume[] fumes)
             return null;
-        
+
         var managerId = manager.gameObject.transform.GetInstanceID();
 
         // Get or create the muzzle state entry for this manager
         if (!_muzzleStates.TryGetValue(managerId, out var state))
         {
             _muzzleStates[managerId] = state = new MuzzleState();
+            state.Time = Time.unscaledTime;
         }
 
         // It seems like the smoke emitters are the best way to determine the actual muzzle opening as the fireport doesn't take silencers into account
         const float fwdAngle = 25f;
         var candidateAngle = 10f;
-        
+
         state.Smokes.Clear();
-        
+
         for (var i = 0; i < fumes.Length; i++)
         {
             var fume = fumes[i];
@@ -93,6 +98,7 @@ internal class MuzzleStatic
             {
                 state.Smokes.Add(fume);
             }
+
             if (angle > candidateAngle)
                 continue;
 

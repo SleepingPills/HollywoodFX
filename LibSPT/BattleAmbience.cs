@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
+using EFT.UI;
 using HollywoodFX.Lighting;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -7,10 +8,17 @@ using UnityEngine;
 
 namespace HollywoodFX;
 
+internal class BattleAmbienceEmissionTime
+{
+    public float Smoke;
+    public float Dust;
+}
+
 internal class BattleAmbience
 {
     private readonly ParticleSystem[] _cloudSmoke;
     private readonly ParticleSystem[] _suspendedDust;
+    private readonly Dictionary<int, BattleAmbienceEmissionTime> _emissionTimes = new();
 
     public BattleAmbience(Effects eftEffects, GameObject prefab)
     {
@@ -36,20 +44,41 @@ internal class BattleAmbience
 
     public void Emit(ImpactKinetics kinetics)
     {
+        // ReSharper disable once MergeSequentialChecks
+        if (kinetics.Bullet.Info == null || kinetics.Bullet.Info.Player == null) return;
+        
         var emission = Singleton<EmissionController>.Instance;
 
         var emissionChance = 0.4 * (kinetics.Bullet.Energy / 2500f);
 
-        if (Random.Range(0f, 1f) < emissionChance)
+        var playerId = kinetics.Bullet.Info.Player.iPlayer.Id;
+        
+        if (!_emissionTimes.TryGetValue(playerId, out var emissionTime))
+        {
+            _emissionTimes[playerId] = emissionTime = new BattleAmbienceEmissionTime
+            {
+                Smoke = 0f,
+                Dust = 0f
+            };
+        }
+
+        var dustEmissionDeltaTime = Time.unscaledTime - emissionTime.Dust;
+        
+        if (Random.Range(0f, 1f) < emissionChance && dustEmissionDeltaTime > 1f)
         {
             var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
             emission.Emit(smokeEffect, kinetics.Position, kinetics.Normal);
+            emissionTime.Dust = Time.unscaledTime;
         }
 
-        if (!(Random.Range(0f, 1f) < emissionChance)) return;
+        var smokeEmissionRoll = Random.Range(0f, 1f) < emissionChance;
+        var smokeEmissionDeltaTime = Time.unscaledTime - emissionTime.Smoke;
 
+        if (!(smokeEmissionRoll && smokeEmissionDeltaTime > 1f)) return;
+        
         var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
         emission.Emit(dustEffect, kinetics.Position, kinetics.Normal);
+        emissionTime.Smoke = Time.unscaledTime;
     }
 
     private static void ScaleEffect(ParticleSystem particleSystem, float lifetimeScaling, float limitScaling, float emissionScaling)
