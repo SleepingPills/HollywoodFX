@@ -64,7 +64,7 @@ internal class BattleAmbience
 
         var dustEmissionDeltaTime = Time.unscaledTime - emissionTime.Dust;
         
-        if (Random.Range(0f, 1f) < emissionChance && dustEmissionDeltaTime > 1f)
+        if (Random.Range(0f, 1f) < emissionChance && dustEmissionDeltaTime > 0.25f)
         {
             var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
             emission.Emit(smokeEffect, kinetics.Position, kinetics.Normal);
@@ -74,7 +74,7 @@ internal class BattleAmbience
         var smokeEmissionRoll = Random.Range(0f, 1f) < emissionChance;
         var smokeEmissionDeltaTime = Time.unscaledTime - emissionTime.Smoke;
 
-        if (!(smokeEmissionRoll && smokeEmissionDeltaTime > 1f)) return;
+        if (!(smokeEmissionRoll && smokeEmissionDeltaTime > 0.25f)) return;
         
         var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
         emission.Emit(dustEffect, kinetics.Position, kinetics.Normal);

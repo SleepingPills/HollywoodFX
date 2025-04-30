@@ -41,15 +41,16 @@ internal class MuzzleBlast(
         var isThirdPerson = sqrCameraDistance > 0.5f;
         var camera = CameraClass.Instance.Camera;
         var camAngle = Vector3.Angle(camera.transform.forward, fireportDir);
-
+        
         // Core scale factors
         var kineticsFactor = Mathf.Clamp(Mathf.Sqrt(energy / kineticNormFactor), 0.5f, 1.2f);
-        var frontFacingFactor = Mathf.InverseLerp(160f, 140f, camAngle);
+        var orthogonalityFactor = camAngle > 90f ? Mathf.InverseLerp(160f, 140f, camAngle) : Mathf.InverseLerp(20f, 40f, camAngle);
+        
         var proximityFactor = proximityContrib * Mathf.InverseLerp(100f, 1225f, sqrCameraDistance);
         var perspectiveFactor = isThirdPerson ? 1.875f : 0.75f;
         var scaleBase = perspectiveFactor * kineticsFactor;
 
-        var jetEmitted = EmitJets(state, scaleBase, proximityFactor, frontFacingFactor, fireportDir, isThirdPerson);
+        var jetEmitted = EmitJets(state, scaleBase, proximityFactor, orthogonalityFactor, fireportDir, isThirdPerson);
 
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSparks)
         {
@@ -58,10 +59,10 @@ internal class MuzzleBlast(
             sparks.EmitDirect(state.Fireport.position, fireportDir, scaleSparks);
         }
 
-        EmitSmoke(state, scaleBase, frontFacingFactor, fireportDir, jetEmitted);
+        EmitSmoke(state, scaleBase, orthogonalityFactor, fireportDir, jetEmitted);
     }
 
-    private bool EmitJets(MuzzleState state, float scaleBase, float proximityFactor, float frontFacingFactor, Vector3 fireportDir, bool isThirdPerson)
+    private bool EmitJets(MuzzleState state, float scaleBase, float proximityFactor, float orthogonalityFactor, Vector3 fireportDir, bool isThirdPerson)
     {
         var deltaTimeLastShot = Time.unscaledTime - state.Time;
         
@@ -77,8 +78,8 @@ internal class MuzzleBlast(
         var proximityFactor50 = 1f + 0.5f * proximityFactor;
         var scalePortJet = scaleJet * proximityFactor50;
 
-        var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - frontFacingFactor));
-        var adjustForwardJet = isThirdPerson ? frontFacingFactor * proximityFactor50 * Random.Range(0.75f, 1.1f) : 0.5f;
+        var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - orthogonalityFactor));
+        var adjustForwardJet = isThirdPerson ? orthogonalityFactor * proximityFactor50 * Random.Range(0.75f, 1.1f) : 0.5f;
         var adjustMainJet = isThirdPerson ? adjustCoreJet * (1f + proximityFactor) : mainJetFpSize;
 
         if (state.Jets.Count <= 2)
@@ -114,16 +115,16 @@ internal class MuzzleBlast(
         return true;
     }
 
-    private void EmitSmoke(MuzzleState state, float scaleBase, float frontFacingFactor, Vector3 fireportDir, bool jetEmitted)
+    private void EmitSmoke(MuzzleState state, float scaleBase, float orthogonalityFactor, Vector3 fireportDir, bool jetEmitted)
     {
         var scaleSmoke = Mathf.Min(scaleBase * Plugin.MuzzleEffectSmokeSize.Value * Random.Range(0.75f, 1f), 1.25f);
 
-        var notFrontFacing = frontFacingFactor >= 0.09;
+        var notFrontFacing = orthogonalityFactor >= 0.09;
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSmoke)
         {
             // Only emit the smoke if it's not directly facing the camera
             if (notFrontFacing)
-                forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(7f, 10f) * frontFacingFactor));
+                forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(7f, 10f) * orthogonalityFactor));
 
             var scaleSmokeMisc = scaleSmoke * 0.5f;
 
@@ -159,7 +160,7 @@ internal class MuzzleBlast(
         
         if (!(smokeLingerRoll && smokeLingerPacing && notFrontFacing)) return;
         
-        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
+        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * orthogonalityFactor));
         state.TimeSmokeEmitted = Time.unscaledTime;
         // The next smoke emission can happen in a random time between 250 and 500ms;
         state.TimeSmokeThreshold = Random.Range(0.25f, 0.5f);
