@@ -50,7 +50,7 @@ internal class MuzzleBlast(
         var perspectiveFactor = isThirdPerson ? 1.875f : 0.75f;
         var scaleBase = perspectiveFactor * kineticsFactor;
 
-        var jetEmitted = EmitJets(state, scaleBase, proximityFactor, orthogonalityFactor, fireportDir, isThirdPerson);
+        var jetEmitted = EmitJets(state, scaleBase, kineticsFactor, proximityFactor, orthogonalityFactor, fireportDir, isThirdPerson);
 
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSparks)
         {
@@ -62,7 +62,7 @@ internal class MuzzleBlast(
         EmitSmoke(state, scaleBase, orthogonalityFactor, fireportDir, jetEmitted);
     }
 
-    private bool EmitJets(MuzzleState state, float scaleBase, float proximityFactor, float orthogonalityFactor, Vector3 fireportDir, bool isThirdPerson)
+    private bool EmitJets(MuzzleState state, float scaleBase, float kineticsFactor, float proximityFactor, float orthogonalityFactor, Vector3 fireportDir, bool isThirdPerson)
     {
         var deltaTimeLastShot = Time.unscaledTime - state.Time;
         
@@ -76,7 +76,8 @@ internal class MuzzleBlast(
         var scaleJet = scaleBase * Plugin.MuzzleEffectJetsSize.Value;
 
         var proximityFactor50 = 1f + 0.5f * proximityFactor;
-        var scalePortJet = scaleJet * proximityFactor50;
+        var portJetRandomization = Random.Range(0.5f, 1.1f);
+        var scalePortJet = scaleJet * proximityFactor50 * portJetRandomization;
 
         var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - orthogonalityFactor));
         var adjustForwardJet = isThirdPerson ? orthogonalityFactor * proximityFactor50 * Random.Range(0.75f, 1.1f) : 0.5f;
@@ -99,8 +100,8 @@ internal class MuzzleBlast(
         if (adjustForwardJet > 0.01f)
             forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
 
-        // 20% chance to emit brighter port jets
-        var portJetMain = Random.Range(0f, 1f) < 0.2f && portJetBright != null ? portJetBright : portJet;
+        // Some chance to emit brighter port jets
+        var portJetMain = Random.Range(0f, 1f) < 0.35f && portJetBright != null ? portJetBright : portJet;
 
         for (var i = 0; i < state.Jets.Count; i++)
         {
@@ -110,7 +111,7 @@ internal class MuzzleBlast(
         }
 
         // Lights
-        lights.EmitDirect(state.Fireport.position, fireportDir, scaleJet);
+        lights.EmitDirect(state.Fireport.position, fireportDir, kineticsFactor * portJetRandomization);
 
         return true;
     }
