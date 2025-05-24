@@ -1,4 +1,5 @@
-﻿using EFT.Ballistics;
+﻿using EFT;
+using EFT.Ballistics;
 using HollywoodFX.Gore;
 using Systems.Effects;
 using UnityEngine;
@@ -39,8 +40,9 @@ internal class ImpactController
     {
         var hitColliderRoot = kinetics.Bullet.HitColliderRoot;
 
-        // Don't render effects on the local player
-        if (hitColliderRoot != null && hitColliderRoot == ImpactStatic.LocalPlayerTransform)
+        // Don't render effects on the local player in first person view
+        var localPlayer = ImpactStatic.LocalPlayer;
+        if (hitColliderRoot != null && hitColliderRoot == localPlayer.Transform.Original && localPlayer.PointOfView == EPointOfView.FirstPerson)
             return;
         
         var isBodyShot = (kinetics.Material is

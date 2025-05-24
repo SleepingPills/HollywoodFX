@@ -46,15 +46,8 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-        foreach (var player in __instance.RegisteredPlayers)
-        {
-            if (!player.IsYourPlayer) continue;
-
-            Plugin.Log.LogInfo($"Found local player: {player.ProfileId}");
-            ImpactStatic.LocalPlayerTransform = player.Transform.Original;
-            break;
-        }
+        ImpactStatic.LocalPlayer = __instance.MainPlayer;
+        Plugin.Log.LogInfo($"Found local player: {__instance.MainPlayer.ProfileId}");
 
         if (__instance.LocationId.Contains("factory"))
         {

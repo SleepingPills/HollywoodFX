@@ -37,7 +37,7 @@ public class GameWorldDisposePostfixPatch : ModulePatch
         Singleton<MuzzleStatic>.Release(Singleton<MuzzleStatic>.Instance);
 
         ImpactStatic.Kinetics = new ImpactKinetics();
-        ImpactStatic.LocalPlayerTransform = null;
+        ImpactStatic.LocalPlayer = null;
         ImpactStatic.PlayerHitInfo = null;
         
         Plugin.Log.LogInfo("Disposing complete.");

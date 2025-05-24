@@ -65,8 +65,6 @@ public class EffectsAwakePrefixPatch : ModulePatch
         {
             var texDecalsOrigTraverse = Traverse.Create(eftEffects.TexDecals);
 
-            Plugin.Log.LogInfo($"Shaders: {texDecalsOrigTraverse.Field("_drawInterceptionShader").GetValue<Shader>()} {texDecalsOrigTraverse.Field("_blitShader").GetValue<Shader>()}");
-
             texDecalsOrigTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
 
             var bloodDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
@@ -110,8 +108,8 @@ public class EffectsAwakePrefixPatch : ModulePatch
         }
         
         var impactDecals = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
-        Decals.TracerScrorchMark = impactDecals[0];
-        Plugin.Log.LogInfo($"Extracted decal: {Decals.TracerScrorchMark} > {Decals.TracerScrorchMark.DecalMaterial.name}");
+        Decals.TracerScorchMark = impactDecals[0];
+        Plugin.Log.LogInfo($"Extracted decal: {Decals.TracerScorchMark} > {Decals.TracerScorchMark.DecalMaterial.name}");
         
         Plugin.Log.LogInfo("Decal overrides complete");
     }

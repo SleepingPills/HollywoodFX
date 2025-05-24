@@ -175,7 +175,7 @@ internal class TracerImpactEffects
         if (impactDef.Decal)
         {
             Singleton<DecalPainter>.Instance.DrawDecal(
-                Decals.TracerScrorchMark, kinetics.Position, kinetics.Normal, kinetics.Bullet.Info.HittedBallisticCollider
+                Decals.TracerScorchMark, kinetics.Position, kinetics.Normal, kinetics.Bullet.Info.HittedBallisticCollider
             );
         }
 
