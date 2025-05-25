@@ -73,7 +73,7 @@ public class BloodEffects
 
         var bullet = kinetics.Bullet;
 
-        var mistSizeScale = bullet.SizeScale * Plugin.BloodMistSize.Value;
+        var mistSizeScale = Mathf.Max(bullet.SizeScale, 1f) * Plugin.BloodMistSize.Value;
         var spraySizeScale = bullet.SizeScale * Plugin.BloodSpraySize.Value;
         var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
 
