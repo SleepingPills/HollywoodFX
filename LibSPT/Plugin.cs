@@ -41,6 +41,8 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> GoreEnabled;
     
     public static ConfigEntry<float> BloodMistSize;
+    public static ConfigEntry<float> BloodMistEmission;
+    
     public static ConfigEntry<float> BloodSquibSize;
     
     public static ConfigEntry<float> BloodSpraySize;
@@ -266,6 +268,12 @@ public class Plugin : BaseUnityPlugin
             "Toggles whether gore effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
             null,
             new ConfigurationManagerAttributes { Order = 39 }
+        ));
+        
+        BloodMistEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 1f, new ConfigDescription(
+            "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
+            new AcceptableValueRange<float>(0f, 5f),
+            new ConfigurationManagerAttributes { Order = 38 }
         ));
         
         BloodSprayEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 0.5f, new ConfigDescription(

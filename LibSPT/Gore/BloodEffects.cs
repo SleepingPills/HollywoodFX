@@ -7,7 +7,8 @@ namespace HollywoodFX.Gore;
 
 public class BloodEffects
 {
-    private readonly EffectSystem _mists;
+    private readonly EffectBundle _mists;
+    private readonly EffectSystem _puffs;
     private readonly EffectSystem _sprays;
     private readonly EffectSystem _squibs;
 
@@ -26,10 +27,16 @@ public class BloodEffects
     {
         var effectMap = EffectBundle.LoadPrefab(eftEffects, prefabMain, false);
 
-        var puffSide = new DirectionalEffect(effectMap["Puff_Blood"], camDir: CamDir.Angled);
+        _mists = effectMap["Mist_Blood"];
+        _mists.ScaleDensity(Plugin.BloodMistEmission.Value);
 
-        Plugin.Log.LogInfo("Building blood mists");
-        _mists = new EffectSystem(directional: [new DirectionalEffect(effectMap["Puff_Blood_Front"]), puffSide]);
+        Plugin.Log.LogInfo("Building blood puffs");
+        _puffs = new EffectSystem(directional:
+            [
+                new DirectionalEffect(effectMap["Puff_Blood_Front"]),
+                new DirectionalEffect(effectMap["Puff_Blood"], camDir: CamDir.Angled)
+            ]
+        );
 
         Plugin.Log.LogInfo("Building blood sprays");
         var bloodSprays = effectMap["Spray_Blood"];
@@ -41,13 +48,13 @@ public class BloodEffects
 
         _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _squirts.Setup(eftEffects, prefabSquirts, 10, 2f, Plugin.BloodSquirtEmission.Value);
-        
+
         _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _bleeds.Setup(eftEffects, prefabBleeds, 30, 10f, Plugin.BloodBleedEmission.Value);
 
         _bleedouts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 3.5f, Plugin.BloodFinisherEmission.Value);
-        
+
         _finishers = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _finishers.Setup(eftEffects, prefabFinishers, 10, 2f, Plugin.BloodFinisherEmission.Value);
     }
@@ -72,7 +79,12 @@ public class BloodEffects
 
         var squibChanceScale = 0.5f * armorChanceScale;
 
-        _mists.Emit(kinetics, mistSizeScale, armorChanceScale);
+        // Emit a mist or a puff at a 50/50 chance
+        if (Random.Range(0f, 1f) < 0.5f)
+            _mists.Emit(kinetics.Position, kinetics.Normal, mistSizeScale);
+        else
+            _puffs.Emit(kinetics, mistSizeScale, armorChanceScale);
+
         _sprays.Emit(kinetics, spraySizeScale, armorChanceScale);
         _squibs.Emit(kinetics, squibSizeScale, squibChanceScale);
 
@@ -107,7 +119,7 @@ public class BloodEffects
         if (!camDir.IsSet(CamDir.Angled)) return;
 
         var worldDir = Orientation.GetWorldDir(flippedNormal);
-        _mists.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
+        _puffs.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
         _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, squibChanceScale);
     }
 
@@ -115,7 +127,7 @@ public class BloodEffects
     {
         _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
     }
-    
+
     public void EmitFinisher(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
         _finishers.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
