@@ -186,13 +186,13 @@ public class Plugin : BaseUnityPlugin
         EffectSize = Config.Bind(general, "Impact Effect Size", 1.0f, new ConfigDescription(
             "Scales the size of impact effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
-            new ConfigurationManagerAttributes { Order = 91 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
 
-        TracerImpactsEnabled = Config.Bind(battleAmbience, "Enable Tracer Round Impacts", true, new ConfigDescription(
+        TracerImpactsEnabled = Config.Bind(general, "Enable Tracer Round Impacts", true, new ConfigDescription(
             "Toggles special impact effects for tracer rounds.",
             null,
-            new ConfigurationManagerAttributes { Order = 90 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
         
         /*
@@ -201,31 +201,31 @@ public class Plugin : BaseUnityPlugin
         MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Effects (RESTART)", true, new ConfigDescription(
             "Toggles new muzzle blast effects.",
             null,
-            new ConfigurationManagerAttributes { Order = 80 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
 
         MuzzleEffectJetsSize = Config.Bind(muzzleEffects, "Muzzle Jet Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle flame jets.",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 79 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
         
         MuzzleEffectSparksSize = Config.Bind(muzzleEffects, "Muzzle Sparks Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle sparks.",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 78 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
         
         MuzzleEffectSmokeSize = Config.Bind(muzzleEffects, "Muzzle Smoke Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle smoke.",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 77 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
         
         MuzzleLightShadowEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Light Shadow (RESTART)", true, new ConfigDescription(
             "Toggles shadow casting for muzzle lights.",
             null,
-            new ConfigurationManagerAttributes { Order = 76 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
         
         /*
@@ -234,31 +234,31 @@ public class Plugin : BaseUnityPlugin
         BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects", true, new ConfigDescription(
             "Toggles battle ambience effects like lingering smoke, dust and debris.",
             null,
-            new ConfigurationManagerAttributes { Order = 64 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
 
         AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 25f, new ConfigDescription(
             "Ambient battle effects are simulated in this range around the player, even if not immediately visible. Helps create ambience from bot fights.",
             new AcceptableValueRange<float>(0, 250f),
-            new ConfigurationManagerAttributes { Order = 63 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         AmbientEffectDensity = Config.Bind(battleAmbience, "Ambient Effect Emission Rate", 1f, new ConfigDescription(
             "Adjusts the density of ambient effects. The bigger this number, the denser the smoke, debris, glitter etc...",
             new AcceptableValueRange<float>(0.1f, 5f),
-            new ConfigurationManagerAttributes { Order = 62 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
 
         AmbientParticleLimit = Config.Bind(battleAmbience, "Ambient Effect Particle Limit", 1f, new ConfigDescription(
             "Scales the internal limits on the number of active particles. Since there are different limits for different components, this scales everything proportionally.",
             new AcceptableValueRange<float>(0.1f, 5f),
-            new ConfigurationManagerAttributes { Order = 61 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
 
         AmbientParticleLifetime = Config.Bind(battleAmbience, "Ambient Effect Particle Lifetime", 1f, new ConfigDescription(
             "Scales the internal lifetime of particles. Since there are different limits for different components, this scales everything proportionally.",
             new AcceptableValueRange<float>(0.1f, 5f),
-            new ConfigurationManagerAttributes { Order = 60 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
 
         /*
@@ -267,37 +267,37 @@ public class Plugin : BaseUnityPlugin
         GoreEnabled = Config.Bind(goreEmission, "Enable Gore Effects", true, new ConfigDescription(
             "Toggles whether gore effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
             null,
-            new ConfigurationManagerAttributes { Order = 39 }
+            new ConfigurationManagerAttributes { Order = 6 }
         ));
         
-        BloodMistEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 1f, new ConfigDescription(
-            "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
+        BloodMistEmission = Config.Bind(goreEmission, "Blood Mist Emission Rate", 1f, new ConfigDescription(
+            "Adjusts the quantity of mists & puffs of blood.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 38 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
         
         BloodSprayEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 38 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
         
         BloodBleedEmission = Config.Bind(goreEmission, "Bleed Emission Rate", 1f, new ConfigDescription(
             "Adjusts the quantity of particles open wound bleeding effects on live targets. Above 2 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 37 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
         
         BloodSquirtEmission = Config.Bind(goreEmission, "Squirt Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of the blood squirt particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 36 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
 
         BloodFinisherEmission = Config.Bind(goreEmission, "Finisher Emission Rate", 0.3f, new ConfigDescription(
             "Adjusts the quantity of particles in finisher effects. Reduce if you get stutters. Above 0.5 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 35 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
         
         /*
@@ -306,37 +306,37 @@ public class Plugin : BaseUnityPlugin
         BloodMistSize = Config.Bind(goreSize, "Mist Size", 1f, new ConfigDescription(
             "Adjusts the size of blood mists/puffs.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 34 }
+            new ConfigurationManagerAttributes { Order = 6 }
         ));
 
         BloodSpraySize = Config.Bind(goreSize, "Spray Size", 1f, new ConfigDescription(
             "Adjusts the size of fine blood sprays.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 33 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
        
         BloodBleedSize = Config.Bind(goreSize, "Bleed Drop Size", 1f, new ConfigDescription(
             "Adjusts the size of open wound bleeding on live targets.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 32 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         BloodSquibSize = Config.Bind(goreSize, "Squib Size", 1f, new ConfigDescription(
             "Adjusts the size of blood sqquibs.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 31 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
 
         BloodSquirtSize = Config.Bind(goreSize, "Squirt Size", 1f, new ConfigDescription(
             "Adjusts the size of the blood squirts.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 30 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
 
         BloodFinisherSize = Config.Bind(goreSize, "Finisher Gore Size", 1f, new ConfigDescription(
             "Adjusts the size of the gore generated by finisher shots.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 29 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
 
         /*
@@ -345,25 +345,25 @@ public class Plugin : BaseUnityPlugin
         WoundDecalsEnabled = Config.Bind(goreDecals, "Wound Decals on Bodies", true, new ConfigDescription(
             "Toggles the new blood splashes appearing on bodies. If toggled off, you'll get the barely visible EFT default wound effects. Philistine.",
             null,
-            new ConfigurationManagerAttributes { Order = 28 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         WoundDecalsSize = Config.Bind(goreDecals, "Wound Decal Size", 1f, new ConfigDescription(
             "Adjusts the size of the wound decals that appear on bodies.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 27 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
         
         BloodSplatterDecalsEnabled = Config.Bind(goreDecals, "Blood Splatter on Environment", true, new ConfigDescription(
             "Toggles the new blood splashes appearing on the environment for penetrating hits. If toggled off, you'll get the shonky EFT defaults. Philistine.",
             null,
-            new ConfigurationManagerAttributes { Order = 26 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
         
         BloodSplatterDecalsSize = Config.Bind(goreDecals, "Blood Splatter Decal Size", 1f, new ConfigDescription(
             "Adjusts the size of the blood splatters on the environment.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 25 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
 
         /*
@@ -373,25 +373,25 @@ public class Plugin : BaseUnityPlugin
         RagdollEnabled = Config.Bind(ragdoll, "Enable Ragdoll Effects (RESTART)", !visceralCombatDetected, new ConfigDescription(
             "Toggles whether ragdoll effects will be enabled.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 20, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 4, ReadOnly = visceralCombatDetected }
         ));
         
         RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (RESTART)", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 19, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 3, ReadOnly = visceralCombatDetected }
         ));
         
         RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (RESTART)", true, new ConfigDescription(
             "Toggles the enemies dropping their weapon on death.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
-            new ConfigurationManagerAttributes { Order = 18, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 2, ReadOnly = visceralCombatDetected }
         ));
 
         RagdollForceMultiplier = Config.Bind(ragdoll, "Ragdoll Force Multiplier", 1f, new ConfigDescription(
             "Multiplies the force that is applied to ragdolls when enemies die.",
             new AcceptableValueRange<float>(0f, 100f),
-            new ConfigurationManagerAttributes { Order = 17, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 1, ReadOnly = visceralCombatDetected }
         ));
 
         /*
@@ -400,31 +400,31 @@ public class Plugin : BaseUnityPlugin
         MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (RESTART)", true, new ConfigDescription(
             "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
             null,
-            new ConfigurationManagerAttributes { Order = 15 }
+            new ConfigurationManagerAttributes { Order = 11 }
         ));
 
         MiscMaxDecalCount = Config.Bind(misc, "Decal Limits (RESTART)", 2048, new ConfigDescription(
             "Adjusts the maximum number of decals that the game will render. The vanilla number is a puny 200.",
             new AcceptableValueRange<int>(1, 2048),
-            new ConfigurationManagerAttributes { Order = 14 }
+            new ConfigurationManagerAttributes { Order = 10 }
         ));
 
         MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (RESTART)", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
-            new ConfigurationManagerAttributes { Order = 13 }
+            new ConfigurationManagerAttributes { Order = 9 }
         ));
         
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
             "How long do spent shells stay on the ground before despawning (game default is 1 second).",
             new AcceptableValueRange<float>(0f, 3600f),
-            new ConfigurationManagerAttributes { Order = 12 }
+            new ConfigurationManagerAttributes { Order = 8 }
         ));
         
         MiscShellSize = Config.Bind(misc, "Spent Shells Size", 1.5f, new ConfigDescription(
             "Adjusts the size of spent shells multiplicatively (2 means 2x the size).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 11 }
+            new ConfigurationManagerAttributes { Order = 7 }
         ));
         MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
@@ -432,7 +432,7 @@ public class Plugin : BaseUnityPlugin
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 10 }
+            new ConfigurationManagerAttributes { Order = 6 }
         ));
         MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
@@ -441,7 +441,7 @@ public class Plugin : BaseUnityPlugin
         MiscShellPhysicsEnabled = Config.Bind(misc, "Enhanced Shell Physics (RESTART)", true, new ConfigDescription(
             "Toggles whether to enhance the spent shell physics, resulting in finer grained simulation of bouncing and rolling.",
             null,
-            new ConfigurationManagerAttributes { Order = 9 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
@@ -449,25 +449,25 @@ public class Plugin : BaseUnityPlugin
         LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
             "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
             null,
-            new ConfigurationManagerAttributes { Order = 8 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
         
         LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (RESTART)", 1f, new ConfigDescription(
             "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 7 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
         
         LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (RESTART)", 1f, new ConfigDescription(
             "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 6 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
 
         KineticsScaling = Config.Bind(misc, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
         
         /*
@@ -476,13 +476,13 @@ public class Plugin : BaseUnityPlugin
         _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (RESTART)", false, new ConfigDescription(
             "Duh. Requires restarting the game to take effect.",
             null,
-            new ConfigurationManagerAttributes { Order = 1 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
         
         _peenEnabled = Config.Bind(debug, "Peen", false, new ConfigDescription(
             "Made you look.",
             null,
-            new ConfigurationManagerAttributes { Order = 0 }
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
         _peenEnabled.SettingChanged += (_, _) => ErrorPlayerFeedback("Made you look!");
     }
