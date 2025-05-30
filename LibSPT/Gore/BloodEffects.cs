@@ -79,8 +79,8 @@ public class BloodEffects
 
         var squibChanceScale = 1f * armorChanceScale;
 
-        // Emit a mist or a puff at a 50/50 chance
-        if (Random.Range(0f, 1f) < 0.5f)
+        // Emit a mist or a puff at a 35/65 chance
+        if (Random.Range(0f, 1f) < 0.35f)
             _mists.Emit(kinetics.Position, kinetics.Normal, mistSizeScale);
         else
             _puffs.Emit(kinetics, mistSizeScale, armorChanceScale);
