@@ -77,16 +77,18 @@ public class BloodEffects
         var spraySizeScale = bullet.SizeScale * Plugin.BloodSpraySize.Value;
         var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
 
-        var squibChanceScale = 1f * armorChanceScale;
-
-        // Emit a mist or a puff at a 35/65 chance
-        if (Random.Range(0f, 1f) < 0.35f)
-            _mists.Emit(kinetics.Position, kinetics.Normal, mistSizeScale);
-        else
-            _puffs.Emit(kinetics, mistSizeScale, armorChanceScale);
-
+        var mistChance = 0.5f * armorChanceScale;
+        if (Random.Range(0f, 1f) < mistChance)
+        {
+            // Emit a mist or a puff at a 50/50 chance
+            if (Random.Range(0f, 1f) < 0.5f)
+                _mists.Emit(kinetics.Position, kinetics.Normal, mistSizeScale);
+            else
+                _puffs.Emit(kinetics, mistSizeScale);            
+        }
+        
         _sprays.Emit(kinetics, spraySizeScale, armorChanceScale);
-        _squibs.Emit(kinetics, squibSizeScale, squibChanceScale);
+        _squibs.Emit(kinetics, squibSizeScale, armorChanceScale);
 
         if (!penetrated) return;
 
@@ -120,7 +122,7 @@ public class BloodEffects
 
         var worldDir = Orientation.GetWorldDir(flippedNormal);
         _puffs.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
-        _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, squibChanceScale);
+        _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, armorChanceScale);
     }
 
     public void EmitBleedout(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
