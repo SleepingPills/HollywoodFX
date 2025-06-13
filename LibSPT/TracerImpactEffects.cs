@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Comfort.Common;
-using DeferredDecals;
 using EFT.Ballistics;
 using HarmonyLib;
 using HollywoodFX.Decal;
@@ -30,7 +29,7 @@ internal class TracerImpactEffects
     private readonly EffectBundle _tracerYellow;
     private readonly EffectBundle _tracerWhite;
 
-    private readonly GClass998 _lightPool;
+    private readonly GClass1015 _lightPool;
 
     public TracerImpactEffects(Effects eftEffects, Dictionary<string, EffectBundle> mainEffects, Dictionary<string, EffectBundle> tracerEffects)
     {
@@ -159,7 +158,7 @@ internal class TracerImpactEffects
         _impacts[(int)MaterialType.GenericHard] = new TracerImpact(lowFlammable, 0.35f, 0.5f);
         _impacts[(int)MaterialType.MetalNoDecal] = new TracerImpact(lowFlammable, 0.45f, 0.6f);
 
-        _lightPool = Traverse.Create(eftEffects).Field("gclass998_0").GetValue<GClass998>();
+        _lightPool = Traverse.Create(eftEffects).Field("gclass1015_0").GetValue<GClass1015>();
     }
 
     public void Emit(ImpactKinetics kinetics, AmmoItemClass ammo)

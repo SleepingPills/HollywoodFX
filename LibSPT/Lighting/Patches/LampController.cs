@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using EFT.Interactive;
 using HarmonyLib;
+using MultiFlare;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Lighting.Patches;
@@ -14,7 +15,7 @@ public class LampControllerAwakePostfixPatch : ModulePatch
 
     [PatchPrefix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(LampController __instance, MultiFlareLight[] ___MultiFlareLights, MaterialEmission[] ____materialsWithEmission)
+    public static void Prefix(LampController __instance, FlareLight[] ___MultiFlareLights, MaterialEmission[] ____materialsWithEmission)
     {
         // Plugin.Log.LogInfo($"Found light: {__instance.name} lights: {___MultiFlareLights} alights: {__instance.CustomLights.Length}");
         
@@ -23,7 +24,9 @@ public class LampControllerAwakePostfixPatch : ModulePatch
             // Plugin.Log.LogInfo($"Flare light: {__instance.name} alpha {flareLight.Alpha} scale {flareLight.Scale} flares {flareLight.Flares.Count}");
 
             // Apply a floor on the alpha and compress the range with an sqrt
-            flareLight.Alpha *= Plugin.LightFlareIntensity.Value;
+            var alphaField = Traverse.Create(flareLight).Field("_alpha");
+
+            alphaField.SetValue(alphaField.GetValue<float>() * Plugin.LightFlareIntensity.Value);
 
             var scaleField = Traverse.Create(flareLight).Field("_scale");
 
