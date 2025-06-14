@@ -19,7 +19,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.6.6";
+    public const string HollywoodFXVersion = "1.6.7";
 
     public static ManualLogSource Log;
 
@@ -483,8 +483,8 @@ public class Plugin : BaseUnityPlugin
         /*
          * Graphics
          */
-        _lodOverride = Config.Bind(gfx, "Override LOD Settings", false, new ConfigDescription(
-            "Toggles whether the standard LOD settings should be overridden.",
+        _lodOverride = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
+            "Toggles whether the standard LOD settings should be overridden. ",
             null,
             new ConfigurationManagerAttributes { Order = 5 }
         ));
@@ -493,19 +493,14 @@ public class Plugin : BaseUnityPlugin
             if (_lodOverride.Value)
                 QualitySettings.lodBias = _lodBias.Value;
 
-            if (_lodBias.Description.Tags[0] is ConfigurationManagerAttributes configAttr)
-            {
-                configAttr.ReadOnly = !_lodOverride.Value;
-            }
-            else
-            {
-                ConsoleScreen.Log($"Tags not as expected: {_lodBias.Description.Tags}");
-            }
+            if (_lodBias.Description.Tags[0] is not ConfigurationManagerAttributes configAttr) return;
+            
+            configAttr.Browsable = _lodOverride.Value;
         };
         _lodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
             "Adjust the LOD bias in a wider range than what the game allows.",
             new AcceptableValueRange<float>(1f, 20f),
-            new ConfigurationManagerAttributes { Order = 4, ReadOnly = _lodOverride.Value }
+            new ConfigurationManagerAttributes { Order = 4, Browsable = _lodOverride.Value }
         ));
         _lodBias.SettingChanged += (_, _) =>
         {
@@ -513,7 +508,7 @@ public class Plugin : BaseUnityPlugin
                 QualitySettings.lodBias = _lodBias.Value;
         };
 
-        TerrainDetailOverride = Config.Bind(gfx, "Override Terrain Detail", false, new ConfigDescription(
+        TerrainDetailOverride = Config.Bind(gfx, "Override Terrain Detail (RESTART)", false, new ConfigDescription(
             "Toggles whether the terrain details settings should be overridden.",
             null,
             new ConfigurationManagerAttributes { Order = 3 }
@@ -522,23 +517,23 @@ public class Plugin : BaseUnityPlugin
         {
             if (TerrainDetailDistance.Description.Tags[0] is ConfigurationManagerAttributes distanceConfigAttr)
             {
-                distanceConfigAttr.ReadOnly = !_lodOverride.Value;
+                distanceConfigAttr.Browsable = TerrainDetailOverride.Value;
             }
             if (TerrainDetailDensityScaling.Description.Tags[0] is ConfigurationManagerAttributes densityConfigAttr)
             {
-                densityConfigAttr.ReadOnly = !_lodOverride.Value;
+                densityConfigAttr.Browsable = TerrainDetailOverride.Value;
             }
         };
         TerrainDetailDistance = Config.Bind(gfx, "Terrain Detail LOD Scaling", 2.5f, new ConfigDescription(
             "Set the maximum visible distance for terrain detail like rocks and foliage. For some unfathomable reason this is separate" +
             "from the regular LOD",
             new AcceptableValueRange<float>(0.5f, 10f),
-            new ConfigurationManagerAttributes { Order = 2, ReadOnly = true }
+            new ConfigurationManagerAttributes { Order = 2, Browsable = TerrainDetailOverride.Value }
         ));
         TerrainDetailDensityScaling = Config.Bind(gfx, "Terrain Detail Density", 2f, new ConfigDescription(
             "Scales the density of terrain detail like rocks and foliage.",
             new AcceptableValueRange<float>(0.5f, 5f),
-            new ConfigurationManagerAttributes { Order = 1, ReadOnly = true }
+            new ConfigurationManagerAttributes { Order = 1, Browsable = TerrainDetailOverride.Value }
         ));
 
         /*
