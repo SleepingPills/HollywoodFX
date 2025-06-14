@@ -1,11 +1,11 @@
 ﻿using System.Collections;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using Comfort.Common;
+using EFT.Communications;
 using EFT.UI;
 using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
@@ -25,13 +25,13 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> EffectSize;
     public static ConfigEntry<bool> TracerImpactsEnabled;
-    
+
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
     public static ConfigEntry<float> MuzzleEffectJetsSize;
     public static ConfigEntry<float> MuzzleEffectSparksSize;
     public static ConfigEntry<float> MuzzleEffectSmokeSize;
     public static ConfigEntry<bool> MuzzleLightShadowEnabled;
-    
+
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
     public static ConfigEntry<float> AmbientEffectDensity;
@@ -39,24 +39,24 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> AmbientParticleLifetime;
 
     public static ConfigEntry<bool> GoreEnabled;
-    
+
     public static ConfigEntry<float> BloodMistSize;
     public static ConfigEntry<float> BloodMistEmission;
-    
+
     public static ConfigEntry<float> BloodSquibSize;
-    
+
     public static ConfigEntry<float> BloodSpraySize;
     public static ConfigEntry<float> BloodSprayEmission;
-    
+
     public static ConfigEntry<float> BloodBleedSize;
     public static ConfigEntry<float> BloodBleedEmission;
-    
+
     public static ConfigEntry<float> BloodSquirtSize;
     public static ConfigEntry<float> BloodSquirtEmission;
-    
+
     public static ConfigEntry<float> BloodFinisherSize;
     public static ConfigEntry<float> BloodFinisherEmission;
-    
+
     public static ConfigEntry<bool> WoundDecalsEnabled;
     public static ConfigEntry<float> WoundDecalsSize;
     public static ConfigEntry<bool> BloodSplatterDecalsEnabled;
@@ -77,9 +77,15 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> MiscShellSize;
     public static ConfigEntry<float> MiscShellVelocity;
     public static ConfigEntry<bool> MiscShellPhysicsEnabled;
-    
+
     public static ConfigEntry<float> KineticsScaling;
-    
+
+    private static ConfigEntry<bool> _lodOverride;
+    private static ConfigEntry<float> _lodBias;
+    public static ConfigEntry<bool> TerrainDetailOverride;
+    public static ConfigEntry<float> TerrainDetailDistance;
+    public static ConfigEntry<float> TerrainDetailDensityScaling;
+
     private static ConfigEntry<bool> _peenEnabled;
 
     private static ConfigEntry<bool> _loggingEnabled;
@@ -109,11 +115,11 @@ public class Plugin : BaseUnityPlugin
         SetupConfig(visceralCombatDetected);
 
         new GameWorldDisposePostfixPatch().Enable();
-        
+
         new GameWorldAwakePrefixPatch().Enable();
         new GameWorldStartedPostfixPatch().Enable();
-        new GameWorldShotDelegatePrefixPatch().Enable(); 
-        
+        new GameWorldShotDelegatePrefixPatch().Enable();
+
         new EffectsAwakePrefixPatch().Enable();
         new EffectsAwakePostfixPatch().Enable();
         new BulletImpactPatch().Enable();
@@ -122,7 +128,7 @@ public class Plugin : BaseUnityPlugin
 
         if (LightFlareEnabled.Value)
             new LampControllerAwakePostfixPatch().Enable();
-        
+
         if (MiscShellPhysicsEnabled.Value)
             new ShellOnBouncePrefixPatch().Enable();
 
@@ -137,7 +143,7 @@ public class Plugin : BaseUnityPlugin
         {
             if (RagdollCinematicEnabled.Value)
                 new PlayerPoolObjectRoleModelPostfixPatch().Enable();
-            
+
             new RagdollStartPrefixPatch().Enable();
             new RagdollStartPostfixPatch().Enable();
 
@@ -146,7 +152,7 @@ public class Plugin : BaseUnityPlugin
                 new AttachWeaponPostfixPatch().Enable();
                 new LootItemIsRigidBodyDonePrefixPatch().Enable();
             }
-            
+
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
 
@@ -155,8 +161,11 @@ public class Plugin : BaseUnityPlugin
             new PlayerOnDeadPostfixPatch().Enable();
         }
         
+        // if (_detailOverride.Value)
+        new GPUInstancerDetailManagerAwakePostfixPatch().Enable();
+
         Log.LogInfo("Initialization finished");
-        
+
         if (_loggingEnabled.Value)
         {
             Log.LogInfo("Logging enabled");
@@ -170,15 +179,17 @@ public class Plugin : BaseUnityPlugin
 
     private void SetupConfig(bool visceralCombatDetected)
     {
-        const string general = "1. Impact Effects";
-        const string muzzleEffects = "2. Muzzle Blast Effects";
-        const string battleAmbience = "3. Ambient Battle Effects (RESTART)";
-        const string goreEmission = "4. Gore Emission (RESTART)";
-        const string goreSize = "5. Gore Size";
-        const string goreDecals = "6. Gore Decals";
-        const string ragdoll = "7. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
-        const string misc = "8. Miscellaneous Flotsam";
-        const string debug = "9. Debug";
+        const string general = "01. Impact Effects";
+        const string muzzleEffects = "02. Muzzle Blast Effects";
+        const string battleAmbience = "03. Ambient Battle Effects (RESTART)";
+        const string goreEmission = "04. Gore Emission (RESTART)";
+        const string goreSize = "05. Gore Size";
+        const string goreDecals = "06. Gore Decals";
+        const string ragdoll = "07. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
+        const string misc = "08. Miscellaneous Flotsam";
+        const string gfx = "09. Graphics";
+        const string whimsy = "10. Whimsy";
+        const string debug = "11. Debug";
 
         /*
          * General
@@ -194,7 +205,7 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        
+
         /*
          * Muzzle Effects
          */
@@ -209,25 +220,25 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 4 }
         ));
-        
+
         MuzzleEffectSparksSize = Config.Bind(muzzleEffects, "Muzzle Sparks Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle sparks.",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        
+
         MuzzleEffectSmokeSize = Config.Bind(muzzleEffects, "Muzzle Smoke Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle smoke.",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 2 }
         ));
-        
+
         MuzzleLightShadowEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Light Shadow (RESTART)", true, new ConfigDescription(
             "Toggles shadow casting for muzzle lights.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        
+
         /*
          * Battle Ambience
          */
@@ -269,25 +280,25 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 6 }
         ));
-        
+
         BloodMistEmission = Config.Bind(goreEmission, "Blood Mist Emission Rate", 1f, new ConfigDescription(
             "Adjusts the quantity of mists & puffs of blood.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        
+
         BloodSprayEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 4 }
         ));
-        
+
         BloodBleedEmission = Config.Bind(goreEmission, "Bleed Emission Rate", 1f, new ConfigDescription(
             "Adjusts the quantity of particles open wound bleeding effects on live targets. Above 2 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        
+
         BloodSquirtEmission = Config.Bind(goreEmission, "Squirt Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of the blood squirt particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
@@ -299,7 +310,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        
+
         /*
          * Gore Size
          */
@@ -314,7 +325,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-       
+
         BloodBleedSize = Config.Bind(goreSize, "Bleed Drop Size", 1f, new ConfigDescription(
             "Adjusts the size of open wound bleeding on live targets.",
             new AcceptableValueRange<float>(0f, 5f),
@@ -353,13 +364,13 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        
+
         BloodSplatterDecalsEnabled = Config.Bind(goreDecals, "Blood Splatter on Environment", true, new ConfigDescription(
             "Toggles the new blood splashes appearing on the environment for penetrating hits. If toggled off, you'll get the shonky EFT defaults. Philistine.",
             null,
             new ConfigurationManagerAttributes { Order = 2 }
         ));
-        
+
         BloodSplatterDecalsSize = Config.Bind(goreDecals, "Blood Splatter Decal Size", 1f, new ConfigDescription(
             "Adjusts the size of the blood splatters on the environment.",
             new AcceptableValueRange<float>(0f, 5f),
@@ -375,13 +386,13 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 4, ReadOnly = visceralCombatDetected }
         ));
-        
+
         RagdollCinematicEnabled = Config.Bind(ragdoll, "Enable Cinematic Ragdolls (RESTART)", true, new ConfigDescription(
             "Adjusts the skeletal and joint characteristics of ragdolls for a more Cinematic (TM) experience.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
             new ConfigurationManagerAttributes { Order = 3, ReadOnly = visceralCombatDetected }
         ));
-        
+
         RagdollDropWeaponEnabled = Config.Bind(ragdoll, "Drop Weapon on Death (RESTART)", true, new ConfigDescription(
             "Toggles the enemies dropping their weapon on death.",
             new AcceptableValueList<bool>(ragdollAcceptableValues),
@@ -414,13 +425,13 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<int>(10, 1000),
             new ConfigurationManagerAttributes { Order = 9 }
         ));
-        
+
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
             "How long do spent shells stay on the ground before despawning (game default is 1 second).",
             new AcceptableValueRange<float>(0f, 3600f),
             new ConfigurationManagerAttributes { Order = 8 }
         ));
-        
+
         MiscShellSize = Config.Bind(misc, "Spent Shells Size", 1.5f, new ConfigDescription(
             "Adjusts the size of spent shells multiplicatively (2 means 2x the size).",
             new AcceptableValueRange<float>(0f, 10f),
@@ -428,7 +439,7 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellSize.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
         EFTHardSettings.Instance.Shells.radius = MiscShellSize.Value / 1000f;
-        
+
         MiscShellVelocity = Config.Bind(misc, "Shell Ejection Velocity", 1.5f, new ConfigDescription(
             "Adjusts the velocity of the spent shells multiplicatively (2 means 2x the speed).",
             new AcceptableValueRange<float>(0f, 10f),
@@ -436,8 +447,7 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellVelocity.SettingChanged += (_, _) => EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
         EFTHardSettings.Instance.Shells.velocityMult = MiscShellVelocity.Value;
-        // EFTHardSettings.Instance.Shells.velocityRotation = 35f;
-        
+
         MiscShellPhysicsEnabled = Config.Bind(misc, "Enhanced Shell Physics (RESTART)", true, new ConfigDescription(
             "Toggles whether to enhance the spent shell physics, resulting in finer grained simulation of bouncing and rolling.",
             null,
@@ -445,19 +455,19 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
-        
+
         LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
             "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
             null,
             new ConfigurationManagerAttributes { Order = 4 }
         ));
-        
+
         LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (RESTART)", 1f, new ConfigDescription(
             "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        
+
         LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (RESTART)", 1f, new ConfigDescription(
             "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
@@ -469,6 +479,77 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
+
+        /*
+         * Graphics
+         */
+        _lodOverride = Config.Bind(gfx, "Override LOD Settings", false, new ConfigDescription(
+            "Toggles whether the standard LOD settings should be overridden.",
+            null,
+            new ConfigurationManagerAttributes { Order = 5 }
+        ));
+        _lodOverride.SettingChanged += (_, _) =>
+        {
+            if (_lodOverride.Value)
+                QualitySettings.lodBias = _lodBias.Value;
+
+            if (_lodBias.Description.Tags[0] is ConfigurationManagerAttributes configAttr)
+            {
+                configAttr.ReadOnly = !_lodOverride.Value;
+            }
+            else
+            {
+                ConsoleScreen.Log($"Tags not as expected: {_lodBias.Description.Tags}");
+            }
+        };
+        _lodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
+            "Adjust the LOD bias in a wider range than what the game allows.",
+            new AcceptableValueRange<float>(1f, 20f),
+            new ConfigurationManagerAttributes { Order = 4, ReadOnly = _lodOverride.Value }
+        ));
+        _lodBias.SettingChanged += (_, _) =>
+        {
+            if (_lodOverride.Value)
+                QualitySettings.lodBias = _lodBias.Value;
+        };
+
+        TerrainDetailOverride = Config.Bind(gfx, "Override Terrain Detail", false, new ConfigDescription(
+            "Toggles whether the terrain details settings should be overridden.",
+            null,
+            new ConfigurationManagerAttributes { Order = 3 }
+        ));
+        TerrainDetailOverride.SettingChanged += (_, _) =>
+        {
+            if (TerrainDetailDistance.Description.Tags[0] is ConfigurationManagerAttributes distanceConfigAttr)
+            {
+                distanceConfigAttr.ReadOnly = !_lodOverride.Value;
+            }
+            if (TerrainDetailDensityScaling.Description.Tags[0] is ConfigurationManagerAttributes densityConfigAttr)
+            {
+                densityConfigAttr.ReadOnly = !_lodOverride.Value;
+            }
+        };
+        TerrainDetailDistance = Config.Bind(gfx, "Terrain Detail LOD Scaling", 2.5f, new ConfigDescription(
+            "Set the maximum visible distance for terrain detail like rocks and foliage. For some unfathomable reason this is separate" +
+            "from the regular LOD",
+            new AcceptableValueRange<float>(0.5f, 10f),
+            new ConfigurationManagerAttributes { Order = 2, ReadOnly = true }
+        ));
+        TerrainDetailDensityScaling = Config.Bind(gfx, "Terrain Detail Density", 2f, new ConfigDescription(
+            "Scales the density of terrain detail like rocks and foliage.",
+            new AcceptableValueRange<float>(0.5f, 5f),
+            new ConfigurationManagerAttributes { Order = 1, ReadOnly = true }
+        ));
+
+        /*
+         * Whimsy
+         */
+        _peenEnabled = Config.Bind(whimsy, "Peen", false, new ConfigDescription(
+            "Made you look.",
+            null,
+            new ConfigurationManagerAttributes { Order = 1 }
+        ));
+        _peenEnabled.SettingChanged += (_, _) => ErrorPlayerFeedback("Made you look!");
         
         /*
          * Deboog
@@ -476,20 +557,13 @@ public class Plugin : BaseUnityPlugin
         _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (RESTART)", false, new ConfigDescription(
             "Duh. Requires restarting the game to take effect.",
             null,
-            new ConfigurationManagerAttributes { Order = 2 }
-        ));
-        
-        _peenEnabled = Config.Bind(debug, "Peen", false, new ConfigDescription(
-            "Made you look.",
-            null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        _peenEnabled.SettingChanged += (_, _) => ErrorPlayerFeedback("Made you look!");
     }
-    
+
     public static void ErrorPlayerFeedback(string message)
     {
-        NotificationManagerClass.DisplayWarningNotification(message, EFT.Communications.ENotificationDurationType.Long);
+        NotificationManagerClass.DisplayWarningNotification(message, ENotificationDurationType.Long);
         Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.ErrorMessage);
     }
 
