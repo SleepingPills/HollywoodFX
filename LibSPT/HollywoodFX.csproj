@@ -88,6 +88,9 @@
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\Client_Dev\EscapeFromTarkov_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.TerrainModule">
+      <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssetRegistry.cs" />
@@ -123,6 +126,7 @@
     <Compile Include="Patches\Dispose.cs" />
     <Compile Include="Patches\Effects.cs" />
     <Compile Include="Patches\GameWorld.cs" />
+    <Compile Include="Patches\GPUInstancer.cs" />
     <Compile Include="Patches\Player.cs" />
     <Compile Include="Patches\Ragdoll.cs" />
     <Compile Include="Patches\Shell.cs" />
