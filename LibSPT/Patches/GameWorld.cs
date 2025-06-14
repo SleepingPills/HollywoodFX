@@ -6,6 +6,7 @@ using HollywoodFX.Lighting;
 using HollywoodFX.Muzzle;
 using HollywoodFX.Muzzle.Patches;
 using SPT.Reflection.Patching;
+using UnityEngine;
 
 namespace HollywoodFX.Patches;
 
@@ -58,6 +59,9 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         {
             __instance.gameObject.AddComponent<DynamicMaterialAmbientLighting>();
         }
+        
+        if (Plugin.LodOverride.Value)
+            QualitySettings.lodBias = Plugin.LodBias.Value;
     }
 }
 

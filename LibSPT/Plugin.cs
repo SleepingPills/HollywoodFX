@@ -80,8 +80,8 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> KineticsScaling;
 
-    private static ConfigEntry<bool> _lodOverride;
-    private static ConfigEntry<float> _lodBias;
+    public static ConfigEntry<bool> LodOverride;
+    public static ConfigEntry<float> LodBias;
     public static ConfigEntry<bool> TerrainDetailOverride;
     public static ConfigEntry<float> TerrainDetailDistance;
     public static ConfigEntry<float> TerrainDetailDensityScaling;
@@ -483,30 +483,32 @@ public class Plugin : BaseUnityPlugin
         /*
          * Graphics
          */
-        _lodOverride = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
+        LodOverride = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
             "Toggles whether the standard LOD settings should be overridden. ",
             null,
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        _lodOverride.SettingChanged += (_, _) =>
+        LodOverride.SettingChanged += (_, _) =>
         {
-            if (_lodOverride.Value)
-                QualitySettings.lodBias = _lodBias.Value;
+            if (LodOverride.Value)
+                QualitySettings.lodBias = LodBias.Value;
 
-            if (_lodBias.Description.Tags[0] is not ConfigurationManagerAttributes configAttr) return;
+            if (LodBias.Description.Tags[0] is not ConfigurationManagerAttributes configAttr) return;
             
-            configAttr.Browsable = _lodOverride.Value;
+            configAttr.Browsable = LodOverride.Value;
         };
-        _lodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
+        LodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
             "Adjust the LOD bias in a wider range than what the game allows.",
             new AcceptableValueRange<float>(1f, 20f),
-            new ConfigurationManagerAttributes { Order = 4, Browsable = _lodOverride.Value }
+            new ConfigurationManagerAttributes { Order = 4, Browsable = LodOverride.Value }
         ));
-        _lodBias.SettingChanged += (_, _) =>
+        LodBias.SettingChanged += (_, _) =>
         {
-            if (_lodOverride.Value)
-                QualitySettings.lodBias = _lodBias.Value;
+            if (LodOverride.Value)
+                QualitySettings.lodBias = LodBias.Value;
         };
+        if (LodOverride.Value)
+            QualitySettings.lodBias = LodBias.Value;
 
         TerrainDetailOverride = Config.Bind(gfx, "Override Terrain Detail (RESTART)", false, new ConfigDescription(
             "Toggles whether the terrain details settings should be overridden.",
