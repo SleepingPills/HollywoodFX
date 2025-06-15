@@ -12,6 +12,9 @@ internal class DetachOnDisable : MonoBehaviour
 {
     private void OnDisable()
     {
+        if (Singleton<Effects>.Instance is null)
+            return;
+        
         transform.SetParent(Singleton<Effects>.Instance.transform);
         enabled = true;
     }
