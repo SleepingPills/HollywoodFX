@@ -15,7 +15,7 @@ public class GPUInstancerDetailManagerAwakePostfixPatch : ModulePatch
     // ReSharper disable once InconsistentNaming
     public static void Postfix(GPUInstancerDetailManager __instance)
     {
-        if (!Plugin.TerrainDetailOverride.Value)
+        if (!Plugin.TerrainDetailOverrideEnabled.Value)
             return;
         
         Plugin.Log.LogInfo($"S0 Terrain: {__instance.terrain.name} DistT: {__instance.terrain.detailObjectDistance} Dist: {__instance.terrainSettings.maxDetailDistance} DistL: {__instance.terrainSettings.maxDetailDistanceLegacy} Dens: {__instance.terrainSettings.detailDensity}");

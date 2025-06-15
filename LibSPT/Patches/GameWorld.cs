@@ -60,7 +60,7 @@ public class GameWorldStartedPostfixPatch : ModulePatch
             __instance.gameObject.AddComponent<DynamicMaterialAmbientLighting>();
         }
         
-        if (Plugin.LodOverride.Value)
+        if (Plugin.LodOverrideEnabled.Value)
             QualitySettings.lodBias = Plugin.LodBias.Value;
     }
 }
@@ -87,5 +87,41 @@ public class GameWorldShotDelegatePrefixPatch : ModulePatch
             return;
 
         Singleton<PlayerDamageRegistry>.Instance.RegisterDamage(ImpactStatic.Kinetics.Bullet, hitCollider, bullet.HitColliderRoot);
+    }
+}
+
+public class MichelinManPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(ClientGameWorld).GetMethod(nameof(ClientGameWorld.ShotDelegate));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable once InconsistentNaming
+    public static void Prefix(EftBulletClass shotResult)
+    {
+        var hitCollider = shotResult.HitCollider;
+        
+        if (hitCollider == null)
+            return;
+        
+        var rigidbody = hitCollider.attachedRigidbody;
+        
+        if (rigidbody == null)
+            return;
+
+        var hitColliderRoot = hitCollider.transform.root;
+        
+        if (hitColliderRoot.gameObject.layer != LayerMaskClass.PlayerLayer)
+            return;
+
+        if (hitColliderRoot == ImpactStatic.LocalPlayer.Transform.Original)
+            return;
+
+        var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.transform.position = rigidbody.transform.position;
+        // sphere.transform.localScale = Vector3.one * 0.2f;
+        sphere.transform.parent = rigidbody.transform;
     }
 }

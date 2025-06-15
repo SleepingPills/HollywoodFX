@@ -80,15 +80,18 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> KineticsScaling;
 
-    public static ConfigEntry<bool> LodOverride;
+    public static ConfigEntry<bool> LodOverrideEnabled;
     public static ConfigEntry<float> LodBias;
-    public static ConfigEntry<bool> TerrainDetailOverride;
+    public static ConfigEntry<bool> TerrainDetailOverrideEnabled;
     public static ConfigEntry<float> TerrainDetailDistance;
     public static ConfigEntry<float> TerrainDetailDensityScaling;
 
+    private static ConfigEntry<bool> _michelinManEnabled;
     private static ConfigEntry<bool> _peenEnabled;
 
     private static ConfigEntry<bool> _loggingEnabled;
+    
+    private static MichelinManPatch _michelinManPatch;
 
     private void Awake()
     {
@@ -96,6 +99,7 @@ public class Plugin : BaseUnityPlugin
 
         AssetRegistry.LoadBundles();
 
+        _michelinManPatch = new MichelinManPatch();
         StartCoroutine(DelayedLoad());
     }
 
@@ -483,64 +487,79 @@ public class Plugin : BaseUnityPlugin
         /*
          * Graphics
          */
-        LodOverride = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
+        LodOverrideEnabled = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
             "Toggles whether the standard LOD settings should be overridden. ",
             null,
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        LodOverride.SettingChanged += (_, _) =>
+        LodOverrideEnabled.SettingChanged += (_, _) =>
         {
-            if (LodOverride.Value)
+            if (LodOverrideEnabled.Value)
                 QualitySettings.lodBias = LodBias.Value;
 
             if (LodBias.Description.Tags[0] is not ConfigurationManagerAttributes configAttr) return;
             
-            configAttr.Browsable = LodOverride.Value;
+            configAttr.Browsable = LodOverrideEnabled.Value;
         };
         LodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
             "Adjust the LOD bias in a wider range than what the game allows.",
             new AcceptableValueRange<float>(1f, 20f),
-            new ConfigurationManagerAttributes { Order = 4, Browsable = LodOverride.Value }
+            new ConfigurationManagerAttributes { Order = 4, Browsable = LodOverrideEnabled.Value }
         ));
         LodBias.SettingChanged += (_, _) =>
         {
-            if (LodOverride.Value)
+            if (LodOverrideEnabled.Value)
                 QualitySettings.lodBias = LodBias.Value;
         };
-        if (LodOverride.Value)
+        if (LodOverrideEnabled.Value)
             QualitySettings.lodBias = LodBias.Value;
 
-        TerrainDetailOverride = Config.Bind(gfx, "Override Terrain Detail (RESTART)", false, new ConfigDescription(
+        TerrainDetailOverrideEnabled = Config.Bind(gfx, "Override Terrain Detail (RESTART)", false, new ConfigDescription(
             "Toggles whether the terrain details settings should be overridden.",
             null,
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        TerrainDetailOverride.SettingChanged += (_, _) =>
+        TerrainDetailOverrideEnabled.SettingChanged += (_, _) =>
         {
             if (TerrainDetailDistance.Description.Tags[0] is ConfigurationManagerAttributes distanceConfigAttr)
             {
-                distanceConfigAttr.Browsable = TerrainDetailOverride.Value;
+                distanceConfigAttr.Browsable = TerrainDetailOverrideEnabled.Value;
             }
             if (TerrainDetailDensityScaling.Description.Tags[0] is ConfigurationManagerAttributes densityConfigAttr)
             {
-                densityConfigAttr.Browsable = TerrainDetailOverride.Value;
+                densityConfigAttr.Browsable = TerrainDetailOverrideEnabled.Value;
             }
         };
         TerrainDetailDistance = Config.Bind(gfx, "Terrain Detail LOD Scaling", 2.5f, new ConfigDescription(
             "Set the maximum visible distance for terrain detail like rocks and foliage. For some unfathomable reason this is separate" +
             "from the regular LOD",
             new AcceptableValueRange<float>(0.5f, 10f),
-            new ConfigurationManagerAttributes { Order = 2, Browsable = TerrainDetailOverride.Value }
+            new ConfigurationManagerAttributes { Order = 2, Browsable = TerrainDetailOverrideEnabled.Value }
         ));
         TerrainDetailDensityScaling = Config.Bind(gfx, "Terrain Detail Density", 2f, new ConfigDescription(
             "Scales the density of terrain detail like rocks and foliage.",
             new AcceptableValueRange<float>(0.5f, 5f),
-            new ConfigurationManagerAttributes { Order = 1, Browsable = TerrainDetailOverride.Value }
+            new ConfigurationManagerAttributes { Order = 1, Browsable = TerrainDetailOverrideEnabled.Value }
         ));
 
         /*
          * Whimsy
          */
+        _michelinManEnabled = Config.Bind(whimsy, "AcidPhantasm Michelin Man Mode", false, new ConfigDescription(
+            "Nunc est Bibendum.",
+            null,
+            new ConfigurationManagerAttributes { Order = 2 }
+        ));
+        _michelinManEnabled.SettingChanged += (_, _) =>
+        {
+            if (_michelinManEnabled.Value)
+                _michelinManPatch.Enable();                
+            else
+                _michelinManPatch.Disable();
+        };
+        if (_michelinManEnabled.Value)
+            _michelinManPatch.Enable();                
+        
         _peenEnabled = Config.Bind(whimsy, "Peen", false, new ConfigDescription(
             "Made you look.",
             null,
