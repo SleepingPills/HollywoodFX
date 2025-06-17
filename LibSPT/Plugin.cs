@@ -70,6 +70,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> MiscDecalsEnabled;
     public static ConfigEntry<int> MiscMaxDecalCount;
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
+    public static ConfigEntry<int> DecalCullDistance;
     public static ConfigEntry<bool> LightFlareEnabled;
     public static ConfigEntry<float> LightFlareIntensity;
     public static ConfigEntry<float> LightFlareSize;
@@ -117,7 +118,7 @@ public class Plugin : BaseUnityPlugin
         }
 
         SetupConfig(visceralCombatDetected);
-
+        
         new GameWorldDisposePostfixPatch().Enable();
 
         new GameWorldAwakePrefixPatch().Enable();
@@ -128,6 +129,7 @@ public class Plugin : BaseUnityPlugin
         new EffectsAwakePostfixPatch().Enable();
         new BulletImpactPatch().Enable();
         new EffectsEmitPatch().Enable();
+        new TextureDecalsPainterVisCheckPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
         if (LightFlareEnabled.Value)
@@ -415,18 +417,24 @@ public class Plugin : BaseUnityPlugin
         MiscDecalsEnabled = Config.Bind(misc, "Enable Decal Limit Adjustment (RESTART)", true, new ConfigDescription(
             "Toggles whether to override the built-in decal limits. If you have this enabled in Visceral Combat, you can disable it here.",
             null,
-            new ConfigurationManagerAttributes { Order = 11 }
+            new ConfigurationManagerAttributes { Order = 12 }
         ));
 
         MiscMaxDecalCount = Config.Bind(misc, "Decal Limits (RESTART)", 2048, new ConfigDescription(
             "Adjusts the maximum number of decals that the game will render. The vanilla number is a puny 200.",
             new AcceptableValueRange<int>(1, 2048),
-            new ConfigurationManagerAttributes { Order = 10 }
+            new ConfigurationManagerAttributes { Order = 11 }
         ));
 
         MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (RESTART)", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
+            new ConfigurationManagerAttributes { Order = 10 }
+        ));
+
+        DecalCullDistance = Config.Bind(misc, "Max Decal Render Distance (RESTART)", 150, new ConfigDescription(
+            "Sets the maximum decal render distance.",
+            new AcceptableValueRange<int>(1, 1000),
             new ConfigurationManagerAttributes { Order = 9 }
         ));
 
@@ -501,7 +509,7 @@ public class Plugin : BaseUnityPlugin
             
             configAttr.Browsable = LodOverrideEnabled.Value;
         };
-        LodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
+        LodBias = Config.Bind(gfx, "LOD Bias", 10f, new ConfigDescription(
             "Adjust the LOD bias in a wider range than what the game allows.",
             new AcceptableValueRange<float>(1f, 20f),
             new ConfigurationManagerAttributes { Order = 4, Browsable = LodOverrideEnabled.Value }
