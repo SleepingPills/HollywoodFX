@@ -78,7 +78,7 @@ internal class MuzzleBlast(
         var scaleJet = scaleBase * Plugin.MuzzleEffectJetsSize.Value;
 
         var proximityFactor50 = 1f + 0.5f * proximityFactor;
-        var portJetRandomization = Random.Range(0.5f, 1.1f);
+        var portJetRandomization = Random.Range(0.75f, 1.1f);
         var scalePortJet = scaleJet * proximityFactor50 * portJetRandomization;
 
         var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - orthogonalityFactor));

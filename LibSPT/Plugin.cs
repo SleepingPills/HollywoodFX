@@ -117,7 +117,7 @@ public class Plugin : BaseUnityPlugin
         }
 
         SetupConfig(visceralCombatDetected);
-
+        
         new GameWorldDisposePostfixPatch().Enable();
 
         new GameWorldAwakePrefixPatch().Enable();
@@ -128,6 +128,7 @@ public class Plugin : BaseUnityPlugin
         new EffectsAwakePostfixPatch().Enable();
         new BulletImpactPatch().Enable();
         new EffectsEmitPatch().Enable();
+        new TextureDecalsPainterVisCheckPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
         if (LightFlareEnabled.Value)
