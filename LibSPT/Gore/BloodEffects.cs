@@ -73,8 +73,9 @@ public class BloodEffects
 
         var bullet = kinetics.Bullet;
 
+        // Don't scale the sprays as they look wonky when too big
+        var spraySizeScale = Plugin.BloodSpraySize.Value;
         var mistSizeScale = Mathf.Max(bullet.SizeScale, 1f) * Plugin.BloodMistSize.Value;
-        var spraySizeScale = bullet.SizeScale * Plugin.BloodSpraySize.Value;
         var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
 
         var mistChance = 0.5f * armorChanceScale;
