@@ -25,6 +25,7 @@ internal class MuzzleBlast(
     float chanceSparks,
     float mainJetFpSize = 1f,
     float mainJetTpSize = 0.75f,
+    float portJetSize = 1f,
     float proximityContrib = 1f
 )
 {
@@ -79,7 +80,7 @@ internal class MuzzleBlast(
 
         var proximityFactor50 = 1f + 0.5f * proximityFactor;
         var portJetRandomization = Random.Range(0.75f, 1.1f);
-        var scalePortJet = scaleJet * proximityFactor50 * portJetRandomization;
+        var scalePortJet = portJetSize * scaleJet * proximityFactor50 * portJetRandomization;
 
         var adjustCoreJet = mainJetTpSize * (1f + 0.25f * (1f - orthogonalityFactor));
         var adjustForwardJet = isThirdPerson ? orthogonalityFactor * proximityFactor50 * Random.Range(0.75f, 1.1f) : 0.5f;
@@ -293,14 +294,15 @@ internal class MuzzleEffects
             1000f,
             rifleCoreJet, handgunMainJet, handgunForwardJet, riflePortJet, riflePortJetBase, riflePortJetBright,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, light,
-            0.9f, 0.85f, 0.5f, mainJetFpSize: 1.4f, proximityContrib: 0.5f
+            0.9f, 0.85f, 0.5f, mainJetFpSize: 1.4f, portJetSize: 0.35f,
+            proximityContrib: 0.5f
         );
 
         var handgunBlastDim = new MuzzleBlast(
-            1000f,
+            1250f,
             rifleCoreJet, rifleMainJetDim, rifleForwardJetDim, riflePortJetDim, riflePortJetBase, null,
             rifleForwardSmoke, rifleRingSmoke, riflePortSmoke, rifleLingerSmoke, rifleSparks, lightDim,
-            0.65f, 0.85f, 0.85f, proximityContrib: 0.5f
+            0.65f, 0.85f, 0.85f, portJetSize: 0.35f, proximityContrib: 0.5f
         );
 
         _regularMuzzleBlasts = new MuzzleBlastBundle(handgunBlast, smgBlast, rifleBlast, shotgunBlast);
