@@ -36,7 +36,7 @@ internal class PlayerOnDeadPostfixPatch : ModulePatch
         
         if (Time.fixedTime - damage.FrameTime <= 0.3f)
         {
-            var scaledImpulse = Mathf.Min(6f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.Penetration), 200f);
+            var scaledImpulse = Mathf.Min(5f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.Penetration), 200f);
             
             rigidbody.AddForceAtPosition(damage.Direction * scaledImpulse, damage.HitPoint, ForceMode.Impulse);
             bloodEffects.EmitFinisher(rigidbody, damage.HitPoint, damage.HitNormal, Mathf.Min(damage.SizeScale, 1.1f));

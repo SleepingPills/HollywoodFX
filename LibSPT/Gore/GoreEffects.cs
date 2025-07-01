@@ -46,6 +46,8 @@ public class GoreEffects
 
             if (Plugin.RagdollEnabled.Value)
             {
+                var applyUpthrust = true;
+                
                 // Reactivate static (kinematic) ragdolls
                 if (rigidbody.isKinematic)
                 {
@@ -54,12 +56,13 @@ public class GoreEffects
                         if (!player.IsYourPlayer && player.TryGetComponent(out Corpse corpse))
                         {
                             corpse.Ragdoll.Start();
+                            applyUpthrust = false;
                         }
                     }
                 }
 
                 // Apply the impulse to dead bodies
-                ApplyRagdollImpulse(kinetics, bulletInfo, hitColliderRoot, rigidbody);
+                ApplyRagdollImpulse(kinetics, bulletInfo, hitColliderRoot, rigidbody, applyUpthrust);
             }
 
             if (Plugin.WoundDecalsEnabled.Value)
@@ -87,20 +90,26 @@ public class GoreEffects
     public static float CalculateImpactImpulse(float impulse, float penetration)
     {
         var penetrationFactor = 0.7f + 0.3f * Mathf.InverseLerp(50f, 20f, penetration);
-        return 8f * impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
+        return 5f * impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
     }
 
-    private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody)
+    private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody, bool applyUpthrust=true)
     {
         var impactImpulse = CalculateImpactImpulse(kinetics.Bullet.Impulse, kinetics.Bullet.Info.PenetrationPower);
         impactImpulse = Mathf.Clamp(impactImpulse, 25f, 75f);
 
-        // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
-        // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
-        var upThrust = (bulletInfo.HitPoint - root.position);
-        upThrust.y = Mathf.InverseLerp(1.2f, 1.6f, upThrust.y);
+        var direction = bulletInfo.Direction;
+        
+        if (applyUpthrust)
+        {
+            // Generate an upwards force depending on how far up the hit point is compared to the base of the ragdoll.
+            // Head is ~1.6, we scale progressively from 0.8 upwards and achieve maximum upthrust at 1.2.
+            var upThrust = bulletInfo.HitPoint - root.position;
+            upThrust.y = Mathf.InverseLerp(1.2f, 1.6f, upThrust.y);
+            direction += upThrust;
+        }
 
-        var direction = (bulletInfo.Direction + upThrust).normalized;
+        direction.Normalize();
         rigidbody.AddForceAtPosition(direction * impactImpulse, bulletInfo.HitPoint, ForceMode.Impulse);
     }
 }
