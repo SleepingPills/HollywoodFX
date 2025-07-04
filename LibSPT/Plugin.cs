@@ -19,7 +19,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.6.8";
+    public const string HollywoodFXVersion = "1.6.9";
 
     public static ManualLogSource Log;
 
@@ -29,7 +29,9 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
     public static ConfigEntry<float> MuzzleEffectJetsSize;
     public static ConfigEntry<float> MuzzleEffectSparksSize;
+    public static ConfigEntry<float> MuzzleEffectSparksEmission;
     public static ConfigEntry<float> MuzzleEffectSmokeSize;
+    public static ConfigEntry<float> MuzzleEffectSmokeEmission;
     public static ConfigEntry<bool> MuzzleLightShadowEnabled;
 
     public static ConfigEntry<bool> BattleAmbienceEnabled;
@@ -217,24 +219,36 @@ public class Plugin : BaseUnityPlugin
         MuzzleEffectsEnabled = Config.Bind(muzzleEffects, "Enable Muzzle Effects (RESTART)", true, new ConfigDescription(
             "Toggles new muzzle blast effects.",
             null,
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 7 }
         ));
 
         MuzzleEffectJetsSize = Config.Bind(muzzleEffects, "Muzzle Jet Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle flame jets.",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 6 }
         ));
 
         MuzzleEffectSparksSize = Config.Bind(muzzleEffects, "Muzzle Sparks Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle sparks.",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 3 }
+            new ConfigurationManagerAttributes { Order = 5 }
+        ));
+        
+        MuzzleEffectSparksEmission = Config.Bind(muzzleEffects, "Muzzle Sparks Emission Rate (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the amount of muzzle sparks generated.",
+            new AcceptableValueRange<float>(0.1f, 10f),
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         MuzzleEffectSmokeSize = Config.Bind(muzzleEffects, "Muzzle Smoke Size", 1f, new ConfigDescription(
             "Adjusts the size of the muzzle smoke.",
             new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 3 }
+        ));
+        
+        MuzzleEffectSmokeEmission = Config.Bind(muzzleEffects, "Muzzle Smoke Emission Rate (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the amount of muzzle smoke generated. If you are looking to hotbox with some scavs, set it to 3 or something.",
+            new AcceptableValueRange<float>(0.1f, 10f),
             new ConfigurationManagerAttributes { Order = 2 }
         ));
 

@@ -122,13 +122,15 @@ internal class MuzzleBlast(
     private void EmitSmoke(MuzzleState state, float scaleBase, float frontFacingFactor, Vector3 fireportDir, bool jetEmitted)
     {
         var scaleSmoke = Mathf.Min(scaleBase * Plugin.MuzzleEffectSmokeSize.Value * Random.Range(0.75f, 1f), 1.25f);
+        var emissionSmoke = Plugin.MuzzleEffectSmokeEmission.Value;
 
         var notFrontFacing = frontFacingFactor >= 0.09;
         if (!jetEmitted || Random.Range(0f, 1f) < chanceSmoke)
         {
             // Only emit the smoke if it's not directly facing the camera
             if (notFrontFacing)
-                forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(7f, 10f) * frontFacingFactor));
+                forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke,
+                    (int)(Random.Range(7f, 10f) * emissionSmoke * frontFacingFactor));
 
             var scaleSmokeMisc = scaleSmoke * 0.5f;
 
@@ -136,7 +138,7 @@ internal class MuzzleBlast(
             for (var i = 0; i < state.Smokes.Count; i++)
             {
                 var smoke = state.Smokes[i];
-                portSmoke.EmitDirect(smoke.transform.position, -1 * smoke.transform.up, scaleSmokeMisc, Random.Range(3, 5));
+                portSmoke.EmitDirect(smoke.transform.position, -1 * smoke.transform.up, scaleSmokeMisc, (int)(Random.Range(3, 5) * emissionSmoke));
             }
         }
 
@@ -148,12 +150,12 @@ internal class MuzzleBlast(
                 for (var i = 0; i < state.Jets.Count; i++)
                 {
                     var jet = state.Jets[i];
-                    portSmoke.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleSmoke, Random.Range(7, 10));
+                    portSmoke.EmitDirect(jet.transform.position, -1 * jet.transform.up, scaleSmoke, (int)(Random.Range(7, 10) * emissionSmoke));
                 }
             }
             else
             {
-                ringSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, Random.Range(10, 20));
+                ringSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 20) * emissionSmoke));
             }
         }
 
@@ -164,7 +166,7 @@ internal class MuzzleBlast(
 
         if (!(smokeLingerRoll && smokeLingerPacing && notFrontFacing)) return;
 
-        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * frontFacingFactor));
+        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * emissionSmoke * frontFacingFactor));
         state.TimeSmokeEmitted = Time.unscaledTime;
         // The next smoke emission can happen in a random time between 250 and 500ms;
         state.TimeSmokeThreshold = Random.Range(0.25f, 0.5f);
@@ -236,10 +238,14 @@ internal class MuzzleEffects
         var rifleLingerSmoke = effectMap["Rifle_Linger_Smoke"];
 
         var rifleSparks = effectMap["Rifle_Sparks"];
+        rifleSparks.ScaleDensity(Plugin.MuzzleEffectSparksEmission.Value);
+
         var rifleSparksDim = effectMap["Rifle_Sparks_Dim"];
+        rifleSparksDim.ScaleDensity(Plugin.MuzzleEffectSparksEmission.Value);
 
         var shotgunForwardJet = EffectBundle.Merge(effectMap["Rifle_Forward_Jet_Big"], rifleForwardJet);
         var shotgunSparks = effectMap["Rifle_Sparks_Big"];
+        shotgunSparks.ScaleDensity(Plugin.MuzzleEffectSparksEmission.Value);
 
         var handgunMainJet = effectMap["Handgun_Main_Jet"];
         var handgunForwardJet = effectMap["Handgun_Forward_Jet"];

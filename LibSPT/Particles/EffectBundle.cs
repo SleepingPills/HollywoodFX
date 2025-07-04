@@ -75,7 +75,7 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
         {
             foreach (var subSystem in system.GetComponentsInChildren<ParticleSystem>()) 
             {
-                ParticleHelpers.ScaleEmissionRate(subSystem, Plugin.BloodSprayEmission.Value);
+                ParticleHelpers.ScaleEmissionRate(subSystem, density);
             }
         }
     }
