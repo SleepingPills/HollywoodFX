@@ -7,17 +7,16 @@ namespace HollywoodFX.Lighting;
 
 public class MaterialRegistry
 {
-    public static readonly int TintColorId = Shader.PropertyToID("_TintColor");
-    public static readonly int LocalMinimalAmbientLightId = Shader.PropertyToID("_LocalMinimalAmbientLight");
-    
     public readonly List<Material> DynamicAlpha = new();
     public readonly List<Material> StaticAlpha = new();
 
     private void Register(Material material, bool dynamicAlpha)
     {
+        
+        
         if (material.shader.name != "Global Fog/Alpha Blended Lighted") return;
 
-        Plugin.Log.LogInfo($"Registering material {material.name} for ambient lighting adjustment");
+        Plugin.Log.LogInfo($"Registering material {material.name}");
         
         if (dynamicAlpha)
             DynamicAlpha.Add(material);

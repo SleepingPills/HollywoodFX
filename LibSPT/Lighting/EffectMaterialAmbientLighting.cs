@@ -5,6 +5,12 @@ using UnityEngine;
 
 namespace HollywoodFX.Lighting;
 
+internal static class AmbientLightingPropertyIds
+{
+    public static readonly int TintColorId = Shader.PropertyToID("_TintColor");
+    public static readonly int LocalMinimalAmbientLightId = Shader.PropertyToID("_LocalMinimalAmbientLight");
+}
+
 public class DynamicMaterialAmbientLighting : MonoBehaviour
 {
     private List<Material> _materials;
@@ -54,8 +60,8 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
         foreach (var material in _materials)
         {
-            _ambientLightColors.Add(material.GetVector(MaterialRegistry.LocalMinimalAmbientLightId));
-            _tintColors.Add(material.GetVector(MaterialRegistry.TintColorId));
+            _ambientLightColors.Add(material.GetVector(AmbientLightingPropertyIds.LocalMinimalAmbientLightId));
+            _tintColors.Add(material.GetVector(AmbientLightingPropertyIds.TintColorId));
         }
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
@@ -111,8 +117,8 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
             var tintAlphaFactor = 1 + _tintAlphaFactors[i] * tintAlphaFactorBase;
             tintColor.Scale(new Vector4(tintColorFactor, tintColorFactor, tintColorFactor, tintAlphaFactor));
 
-            _materials[i].SetVector(MaterialRegistry.TintColorId, tintColor);
-            _materials[i].SetVector(MaterialRegistry.LocalMinimalAmbientLightId, ambientLightColor);
+            _materials[i].SetVector(AmbientLightingPropertyIds.TintColorId, tintColor);
+            _materials[i].SetVector(AmbientLightingPropertyIds.LocalMinimalAmbientLightId, ambientLightColor);
         }
     }
 }
@@ -156,14 +162,14 @@ public static class StaticMaterialAmbientLighting
 
     private static void ApplyScaling(Material material, Vector4 tintColorFactor, Vector4 ambientLightFactor)
     {
-        var tintColor = material.GetVector(MaterialRegistry.TintColorId);
-        var ambientLightColor = material.GetVector(MaterialRegistry.LocalMinimalAmbientLightId);
+        var tintColor = material.GetVector(AmbientLightingPropertyIds.TintColorId);
+        var ambientLightColor = material.GetVector(AmbientLightingPropertyIds.LocalMinimalAmbientLightId);
 
         var newTintColor = Vector4.Scale(tintColor, tintColorFactor);
         var newAmbientLightColor = Vector4.Scale(ambientLightColor, ambientLightFactor);
 
-        material.SetVector(MaterialRegistry.TintColorId, newTintColor);
-        material.SetVector(MaterialRegistry.LocalMinimalAmbientLightId, newAmbientLightColor);
+        material.SetVector(AmbientLightingPropertyIds.TintColorId, newTintColor);
+        material.SetVector(AmbientLightingPropertyIds.LocalMinimalAmbientLightId, newAmbientLightColor);
         Plugin.Log.LogInfo(
             $"Adjusting material: {material.name} Tint: {tintColor} -> {newTintColor} Ambient: {ambientLightColor} -> {newAmbientLightColor}"
         );
