@@ -109,6 +109,27 @@ internal class RagdollStartPrefixPatch : ModulePatch
     }
 }
 
+internal class PlayerRigidbodySleepHierarchyTryPutToSleepPrefixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(PlayerRigidbodySleepHierarchy).GetMethod(nameof(PlayerRigidbodySleepHierarchy.TryPutToSleep));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable InconsistentNaming
+    public static bool Prefix(PlayerRigidbodySleepHierarchy __instance, ref bool __result)
+    {
+        // There's a NRE triggered in CanSleep sometimes when a dead body ragdoll is reactivated and the game tries to put it to sleep again.
+        if (__instance.RigidbodySpawner.Rigidbody != null) return true;
+        
+        __result = true;
+        __instance.MustBeSleeping = true;
+        return false;
+    }
+}
+
+
 internal class RagdollStartPostfixPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
