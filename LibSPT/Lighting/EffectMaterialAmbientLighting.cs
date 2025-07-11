@@ -35,13 +35,13 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
         _materials = [];
         _tintAlphaFactors = [];
 
-        foreach (var material in Singleton<LitMaterialRegistry>.Instance.DynamicAlpha)
+        foreach (var material in Singleton<MaterialRegistry>.Instance.DynamicAlpha)
         {
             _materials.Add(material);
             _tintAlphaFactors.Add(1f);
         }
 
-        foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
+        foreach (var material in Singleton<MaterialRegistry>.Instance.StaticAlpha)
         {
             _materials.Add(material);
             _tintAlphaFactors.Add(0f);
@@ -54,8 +54,8 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
         foreach (var material in _materials)
         {
-            _ambientLightColors.Add(material.GetVector(LitMaterialRegistry.LocalMinimalAmbientLightId));
-            _tintColors.Add(material.GetVector(LitMaterialRegistry.TintColorId));
+            _ambientLightColors.Add(material.GetVector(MaterialRegistry.LocalMinimalAmbientLightId));
+            _tintColors.Add(material.GetVector(MaterialRegistry.TintColorId));
         }
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
@@ -111,8 +111,8 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
             var tintAlphaFactor = 1 + _tintAlphaFactors[i] * tintAlphaFactorBase;
             tintColor.Scale(new Vector4(tintColorFactor, tintColorFactor, tintColorFactor, tintAlphaFactor));
 
-            _materials[i].SetVector(LitMaterialRegistry.TintColorId, tintColor);
-            _materials[i].SetVector(LitMaterialRegistry.LocalMinimalAmbientLightId, ambientLightColor);
+            _materials[i].SetVector(MaterialRegistry.TintColorId, tintColor);
+            _materials[i].SetVector(MaterialRegistry.LocalMinimalAmbientLightId, ambientLightColor);
         }
     }
 }
@@ -139,7 +139,7 @@ public static class StaticMaterialAmbientLighting
                 break;
         }
 
-        foreach (var material in Singleton<LitMaterialRegistry>.Instance.DynamicAlpha)
+        foreach (var material in Singleton<MaterialRegistry>.Instance.DynamicAlpha)
         {
             if (material.name.ToLower().Contains("blood")) continue;
             ApplyScaling(material, tintColorFactor, ambientLightFactor);
@@ -147,7 +147,7 @@ public static class StaticMaterialAmbientLighting
 
         // Don't scale the alpha
         tintColorFactor.w = 1f;
-        foreach (var material in Singleton<LitMaterialRegistry>.Instance.StaticAlpha)
+        foreach (var material in Singleton<MaterialRegistry>.Instance.StaticAlpha)
         {
             if (material.name.ToLower().Contains("blood")) continue;
             ApplyScaling(material, tintColorFactor, ambientLightFactor);
@@ -156,14 +156,14 @@ public static class StaticMaterialAmbientLighting
 
     private static void ApplyScaling(Material material, Vector4 tintColorFactor, Vector4 ambientLightFactor)
     {
-        var tintColor = material.GetVector(LitMaterialRegistry.TintColorId);
-        var ambientLightColor = material.GetVector(LitMaterialRegistry.LocalMinimalAmbientLightId);
+        var tintColor = material.GetVector(MaterialRegistry.TintColorId);
+        var ambientLightColor = material.GetVector(MaterialRegistry.LocalMinimalAmbientLightId);
 
         var newTintColor = Vector4.Scale(tintColor, tintColorFactor);
         var newAmbientLightColor = Vector4.Scale(ambientLightColor, ambientLightFactor);
 
-        material.SetVector(LitMaterialRegistry.TintColorId, newTintColor);
-        material.SetVector(LitMaterialRegistry.LocalMinimalAmbientLightId, newAmbientLightColor);
+        material.SetVector(MaterialRegistry.TintColorId, newTintColor);
+        material.SetVector(MaterialRegistry.LocalMinimalAmbientLightId, newAmbientLightColor);
         Plugin.Log.LogInfo(
             $"Adjusting material: {material.name} Tint: {tintColor} -> {newTintColor} Ambient: {ambientLightColor} -> {newAmbientLightColor}"
         );

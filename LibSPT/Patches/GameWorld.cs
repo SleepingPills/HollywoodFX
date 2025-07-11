@@ -28,7 +28,7 @@ public class GameWorldAwakePrefixPatch : ModulePatch
 
         if (IsHideout) return;
 
-        Singleton<LitMaterialRegistry>.Create(new LitMaterialRegistry());
+        Singleton<MaterialRegistry>.Create(new MaterialRegistry());
         Singleton<PlayerDamageRegistry>.Create(new PlayerDamageRegistry());
     }
 }

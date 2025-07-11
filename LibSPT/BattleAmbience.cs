@@ -33,7 +33,7 @@ internal class BattleAmbience
 
             child.parent = eftEffects.transform;
             ScaleEffect(particleSystem, Plugin.AmbientParticleLifetime.Value, Plugin.AmbientParticleLimit.Value, Plugin.AmbientEffectDensity.Value);
-            Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, false);
+            Singleton<MaterialRegistry>.Instance.Register(particleSystem, false);
             effectMap.Add(child.name, particleSystem);
             Plugin.Log.LogInfo($"Added battle ambience effect {particleSystem.name} {particleSystem.transform} {particleSystem.transform.parent}");
         }

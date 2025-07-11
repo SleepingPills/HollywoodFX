@@ -92,7 +92,7 @@ public class Plugin : BaseUnityPlugin
     private static ConfigEntry<bool> _peenEnabled;
 
     private static ConfigEntry<bool> _loggingEnabled;
-    
+
     private static MichelinManPatch _michelinManPatch;
 
     private void Awake()
@@ -119,7 +119,7 @@ public class Plugin : BaseUnityPlugin
         }
 
         SetupConfig(visceralCombatDetected);
-        
+
         new GameWorldDisposePostfixPatch().Enable();
 
         new GameWorldAwakePrefixPatch().Enable();
@@ -136,7 +136,7 @@ public class Plugin : BaseUnityPlugin
         if (LightFlareEnabled.Value)
             new LampControllerAwakePostfixPatch().Enable();
 
-        if (MiscShellPhysicsEnabled.Value)
+        if (MiscShellPhysicsEnabled.Value && !visceralCombatDetected)
             new ShellOnBouncePrefixPatch().Enable();
 
         if (MuzzleEffectsEnabled.Value)
@@ -163,11 +163,11 @@ public class Plugin : BaseUnityPlugin
             EFTHardSettings.Instance.CorpseEnergyToSleep = -1;
         }
 
-        if (GoreEnabled.Value)
+        if (GoreEnabled.Value && !visceralCombatDetected)
         {
             new PlayerOnDeadPostfixPatch().Enable();
         }
-        
+
         // if (_detailOverride.Value)
         new GPUInstancerDetailManagerAwakePostfixPatch().Enable();
 
@@ -233,7 +233,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-        
+
         MuzzleEffectSparksEmission = Config.Bind(muzzleEffects, "Muzzle Sparks Emission Rate (RESTART)", 1f, new ConfigDescription(
             "Adjusts the amount of muzzle sparks generated.",
             new AcceptableValueRange<float>(0.1f, 10f),
@@ -245,7 +245,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        
+
         MuzzleEffectSmokeEmission = Config.Bind(muzzleEffects, "Muzzle Smoke Emission Rate (RESTART)", 1f, new ConfigDescription(
             "Adjusts the amount of muzzle smoke generated. If you are looking to hotbox with some scavs, set it to 3 or something.",
             new AcceptableValueRange<float>(0.1f, 10f),
@@ -513,7 +513,7 @@ public class Plugin : BaseUnityPlugin
                 QualitySettings.lodBias = LodBias.Value;
 
             if (LodBias.Description.Tags[0] is not ConfigurationManagerAttributes configAttr) return;
-            
+
             configAttr.Browsable = LodOverrideEnabled.Value;
         };
         LodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
@@ -540,6 +540,7 @@ public class Plugin : BaseUnityPlugin
             {
                 distanceConfigAttr.Browsable = TerrainDetailOverrideEnabled.Value;
             }
+
             if (TerrainDetailDensityScaling.Description.Tags[0] is ConfigurationManagerAttributes densityConfigAttr)
             {
                 densityConfigAttr.Browsable = TerrainDetailOverrideEnabled.Value;
@@ -568,20 +569,20 @@ public class Plugin : BaseUnityPlugin
         _michelinManEnabled.SettingChanged += (_, _) =>
         {
             if (_michelinManEnabled.Value)
-                _michelinManPatch.Enable();                
+                _michelinManPatch.Enable();
             else
                 _michelinManPatch.Disable();
         };
         if (_michelinManEnabled.Value)
-            _michelinManPatch.Enable();                
-        
+            _michelinManPatch.Enable();
+
         _peenEnabled = Config.Bind(whimsy, "Peen", false, new ConfigDescription(
             "Made you look.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
         _peenEnabled.SettingChanged += (_, _) => ErrorPlayerFeedback("Made you look!");
-        
+
         /*
          * Deboog
          */

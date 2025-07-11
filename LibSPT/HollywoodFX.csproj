@@ -109,7 +109,7 @@
     <Compile Include="ImpactEffects.cs" />
     <Compile Include="ImpactStatic.cs" />
     <Compile Include="Lighting\EffectMaterialAmbientLighting.cs" />
-    <Compile Include="Lighting\LitMaterialRegistry.cs" />
+    <Compile Include="Lighting\MaterialRegistry.cs" />
     <Compile Include="Lighting\Patches\LampController.cs" />
     <Compile Include="Muzzle\MuzzleEffects.cs" />
     <Compile Include="Muzzle\MuzzleStatic.cs" />

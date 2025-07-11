@@ -48,7 +48,7 @@ internal class RigidbodyEffects : MonoBehaviour
                 if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
 
                 child.parent = eftEffects.transform;
-                Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, false);
+                Singleton<MaterialRegistry>.Instance.Register(particleSystem, false);
                 _pool.Add(particleSystem);
 
                 foreach (var subSystem in particleSystem.GetComponentsInChildren<ParticleSystem>())

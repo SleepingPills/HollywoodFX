@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace HollywoodFX.Lighting;
 
-public class LitMaterialRegistry
+public class MaterialRegistry
 {
     public static readonly int TintColorId = Shader.PropertyToID("_TintColor");
     public static readonly int LocalMinimalAmbientLightId = Shader.PropertyToID("_LocalMinimalAmbientLight");

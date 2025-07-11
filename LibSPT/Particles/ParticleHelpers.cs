@@ -27,7 +27,7 @@ public static class ParticleHelpers
                 child.parent = eftEffects.transform;
                 effects.Add(particleSystem);
                 
-                Singleton<LitMaterialRegistry>.Instance.Register(particleSystem, dynamicAlpha);
+                Singleton<MaterialRegistry>.Instance.Register(particleSystem, dynamicAlpha);
             }
 
             yield return new(groupName, effects.ToArray());
