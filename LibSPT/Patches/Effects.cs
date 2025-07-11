@@ -168,6 +168,15 @@ public class EffectsAwakePrefixPatch : ModulePatch
                 continue;
             }
 
+            if (effect.Name.ToLower().Contains("metal"))
+            {
+                Plugin.Log.LogInfo("Enhancing lighting");
+                effect.FlashMaxDist *= 2f;
+                effect.LightIntensity *= 2f;
+                effect.LightRange *= 1.5f;
+                effect.LightMaxDist *= 2f;
+            }
+
             Plugin.Log.LogInfo($"Processing {effect.Name}");
             var filteredParticles = new List<Effects.Effect.ParticleSys>();
 
