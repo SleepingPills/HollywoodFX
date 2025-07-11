@@ -7,6 +7,7 @@ using BepInEx.Logging;
 using Comfort.Common;
 using EFT.Communications;
 using EFT.UI;
+using HollywoodFX.Lighting;
 using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
@@ -82,6 +83,7 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> KineticsScaling;
 
+    public static ConfigEntry<float> MipBias;
     public static ConfigEntry<bool> LodOverrideEnabled;
     public static ConfigEntry<float> LodBias;
     public static ConfigEntry<bool> TerrainDetailOverrideEnabled;
@@ -502,6 +504,21 @@ public class Plugin : BaseUnityPlugin
         /*
          * Graphics
          */
+        MipBias = Config.Bind(gfx, "Effect Quality Bias", 0f, new ConfigDescription(
+            "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can heavy *heavy*" +
+            "VRAM impact and cause stuttering.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 6}
+        ));
+        MipBias.SettingChanged += (_, _) =>
+        {
+            var materialRegistry = Singleton<MaterialRegistry>.Instance;
+            if (materialRegistry == null)
+                return;
+            materialRegistry.SetMipBias(MipBias.Value);
+        };
+        
+            
         LodOverrideEnabled = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
             "Toggles whether the standard LOD settings should be overridden. ",
             null,

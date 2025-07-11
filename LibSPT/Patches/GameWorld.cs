@@ -62,6 +62,8 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         
         if (Plugin.LodOverrideEnabled.Value)
             QualitySettings.lodBias = Plugin.LodBias.Value;
+        
+        Singleton<MaterialRegistry>.Instance.SetMipBias(Plugin.MipBias.Value);
     }
 }
 
