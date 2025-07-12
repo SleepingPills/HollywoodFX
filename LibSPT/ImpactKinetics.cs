@@ -63,6 +63,7 @@ public class ImpactKinetics
     public WorldDir WorldDir;
     
     public Vector3 RandNormal;
+    public Vector3 RandNormalOffset;
 
     public readonly BulletKinetics Bullet = new();
 
@@ -89,5 +90,7 @@ public class ImpactKinetics
 
         CamDir = Orientation.GetCamDir(RandNormal);
         WorldDir = Orientation.GetWorldDir(RandNormal);
+        
+        RandNormalOffset = Orientation.GetNormOffset(RandNormal, CamDir);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using HollywoodFX.Helpers;
 using UnityEngine;
 
 namespace HollywoodFX;
@@ -41,6 +42,29 @@ public static class OrientationEnumExtensions
 
 public static class Orientation
 {
+    private const float FrontAngle = 107.5f;
+    private const float FrontAngleInv = 180f - FrontAngle;
+    
+    private const float AngledAngle = 160.0f;
+    private const float AngledAngleInv = 180f - AngledAngle;
+
+    private const float AdjustmentAngle = 30f;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3 GetNormOffset(Vector3 normal, CamDir camDir)
+    {
+        if (!camDir.IsSet(CamDir.Front) || !camDir.IsSet(CamDir.Angled)) return normal;
+        
+        var camera = CameraClass.Instance.Camera;
+        var backward = -camera.transform.forward;
+        var angle = Vector3.Angle(backward, normal);
+        var adjustment = Mathf.Min(FrontAngleInv - angle, AdjustmentAngle);
+            
+        return adjustment <= 1e-3f ? normal : VectorMath.IncreaseAngleBetweenVectors(backward, normal, adjustment);
+
+    }
+
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CamDir GetCamDir(Vector3 normal)
     {
@@ -49,12 +73,12 @@ public static class Orientation
         var camAngleSigned = Vector3.SignedAngle(camera.transform.forward, normal, Vector3.up);
 
         var camDir = CamDir.None;
-        if (camAngle > 107.5)
+        if (camAngle > FrontAngle)
         {
             camDir |= CamDir.Front;
         }
 
-        if (camAngle < 160)
+        if (camAngle < AngledAngle)
         {
             camDir |= CamDir.Angled;
         }

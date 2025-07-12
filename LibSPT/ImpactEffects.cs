@@ -114,7 +114,8 @@ namespace HollywoodFX
                         new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
                     generic: puffGeneric,
-                    forceGeneric: 0.33f
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
                 ),
                 // Various debris and splashes
                 new(
@@ -143,7 +144,8 @@ namespace HollywoodFX
                         new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
                     generic: puffGeneric,
-                    forceGeneric: 0.75f
+                    forceGeneric: 0.75f,
+                    useOffsetNormals: true
                 ),
                 // Various debris and splashes
                 new(
@@ -172,7 +174,8 @@ namespace HollywoodFX
                         new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
                     generic: puffGeneric,
-                    forceGeneric: 0.33f
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
                 ),
                 // Various debris and splashes
                 new(
@@ -198,7 +201,8 @@ namespace HollywoodFX
                         new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
                     ],
                     generic: puffGeneric,
-                    forceGeneric: 0.33f
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
                 ),
                 // Various debris and splashes
                 new(
@@ -216,11 +220,21 @@ namespace HollywoodFX
 
             var softGenericImpact = new List<EffectSystem>
             {
+                // Main puff
+                new(
+                    directional:
+                    [
+                        new DirectionalEffect(puffGenericHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
+                        new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
+                    ],
+                    generic: puffGeneric,
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
+                ),
                 new(
                     directional:
                     [
                         new DirectionalEffect(puffFront),
-                        new DirectionalEffect(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
@@ -231,11 +245,21 @@ namespace HollywoodFX
 
             var hardGenericImpact = new List<EffectSystem>
             {
+                // Main puff
+                new(
+                    directional:
+                    [
+                        new DirectionalEffect(puffGenericHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
+                        new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
+                    ],
+                    generic: puffGeneric,
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
+                ),
                 new(
                     directional:
                     [
                         new DirectionalEffect(puffFront),
-                        new DirectionalEffect(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalEffect(puffRing, chance: 0.35f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(spraySparksLight, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(bulletHoleSmoke, chance: 0.05f, isChanceScaledByKinetics: true)
@@ -245,11 +269,21 @@ namespace HollywoodFX
 
             var woodImpact = new List<EffectSystem>
             {
+                // Main puff
+                new(
+                    directional:
+                    [
+                        new DirectionalEffect(puffGenericHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
+                        new DirectionalEffect(puffGenericHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
+                    ],
+                    generic: puffGeneric,
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
+                ),
                 new(
                     directional:
                     [
                         new DirectionalEffect(puffFrontDusty),
-                        new DirectionalEffect(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
@@ -262,6 +296,13 @@ namespace HollywoodFX
             };
             var metalImpact = new List<EffectSystem>
             {
+                // Main puff
+                new(
+                    directional: [],
+                    generic: puffGeneric,
+                    forceGeneric: 1.0f,
+                    useOffsetNormals: true
+                ),
                 new(
                     directional:
                     [
@@ -269,7 +310,6 @@ namespace HollywoodFX
                         new DirectionalEffect(flashSparks),
                         new DirectionalEffect(puffLinger, chance: 0.1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.35f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(puffGeneric, camDir: CamDir.Angled),
                         new DirectionalEffect(spraySparksMetal, chance: 0.8f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(bulletHoleSmoke, chance: 0.05f, isChanceScaledByKinetics: true)
                     ]

@@ -22,20 +22,22 @@ internal readonly struct DirectionalEffect(
 internal class EffectSystem(
     DirectionalEffect[] directional,
     [CanBeNull] EffectBundle generic = null,
-    float forceGeneric = 0f
+    float forceGeneric = 0f,
+    bool useOffsetNormals = false
 )
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(ImpactKinetics kinetics, float sizeScale=1f, float chanceScale=1f)
+    public void Emit(ImpactKinetics kinetics, float sizeScale = 1f, float chanceScale = 1f)
     {
-        Emit(kinetics, kinetics.CamDir, kinetics.WorldDir, kinetics.Position, kinetics.RandNormal, sizeScale, chanceScale);
+        var normal = useOffsetNormals ? kinetics.RandNormalOffset : kinetics.RandNormal;
+        Emit(kinetics, kinetics.CamDir, kinetics.WorldDir, kinetics.Position, normal, sizeScale, chanceScale);
     }
-    
+
     public void Emit(ImpactKinetics kinetics, CamDir camDir, WorldDir worldDir, Vector3 position, Vector3 normal, float sizeScale, float chanceScale)
     {
         var bullet = kinetics.Bullet;
         var sizeScaleFull = bullet.SizeScale * sizeScale;
-        
+
         EffectBundle genericImpact = null;
 
         if (generic != null && camDir.IsSet(CamDir.Angled))
@@ -54,7 +56,7 @@ internal class EffectSystem(
         for (var i = 0; i < directional.Length; i++)
         {
             var impact = directional[i];
-            
+
             if (!camDir.IsSet(impact.CamDir) || !worldDir.IsSet(impact.WorldDir)) continue;
 
             var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * bullet.ChanceScale : impact.Chance);

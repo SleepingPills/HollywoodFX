@@ -104,6 +104,7 @@
     <Compile Include="Gore\BloodEffects.cs" />
     <Compile Include="Gore\GoreEffects.cs" />
     <Compile Include="Helpers\DebugGizmo.cs" />
+    <Compile Include="Helpers\VectorMath.cs" />
     <Compile Include="ImpactKinetics.cs" />
     <Compile Include="ImpactController.cs" />
     <Compile Include="ImpactEffects.cs" />
