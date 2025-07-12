@@ -8,7 +8,7 @@ namespace HollywoodFX.Gore;
 public class BloodEffects
 {
     private readonly EffectBundle _mists;
-    private readonly EffectSystem _puffs;
+    private readonly EffectSystem[] _puffs;
     private readonly EffectSystem _sprays;
     private readonly EffectSystem _squibs;
 
@@ -31,12 +31,20 @@ public class BloodEffects
         _mists.ScaleDensity(Plugin.BloodMistEmission.Value);
 
         Plugin.Log.LogInfo("Building blood puffs");
-        _puffs = new EffectSystem(directional:
-            [
-                new DirectionalEffect(effectMap["Puff_Blood_Front"]),
-                new DirectionalEffect(effectMap["Puff_Blood"], camDir: CamDir.Angled)
-            ]
-        );
+        _puffs =
+        [
+            new EffectSystem(directional:
+                [
+                    new DirectionalEffect(effectMap["Puff_Blood"], camDir: CamDir.Angled)
+                ],
+                useOffsetNormals: true
+            ),
+            new EffectSystem(directional:
+                [
+                    new DirectionalEffect(effectMap["Puff_Blood_Front"]),
+                ]
+            )
+        ];
 
         Plugin.Log.LogInfo("Building blood sprays");
         var bloodSprays = effectMap["Spray_Blood"];
@@ -85,9 +93,14 @@ public class BloodEffects
             if (Random.Range(0f, 1f) < 0.25f)
                 _mists.Emit(kinetics.Position, kinetics.Normal, mistSizeScale);
             else
-                _puffs.Emit(kinetics, mistSizeScale);            
+            {
+                for (var i = 0; i < _puffs.Length; i++)
+                {
+                    _puffs[i].Emit(kinetics, mistSizeScale);            
+                }
+            }
         }
-        
+
         _sprays.Emit(kinetics, spraySizeScale, armorChanceScale);
         _squibs.Emit(kinetics, squibSizeScale, armorChanceScale);
 
@@ -122,7 +135,12 @@ public class BloodEffects
         if (!camDir.IsSet(CamDir.Angled)) return;
 
         var worldDir = Orientation.GetWorldDir(flippedNormal);
-        _puffs.Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);
+        
+        for (var i = 0; i < _puffs.Length; i++)
+        {
+            _puffs[i].Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, armorChanceScale);            
+        }
+        
         _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, armorChanceScale);
     }
 
