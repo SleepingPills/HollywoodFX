@@ -129,6 +129,20 @@ internal class PlayerRigidbodySleepHierarchyTryPutToSleepPrefixPatch : ModulePat
     }
 }
 
+internal class RagdollM1PostfixPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(RagdollClass).GetMethod(nameof(RagdollClass.method_1));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable InconsistentNaming
+    public static bool Prefix(RagdollClass __instance, Rigidbody rigidbody)
+    {
+        return rigidbody != null;
+    }
+}
 
 internal class RagdollStartPostfixPatch : ModulePatch
 {

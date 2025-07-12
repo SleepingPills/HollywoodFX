@@ -156,6 +156,7 @@ public class Plugin : BaseUnityPlugin
             new RagdollStartPrefixPatch().Enable();
             new RagdollStartPostfixPatch().Enable();
             new PlayerRigidbodySleepHierarchyTryPutToSleepPrefixPatch().Enable();
+            new RagdollM1PostfixPatch().Enable();
 
             if (RagdollDropWeaponEnabled.Value)
             {
