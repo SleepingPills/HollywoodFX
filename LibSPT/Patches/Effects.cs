@@ -7,6 +7,7 @@ using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
 using HollywoodFX.Decal;
+using HollywoodFX.Explosion;
 using HollywoodFX.Muzzle;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Particles;
@@ -162,7 +163,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
         foreach (var effect in effects.EffectsArray)
         {
             // Skip grenade effects or those which have no material attached
-            if (effect.Name.ToLower().Contains("grenade") || effect.MaterialTypes.Length == 0)
+            if (effect.MaterialTypes.Length == 0)
             {
                 Plugin.Log.LogInfo($"Skipping {effect.Name}");
                 continue;
@@ -234,6 +235,8 @@ public class EffectsAwakePostfixPatch : ModulePatch
             Singleton<ImpactController>.Create(new ImpactController(__instance));
             Singleton<DecalPainter>.Create(new DecalPainter(__instance.DeferredDecals));
             
+            Singleton<ExplosionController>.Create(new ExplosionController(__instance));
+            
             if (Plugin.MuzzleEffectsEnabled.Value)
             {
                 Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
@@ -274,3 +277,23 @@ public class EffectsEmitPatch : ModulePatch
         Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
     }
 }
+
+public class EffectsEmitGrenadePatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        // Need to disambiguate the correct emit method
+        return typeof(Effects).GetMethod(nameof(Effects.EmitGrenade));
+    }
+
+    [PatchPrefix]
+    // ReSharper disable once InconsistentNaming
+    public static void Prefix(Vector3 position, Vector3 normal)
+    {
+        if (GameWorldAwakePrefixPatch.IsHideout)
+            return;
+
+        Singleton<ExplosionController>.Instance.Emit(position);
+    }
+}
+

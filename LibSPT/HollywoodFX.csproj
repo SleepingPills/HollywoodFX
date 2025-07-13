@@ -99,6 +99,7 @@
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="Decal\DecalPainter.cs" />
     <Compile Include="Decal\Decals.cs" />
+    <Compile Include="Explosion\ExplosionController.cs" />
     <Compile Include="Gore\Finisher.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />

@@ -147,6 +147,8 @@ public class Plugin : BaseUnityPlugin
             new MuzzleManagerShotPrefixPatch().Enable();
             new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
+        
+        new EffectsEmitGrenadePatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
