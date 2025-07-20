@@ -50,10 +50,14 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         ImpactStatic.LocalPlayer = __instance.MainPlayer;
         Plugin.Log.LogInfo($"Found local player: {__instance.MainPlayer.ProfileId}");
 
-        if (__instance.LocationId.Contains("factory"))
+        var locationId = __instance.LocationId.ToLower();
+        
+        Plugin.Log.LogInfo($"Location: {locationId}");
+        
+        if (locationId.Contains("factory") || locationId.Contains("laboratory"))
         {
-            Plugin.Log.LogInfo("Factory location detected, applying static lighting");
-            StaticMaterialAmbientLighting.AdjustLighting(__instance.LocationId);
+            Plugin.Log.LogInfo("Static lighting location detected, applying static lighting");
+            StaticMaterialAmbientLighting.AdjustLighting(locationId);
         }
         else
         {

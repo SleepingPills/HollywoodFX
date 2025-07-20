@@ -128,7 +128,7 @@ public static class StaticMaterialAmbientLighting
     public static void AdjustLighting(string location)
     {
         var tintColorFactor = new Vector4(1f, 1f, 1f, 1f);
-        var ambientLightFactor = new Vector4(0f, 0f, 0f, 0f);
+        var ambientLightFactor = new Vector4(1f, 1f, 1f, 1f);
 
         switch (location)
         {
@@ -141,7 +141,7 @@ public static class StaticMaterialAmbientLighting
                 ambientLightFactor = new Vector4(1.5f, 1.5f, 1.5f, 1f);
                 break;
             default:
-                Plugin.Log.LogError($"Unknown factory location: {location}");
+                Plugin.Log.LogError($"Location using default lighting: {location}");
                 break;
         }
 
