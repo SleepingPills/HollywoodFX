@@ -80,11 +80,12 @@ namespace HollywoodFX
                     new DirectionalEffect(sparksGroundComb, worldDir: WorldDir.Vertical | WorldDir.Up),
                 ],
                 generic: sparksGeneric,
-                forceGeneric: 0.33f
+                forceGeneric: 0.33f,
+                useOffsetNormals: true
             );
         }
 
-        public static float[] DefineExtraFlashChances()
+        private static float[] DefineExtraFlashChances()
         {
             var chances = new float[Enum.GetNames(typeof(MaterialType)).Length];
 

@@ -66,7 +66,8 @@ internal class TracerImpactEffects
                         new DirectionalEffect(sparksGroundComb, worldDir: WorldDir.Vertical | WorldDir.Up),
                     ],
                     generic: sparksGeneric,
-                    forceGeneric: 0.33f
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
                 ),
                 new EffectSystem(
                     directional:
@@ -89,7 +90,8 @@ internal class TracerImpactEffects
                         new DirectionalEffect(sparksGroundComb, worldDir: WorldDir.Vertical | WorldDir.Up),
                     ],
                     generic: sparksGeneric,
-                    forceGeneric: 0.33f
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
                 ),
                 new EffectSystem(
                     directional:
@@ -114,7 +116,8 @@ internal class TracerImpactEffects
                         new DirectionalEffect(sparksFlammableGround, worldDir: WorldDir.Vertical | WorldDir.Up),
                     ],
                     generic: sparksGeneric,
-                    forceGeneric: 0.33f
+                    forceGeneric: 0.33f,
+                    useOffsetNormals: true
                 ),
                 new EffectSystem(
                     directional:
