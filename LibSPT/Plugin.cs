@@ -148,7 +148,7 @@ public class Plugin : BaseUnityPlugin
             new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
         
-        new EffectsEmitGrenadePatch().Enable();
+        // new EffectsEmitGrenadePatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
