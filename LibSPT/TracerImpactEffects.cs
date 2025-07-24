@@ -34,7 +34,7 @@ internal class TracerImpactEffects
 
     public TracerImpactEffects(Effects eftEffects, Dictionary<string, EffectBundle> mainEffects, Dictionary<string, EffectBundle> tracerEffects)
     {
-        Plugin.Log.LogInfo("Defining effect bundles");
+        Plugin.Log.LogInfo("Defining tracer effect bundles");
         var sparksWide = tracerEffects["Sparks_Wide"];
         var sparksGeneric = tracerEffects["Sparks_Generic"];
         var sparksGround = tracerEffects["Sparks_Ground"];

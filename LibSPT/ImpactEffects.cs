@@ -4,6 +4,7 @@ using EFT.Ballistics;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace System.Runtime.CompilerServices
 {
@@ -13,10 +14,16 @@ namespace System.Runtime.CompilerServices
 
 namespace HollywoodFX
 {
+    /// <summary>
+    /// Verily, this is a spaghetti monster class. Refactor at some point once sanity levels have been restored.
+    /// </summary>
     internal class ImpactEffects
     {
         private readonly List<EffectSystem>[] _mainImpacts;
         private readonly TracerImpactEffects _tracerImpacts;
+
+        private readonly EffectSystem _extraFlashes;
+        private readonly float[] _extraFlashChances;
 
         public ImpactEffects(Effects eftEffects, GameObject mainPrefab, GameObject tracerPrefab)
         {
@@ -25,6 +32,9 @@ namespace HollywoodFX
 
             _mainImpacts = DefineMainEffects(mainEffects);
             _tracerImpacts = new TracerImpactEffects(eftEffects, mainEffects, tracerEffects);
+
+            _extraFlashes = DefineExtraFlashes(tracerEffects);
+            _extraFlashChances = DefineExtraFlashChances();
         }
 
         public void Emit(ImpactKinetics kinetics)
@@ -40,10 +50,60 @@ namespace HollywoodFX
                 impactSystem.Emit(kinetics, Plugin.EffectSize.Value);
             }
 
-            if (!Plugin.TracerImpactsEnabled.Value) return;
-
-            if (kinetics.Bullet.Info.Ammo is AmmoItemClass { Tracer: true } ammo)
+            if (Plugin.TracerImpactsEnabled.Value && kinetics.Bullet.Info.Ammo is AmmoItemClass { Tracer: true } ammo)
                 _tracerImpacts.Emit(kinetics, ammo);
+            else
+            {
+                var chance = _extraFlashChances[(int)kinetics.Material];
+                
+                if (!(Random.Range(0f, 1f) < chance * kinetics.Bullet.ChanceScale))
+                    return;
+                
+                _extraFlashes.Emit(kinetics, Plugin.EffectSize.Value);
+            }
+        }
+
+        private static EffectSystem DefineExtraFlashes(Dictionary<string, EffectBundle> tracerEffects)
+        {
+            Plugin.Log.LogInfo("Defining extra flashes");
+            var sparksGeneric = tracerEffects["Sparks_Generic"];
+            var sparksHorRight = tracerEffects["Sparks_Hor_Right"];
+            var sparksHorLeft = tracerEffects["Sparks_Hor_Left"];
+
+            var sparksGroundComb = EffectBundle.Merge(tracerEffects["Sparks_Generic"], tracerEffects["Sparks_Wide"]);
+
+            return new EffectSystem(
+                directional:
+                [
+                    new DirectionalEffect(sparksHorRight, camDir: CamDir.Angled | CamDir.Right, worldDir: WorldDir.Horizontal),
+                    new DirectionalEffect(sparksHorLeft, camDir: CamDir.Angled | CamDir.Left, worldDir: WorldDir.Horizontal),
+                    new DirectionalEffect(sparksGroundComb, worldDir: WorldDir.Vertical | WorldDir.Up),
+                ],
+                generic: sparksGeneric,
+                forceGeneric: 0.33f
+            );
+        }
+
+        public static float[] DefineExtraFlashChances()
+        {
+            var chances = new float[Enum.GetNames(typeof(MaterialType)).Length];
+
+            chances[(int)MaterialType.Chainfence] = 0.15f;
+            chances[(int)MaterialType.Concrete] = 0.2f;
+            chances[(int)MaterialType.GarbageMetal] = 0.25f;
+            chances[(int)MaterialType.Glass] = 0.1f;
+            chances[(int)MaterialType.GlassShattered] = 0.1f;
+            chances[(int)MaterialType.Grate] = 0.2f;
+            chances[(int)MaterialType.Gravel] = 0.1f;
+            chances[(int)MaterialType.MetalThin] = 0.2f;
+            chances[(int)MaterialType.MetalThick] = 0.25f;
+            chances[(int)MaterialType.Pebbles] = 0.1f;
+            chances[(int)MaterialType.Stone] = 0.15f;
+            chances[(int)MaterialType.Tile] = 0.15f;
+            chances[(int)MaterialType.GenericHard] = 0.15f;
+            chances[(int)MaterialType.MetalNoDecal] = 0.25f;
+
+            return chances;
         }
 
         private static List<EffectSystem>[] DefineMainEffects(Dictionary<string, EffectBundle> effectMap)
