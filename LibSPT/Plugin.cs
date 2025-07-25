@@ -7,7 +7,7 @@ using BepInEx.Logging;
 using Comfort.Common;
 using EFT.Communications;
 using EFT.UI;
-using HollywoodFX.Lighting;
+using HollywoodFX.Graphics;
 using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
@@ -83,13 +83,8 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> KineticsScaling;
 
-    public static ConfigEntry<float> MipBias;
-    public static ConfigEntry<bool> LodOverrideEnabled;
-    public static ConfigEntry<float> LodBias;
-    public static ConfigEntry<bool> TerrainDetailOverrideEnabled;
-    public static ConfigEntry<float> TerrainDetailDistance;
-    public static ConfigEntry<float> TerrainDetailDensityScaling;
-
+    public static GraphicsConfig GraphicsConfig;
+    
     private static ConfigEntry<bool> _michelinManEnabled;
     private static ConfigEntry<bool> _peenEnabled;
 
@@ -174,8 +169,9 @@ public class Plugin : BaseUnityPlugin
             new PlayerOnDeadPostfixPatch().Enable();
         }
 
-        // if (_detailOverride.Value)
-        new GPUInstancerDetailManagerAwakePostfixPatch().Enable();
+        new GraphicsRaidInitPatch().Enable();
+        new GraphicsLodOverridePatch().Enable();
+        new GraphicsTerrainDetailOverridePatch().Enable();
 
         Log.LogInfo("Initialization finished");
 
@@ -508,76 +504,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Graphics
          */
-        MipBias = Config.Bind(gfx, "Effect Quality Bias", 0f, new ConfigDescription(
-            "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can heavy *heavy*" +
-            "VRAM impact and cause stuttering.",
-            new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 6}
-        ));
-        MipBias.SettingChanged += (_, _) =>
-        {
-            var materialRegistry = Singleton<MaterialRegistry>.Instance;
-            if (materialRegistry == null)
-                return;
-            materialRegistry.SetMipBias(MipBias.Value);
-        };
-        
-            
-        LodOverrideEnabled = Config.Bind(gfx, "Override LOD Settings (RESTART)", false, new ConfigDescription(
-            "Toggles whether the standard LOD settings should be overridden. ",
-            null,
-            new ConfigurationManagerAttributes { Order = 5 }
-        ));
-        LodOverrideEnabled.SettingChanged += (_, _) =>
-        {
-            if (LodOverrideEnabled.Value)
-                QualitySettings.lodBias = LodBias.Value;
-
-            if (LodBias.Description.Tags[0] is not ConfigurationManagerAttributes configAttr) return;
-
-            configAttr.Browsable = LodOverrideEnabled.Value;
-        };
-        LodBias = Config.Bind(gfx, "LOD Bias", QualitySettings.lodBias, new ConfigDescription(
-            "Adjust the LOD bias in a wider range than what the game allows.",
-            new AcceptableValueRange<float>(1f, 20f),
-            new ConfigurationManagerAttributes { Order = 4, Browsable = LodOverrideEnabled.Value }
-        ));
-        LodBias.SettingChanged += (_, _) =>
-        {
-            if (LodOverrideEnabled.Value)
-                QualitySettings.lodBias = LodBias.Value;
-        };
-        if (LodOverrideEnabled.Value)
-            QualitySettings.lodBias = LodBias.Value;
-
-        TerrainDetailOverrideEnabled = Config.Bind(gfx, "Override Terrain Detail (RESTART)", false, new ConfigDescription(
-            "Toggles whether the terrain details settings should be overridden.",
-            null,
-            new ConfigurationManagerAttributes { Order = 3 }
-        ));
-        TerrainDetailOverrideEnabled.SettingChanged += (_, _) =>
-        {
-            if (TerrainDetailDistance.Description.Tags[0] is ConfigurationManagerAttributes distanceConfigAttr)
-            {
-                distanceConfigAttr.Browsable = TerrainDetailOverrideEnabled.Value;
-            }
-
-            if (TerrainDetailDensityScaling.Description.Tags[0] is ConfigurationManagerAttributes densityConfigAttr)
-            {
-                densityConfigAttr.Browsable = TerrainDetailOverrideEnabled.Value;
-            }
-        };
-        TerrainDetailDistance = Config.Bind(gfx, "Terrain Detail LOD Scaling", 2.5f, new ConfigDescription(
-            "Set the maximum visible distance for terrain detail like rocks and foliage. For some unfathomable reason this is separate" +
-            "from the regular LOD",
-            new AcceptableValueRange<float>(0.5f, 10f),
-            new ConfigurationManagerAttributes { Order = 2, Browsable = TerrainDetailOverrideEnabled.Value }
-        ));
-        TerrainDetailDensityScaling = Config.Bind(gfx, "Terrain Detail Density", 2f, new ConfigDescription(
-            "Scales the density of terrain detail like rocks and foliage.",
-            new AcceptableValueRange<float>(0.5f, 5f),
-            new ConfigurationManagerAttributes { Order = 1, Browsable = TerrainDetailOverrideEnabled.Value }
-        ));
+        GraphicsConfig = new GraphicsConfig(Config, gfx);
 
         /*
          * Whimsy

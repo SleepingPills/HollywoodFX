@@ -3,8 +3,6 @@ using Comfort.Common;
 using EFT;
 using HollywoodFX.Gore;
 using HollywoodFX.Lighting;
-using HollywoodFX.Muzzle;
-using HollywoodFX.Muzzle.Patches;
 using SPT.Reflection.Patching;
 using UnityEngine;
 
@@ -63,11 +61,6 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         {
             __instance.gameObject.AddComponent<DynamicMaterialAmbientLighting>();
         }
-        
-        if (Plugin.LodOverrideEnabled.Value)
-            QualitySettings.lodBias = Plugin.LodBias.Value;
-        
-        Singleton<MaterialRegistry>.Instance.SetMipBias(Plugin.MipBias.Value);
     }
 }
 

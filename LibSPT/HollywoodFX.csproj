@@ -99,11 +99,16 @@
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="Decal\DecalPainter.cs" />
     <Compile Include="Decal\Decals.cs" />
+    <Compile Include="Explosion\Explosion.cs" />
     <Compile Include="Explosion\ExplosionController.cs" />
+    <Compile Include="Explosion\ExplosionPool.cs" />
+    <Compile Include="Explosion\Patches.cs" />
     <Compile Include="Gore\Finisher.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />
     <Compile Include="Gore\GoreEffects.cs" />
+    <Compile Include="Graphics\GraphicsConfig.cs" />
+    <Compile Include="Graphics\Patches.cs" />
     <Compile Include="Helpers\DebugGizmo.cs" />
     <Compile Include="Helpers\VectorMath.cs" />
     <Compile Include="ImpactKinetics.cs" />
@@ -129,7 +134,6 @@
     <Compile Include="Patches\Dispose.cs" />
     <Compile Include="Patches\Effects.cs" />
     <Compile Include="Patches\GameWorld.cs" />
-    <Compile Include="Patches\GPUInstancer.cs" />
     <Compile Include="Patches\Player.cs" />
     <Compile Include="Patches\Ragdoll.cs" />
     <Compile Include="Patches\Shell.cs" />
