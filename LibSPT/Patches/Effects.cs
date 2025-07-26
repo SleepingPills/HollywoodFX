@@ -162,7 +162,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
         foreach (var effect in effects.EffectsArray)
         {
-            // Skip grenade effects or those which have no material attached
+            // Skip effects which have no material attached
             if (effect.MaterialTypes.Length == 0)
             {
                 Plugin.Log.LogInfo($"Skipping {effect.Name}");
