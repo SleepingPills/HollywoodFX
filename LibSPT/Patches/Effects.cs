@@ -107,11 +107,11 @@ public class EffectsAwakePrefixPatch : ModulePatch
             splatterDecalOrig.TileSheetColumns = splatterDecalNew.TileSheetColumns;
             splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize * Plugin.BloodSplatterDecalsSize.Value;
         }
-        
+
         var impactDecals = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
         Decals.TracerScorchMark = impactDecals[0];
         Plugin.Log.LogInfo($"Extracted decal: {Decals.TracerScorchMark} > {Decals.TracerScorchMark.DecalMaterial.name}");
-        
+
         Plugin.Log.LogInfo("Decal overrides complete");
     }
 
@@ -234,9 +234,9 @@ public class EffectsAwakePostfixPatch : ModulePatch
             Singleton<EmissionController>.Create(emissionController);
             Singleton<ImpactController>.Create(new ImpactController(__instance));
             Singleton<DecalPainter>.Create(new DecalPainter(__instance.DeferredDecals));
-            
+
             Singleton<ExplosionController>.Create(new ExplosionController(__instance));
-            
+
             if (Plugin.MuzzleEffectsEnabled.Value)
             {
                 Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());
@@ -277,23 +277,3 @@ public class EffectsEmitPatch : ModulePatch
         Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
     }
 }
-
-public class EffectsEmitGrenadePatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        // Need to disambiguate the correct emit method
-        return typeof(Effects).GetMethod(nameof(Effects.EmitGrenade));
-    }
-
-    [PatchPrefix]
-    // ReSharper disable once InconsistentNaming
-    public static void Prefix(Vector3 position, Vector3 normal)
-    {
-        if (GameWorldAwakePrefixPatch.IsHideout)
-            return;
-
-        Singleton<ExplosionController>.Instance.Emit(position);
-    }
-}
-
