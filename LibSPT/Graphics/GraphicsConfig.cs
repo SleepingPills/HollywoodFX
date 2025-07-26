@@ -26,8 +26,9 @@ public class GraphicsConfig
     public LodOverrides Current;
 
     public readonly ConfigEntry<float> MipBias;
-    
+
     private readonly Dictionary<string, LodOverrides> _overrides = new();
+
     private readonly Dictionary<string, string[]> _mapNames = new()
     {
         { "Customs", ["bigmap"] },
@@ -52,32 +53,32 @@ public class GraphicsConfig
             new ConfigurationManagerAttributes { Order = 1 }
         ));
         MipBias.SettingChanged += (_, _) => { UpdateMipBias(); };
-        
-        AddDetailOverrides(config, section, "Customs", false, 4f, 2.5f, 2f);
+
+        AddDetailOverrides(config, section, "Default", browsable: false);
+        AddDetailOverrides(config, section, "Customs", false, 6f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Factory");
-        AddDetailOverrides(config, section, "Interchange");
+        AddDetailOverrides(config, section, "Interchange", false, 6f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Laboratory");
-        AddDetailOverrides(config, section, "Lighthouse", false, 6f, 2.5f, 2f);
+        AddDetailOverrides(config, section, "Lighthouse", false, 10f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Reserve", false, 4f, 2.5f, 2f);
-        AddDetailOverrides(config, section, "GroundZero");
-        AddDetailOverrides(config, section, "Shoreline", false, 6f, 2.5f, 2f);
+        AddDetailOverrides(config, section, "GroundZero", false, 6f, 2.5f, 2f);
+        AddDetailOverrides(config, section, "Shoreline", false, 10f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Streets");
         AddDetailOverrides(config, section, "Woods", false, 10f, 2.5f, 2f);
-        AddDetailOverrides(config, section, "Default");
-        
+
         Current = _overrides["default"];
     }
 
     public void SetCurrentMap(string map)
     {
         Current.LodBias.SettingChanged -= OnLodBiasChanged;
-        
+
         if (!_overrides.TryGetValue(map, out Current))
         {
             Plugin.Log.LogInfo($"Map {map} not found in GraphicsConfig using default settings");
             Current = _overrides["default"];
         }
-        
+
         Current.LodBias.SettingChanged += OnLodBiasChanged;
     }
 
@@ -103,7 +104,7 @@ public class GraphicsConfig
             QualitySettings.lodBias = defaultLodBias;
             return;
         }
-        
+
         QualitySettings.lodBias = Current.LodBias.Value;
     }
 
@@ -114,7 +115,7 @@ public class GraphicsConfig
 
     private void AddDetailOverrides(
         ConfigFile config, string section, string map,
-        bool enabled=false, float lodBias=4, float detailDistance=1f, float detailDensityScaling=1f
+        bool enabled = false, float lodBias = 4, float detailDistance = 1f, float detailDensityScaling = 1f, bool browsable = true
     )
     {
         var mapSection = $"{section} - {map}";
@@ -124,22 +125,22 @@ public class GraphicsConfig
             config.Bind(mapSection, $"{map} Enable (RESTART)", enabled, new ConfigDescription(
                 "Toggles whether the LOD settings should be overridden at all.",
                 null,
-                new ConfigurationManagerAttributes { Order = 4 }
+                new ConfigurationManagerAttributes { Order = 4, Browsable = browsable }
             )),
             config.Bind(mapSection, $"{map} LOD Bias", lodBias, new ConfigDescription(
                 "Adjust the LOD bias in a wider range than what the game allows.",
                 new AcceptableValueRange<float>(1f, 20f),
-                new ConfigurationManagerAttributes { Order = 3 }
+                new ConfigurationManagerAttributes { Order = 3, Browsable = browsable }
             )),
-            config.Bind(mapSection, $"{map} Detail Cull Range Scaling (RESTART)", detailDistance, new ConfigDescription(
+            config.Bind(mapSection, $"{map} Detail Cull Range Scaling", detailDistance, new ConfigDescription(
                 "Scales the maximum visible distance for detail like rocks, debris and foliage.",
                 new AcceptableValueRange<float>(0.5f, 10f),
-                new ConfigurationManagerAttributes { Order = 2 }
+                new ConfigurationManagerAttributes { Order = 2, Browsable = browsable }
             )),
-            config.Bind(mapSection, $"{map} Detail Density Scaling (RESTART)", detailDensityScaling, new ConfigDescription(
+            config.Bind(mapSection, $"{map} Detail Density Scaling", detailDensityScaling, new ConfigDescription(
                 "Scales the density of detail like rocks, debris and foliage.",
                 new AcceptableValueRange<float>(0.5f, 5f),
-                new ConfigurationManagerAttributes { Order = 1 }
+                new ConfigurationManagerAttributes { Order = 1, Browsable = browsable }
             ))
         );
 
