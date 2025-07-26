@@ -199,7 +199,7 @@ public class Plugin : BaseUnityPlugin
         const string gfx = "09. Graphics";
         const string whimsy = "10. Whimsy";
         const string debug = "11. Debug";
-
+        
         /*
          * General
          */
