@@ -28,7 +28,6 @@ public class GraphicsConfig
     public readonly ConfigEntry<float> MipBias;
 
     private readonly Dictionary<string, LodOverrides> _overrides = new();
-
     private readonly Dictionary<string, string[]> _mapNames = new()
     {
         { "Customs", ["bigmap"] },
@@ -108,9 +107,17 @@ public class GraphicsConfig
         QualitySettings.lodBias = Current.LodBias.Value;
     }
 
-    private void OnLodBiasChanged(object o, EventArgs e)
+    public void SetDetailOverrides(string map, bool enabled = false, float lodBias = 4, float detailDistance = 1f, float detailDensityScaling = 1f)
     {
-        UpdateLodBias();
+        foreach (var name in _mapNames[map])
+        {
+            var overrides = _overrides[name];
+
+            overrides.Enabled.Value = enabled;
+            overrides.LodBias.Value = lodBias;
+            overrides.DetailDistance.Value = detailDistance;
+            overrides.DetailDensity.Value = detailDensityScaling;
+        }
     }
 
     private void AddDetailOverrides(
@@ -148,5 +155,10 @@ public class GraphicsConfig
         {
             _overrides[name] = overrides;
         }
+    }
+
+    private void OnLodBiasChanged(object o, EventArgs e)
+    {
+        UpdateLodBias();
     }
 }

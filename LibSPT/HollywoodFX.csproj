@@ -81,6 +81,9 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\..\..\..\Game\v4\Client_Dev\EscapeFromTarkov_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\EscapeFromTarkov_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
@@ -96,6 +99,7 @@
     <Compile Include="AssetRegistry.cs" />
     <Compile Include="BattleAmbience.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="ConfigurationTemplates.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="Decal\DecalPainter.cs" />
     <Compile Include="Decal\Decals.cs" />

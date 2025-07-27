@@ -24,6 +24,8 @@ public class Plugin : BaseUnityPlugin
 
     public static ManualLogSource Log;
 
+    public static ConfigEntry<string> ConfigTemplate;
+
     public static ConfigEntry<float> EffectSize;
     public static ConfigEntry<bool> TracerImpactsEnabled;
 
@@ -84,7 +86,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> KineticsScaling;
 
     public static GraphicsConfig GraphicsConfig;
-    
+
     private static ConfigEntry<bool> _michelinManEnabled;
     private static ConfigEntry<bool> _peenEnabled;
 
@@ -142,7 +144,7 @@ public class Plugin : BaseUnityPlugin
             new MuzzleManagerShotPrefixPatch().Enable();
             new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
-        
+
         // new EffectsEmitGrenadePatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
@@ -186,9 +188,28 @@ public class Plugin : BaseUnityPlugin
         }
     }
 
+    private static void LoadTemplateDrawer(ConfigEntryBase entry)
+    {
+        if (GUILayout.Button("Janky's Special"))
+        {
+            ConfigurationTemplates.SetJanky(entry.ConfigFile);
+        }
+
+        if (GUILayout.Button("Potato"))
+        {
+            ConfigurationTemplates.SetPotato(entry.ConfigFile);
+        }
+        
+        if (GUILayout.Button("Defaults"))
+        {
+            ConfigurationTemplates.SetDefaults(entry.ConfigFile);
+        }
+    }
+
     private void SetupConfig(bool visceralCombatDetected)
     {
-        const string general = "01. Impact Effects";
+        const string general = "00. General";
+        const string impacts = "01. Impact Effects";
         const string muzzleEffects = "02. Muzzle Blast Effects";
         const string battleAmbience = "03. Ambient Battle Effects (RESTART)";
         const string goreEmission = "04. Gore Emission (RESTART)";
@@ -199,17 +220,26 @@ public class Plugin : BaseUnityPlugin
         const string gfx = "09. Graphics";
         const string whimsy = "10. Whimsy";
         const string debug = "11. Debug";
-        
+
         /*
          * General
          */
-        EffectSize = Config.Bind(general, "Impact Effect Size", 1.0f, new ConfigDescription(
+        ConfigTemplate = Config.Bind(general, "Load Template (RESTART)", "", new ConfigDescription(
+            "Use a preset template for the HFX settings. Restarting the game is required to ensure all the settings take effect.",
+            null,
+            new ConfigurationManagerAttributes { Order = 1, CustomDrawer = LoadTemplateDrawer }
+        ));
+        
+        /*
+         * Impacts
+         */
+        EffectSize = Config.Bind(impacts, "Impact Effect Size", 1.0f, new ConfigDescription(
             "Scales the size of impact effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 2 }
         ));
 
-        TracerImpactsEnabled = Config.Bind(general, "Enable Tracer Round Impacts", true, new ConfigDescription(
+        TracerImpactsEnabled = Config.Bind(impacts, "Enable Tracer Round Impacts", true, new ConfigDescription(
             "Toggles special impact effects for tracer rounds.",
             null,
             new ConfigurationManagerAttributes { Order = 1 }
