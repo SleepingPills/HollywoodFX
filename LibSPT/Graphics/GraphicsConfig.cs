@@ -54,13 +54,13 @@ public class GraphicsConfig
         MipBias.SettingChanged += (_, _) => { UpdateMipBias(); };
 
         AddDetailOverrides(config, section, "Default", browsable: false);
-        AddDetailOverrides(config, section, "Customs", false, 6f, 2.5f, 2f);
+        AddDetailOverrides(config, section, "Customs", false, 4f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Factory");
-        AddDetailOverrides(config, section, "Interchange", false, 6f, 2.5f, 2f);
+        AddDetailOverrides(config, section, "Interchange", false, 4f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Laboratory");
         AddDetailOverrides(config, section, "Lighthouse", false, 10f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Reserve", false, 4f, 2.5f, 2f);
-        AddDetailOverrides(config, section, "GroundZero", false, 6f, 2.5f, 2f);
+        AddDetailOverrides(config, section, "GroundZero", false, 4f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Shoreline", false, 10f, 2.5f, 2f);
         AddDetailOverrides(config, section, "Streets");
         AddDetailOverrides(config, section, "Woods", false, 10f, 2.5f, 2f);
