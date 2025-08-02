@@ -7,6 +7,7 @@ using BepInEx.Logging;
 using Comfort.Common;
 using EFT.Communications;
 using EFT.UI;
+using HollywoodFX.Explosion;
 using HollywoodFX.Graphics;
 using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
@@ -24,10 +25,14 @@ public class Plugin : BaseUnityPlugin
 
     public static ManualLogSource Log;
 
-    public static ConfigEntry<string> ConfigTemplate;
-
     public static ConfigEntry<float> EffectSize;
     public static ConfigEntry<bool> TracerImpactsEnabled;
+    
+    public static ConfigEntry<float> ExplosionDensityFireball;
+    public static ConfigEntry<float> ExplosionDensityDebris;
+    public static ConfigEntry<float> ExplosionDensitySparks;
+    public static ConfigEntry<float> ExplosionDensitySmoke;
+    public static ConfigEntry<float> ExplosionDensityDust;
 
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
     public static ConfigEntry<float> MuzzleEffectJetsSize;
@@ -145,7 +150,8 @@ public class Plugin : BaseUnityPlugin
             new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
 
-        // new EffectsEmitGrenadePatch().Enable();
+        new EffectsWipeDefaultExplosionSystemsPatch().Enable();
+        new EffectsEmitGrenadePatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
@@ -210,22 +216,23 @@ public class Plugin : BaseUnityPlugin
     {
         const string general = "00. General";
         const string impacts = "01. Impact Effects";
-        const string muzzleEffects = "02. Muzzle Blast Effects";
-        const string battleAmbience = "03. Ambient Battle Effects (RESTART)";
-        const string goreEmission = "04. Gore Emission (RESTART)";
-        const string goreSize = "05. Gore Size";
-        const string goreDecals = "06. Gore Decals";
-        const string ragdoll = "07. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
-        const string misc = "08. Miscellaneous Flotsam";
-        const string gfx = "09. Graphics";
-        const string whimsy = "10. Whimsy";
-        const string debug = "11. Debug";
+        const string explosions = "02. Explosion Effects";
+        const string muzzleEffects = "03. Muzzle Blast Effects";
+        const string battleAmbience = "04. Ambient Battle Effects (RESTART)";
+        const string goreEmission = "05. Gore Emission (RESTART)";
+        const string goreSize = "06. Gore Size";
+        const string goreDecals = "07. Gore Decals";
+        const string ragdoll = "08. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
+        const string misc = "09. Miscellaneous Flotsam";
+        const string gfx = "10. Graphics";
+        const string whimsy = "11. Whimsy";
+        const string debug = "12. Debug";
 
         /*
          * General
          */
-        ConfigTemplate = Config.Bind(general, "Load Template (RESTART)", "", new ConfigDescription(
-            "Use a preset template for the HFX settings. Restarting the game is required to ensure all the settings take effect.",
+        Config.Bind(general, "Load Template (RESTART)", "", new ConfigDescription(
+            "Use a preset template for the HFX settings. Requires restarting the game to ensure all the settings take effect.",
             null,
             new ConfigurationManagerAttributes { Order = 1, CustomDrawer = LoadTemplateDrawer }
         ));
@@ -244,7 +251,40 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
+        
+        /*
+         * Explosions
+         */
+        ExplosionDensityFireball = Config.Bind(explosions, "Fireball Density", 1f, new ConfigDescription(
+            "Adjusts the density of fireballs. Large values may have a performance impact",
+        new AcceptableValueRange<float>(0, 10f),
+        new ConfigurationManagerAttributes { Order = 5 }
+        ));
 
+        ExplosionDensityDebris = Config.Bind(explosions, "Debris Density", 1f, new ConfigDescription(
+            "Adjusts the density of debris and sparks. Large values may have a performance impact",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 4}
+        ));
+        
+        ExplosionDensitySmoke = Config.Bind(explosions, "Smoke Density", 1f, new ConfigDescription(
+            "Adjusts the density of debris and sparks. Large values may have a performance impact",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 3 }
+        ));
+        
+        ExplosionDensitySparks = Config.Bind(explosions, "Sparks Density", 1f, new ConfigDescription(
+            "Adjusts the density of debris and sparks. Large values may have a performance impact",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 2 }
+        ));
+        
+        ExplosionDensityDust = Config.Bind(explosions, "Dust Density", 1f, new ConfigDescription(
+            "Adjusts the density of debris and sparks. Large values may have a performance impact",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 1 }
+        ));
+        
         /*
          * Muzzle Effects
          */

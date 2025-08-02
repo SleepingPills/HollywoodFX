@@ -114,6 +114,7 @@
     <Compile Include="Graphics\GraphicsConfig.cs" />
     <Compile Include="Graphics\Patches.cs" />
     <Compile Include="Helpers\DebugGizmo.cs" />
+    <Compile Include="Helpers\DrawCallProfiler.cs" />
     <Compile Include="Helpers\VectorMath.cs" />
     <Compile Include="ImpactKinetics.cs" />
     <Compile Include="ImpactController.cs" />

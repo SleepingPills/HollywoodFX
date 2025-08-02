@@ -7,6 +7,7 @@ namespace HollywoodFX.Lighting;
 
 public class MaterialRegistry
 {
+    public readonly HashSet<int> SeenMaterials = new();
     public readonly List<Material> DynamicAlpha = new();
     public readonly List<Material> StaticAlpha = new();
     public readonly Dictionary<int, Texture> Textures = new();
@@ -50,7 +51,15 @@ public class MaterialRegistry
         
         if (material.shader.name != "Global Fog/Alpha Blended Lighted") return;
 
-        Plugin.Log.LogInfo($"Registering material {material.name}");
+        var materialId = material.GetInstanceID();
+
+        if (!SeenMaterials.Add(materialId))
+        {
+            Plugin.Log.LogInfo($"Skipping material {material} because it is already registered.");
+            return;
+        }
+
+        Plugin.Log.LogInfo($"Registering material {material}");
         
         if (dynamicAlpha)
             DynamicAlpha.Add(material);
@@ -69,7 +78,11 @@ public class MaterialRegistry
             
             var textureId = texture.GetInstanceID();
 
-            if (Textures.ContainsKey(textureId)) continue;
+            if (Textures.ContainsKey(textureId))
+            {
+                Plugin.Log.LogInfo($"Skipping texture {texture} because it is already registered");
+                continue;
+            }
             
             Plugin.Log.LogInfo($"Registering texture {texture}");
             Textures.Add(textureId, texture);

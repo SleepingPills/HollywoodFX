@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 namespace HollywoodFX.Particles;
 
-internal class EffectBundle(ParticleSystem[] particleSystems)
+public class EffectBundle(ParticleSystem[] particleSystems)
 {
     public readonly ParticleSystem[] ParticleSystems = particleSystems;
 
@@ -57,8 +57,6 @@ internal class EffectBundle(ParticleSystem[] particleSystems)
         foreach (var (name, particleSystems) in ParticleHelpers.LoadParticleSystemBundles(eftEffects, prefab, dynamicAlpha))
         {
             effectMap[name] = new EffectBundle(particleSystems);
-
-            Plugin.Log.LogInfo($"Added effect `{name}` with {particleSystems.Length} particle systems");
         }
 
         return effectMap;

@@ -1,128 +1,93 @@
-﻿using System.Collections.Generic;
-using Comfort.Common;
-using HollywoodFX.Gore;
-using HollywoodFX.Lighting;
-using HollywoodFX.Particles;
+﻿using System;
+using System.Collections.Generic;
 using Systems.Effects;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Explosion;
 
-public class ExplosionPool : MonoBehaviour
+public class ExplosionPoolScheduler : MonoBehaviour
+{
+    public readonly List<ExplosionPool> Pools = [];
+    
+    public void Update()
+    {
+        for (var i = 0; i < Pools.Count; i++)
+        {
+            Pools[i].Update();
+        }
+    }
+}
+
+public class ExplosionPool
 {
     private  readonly float _lifetime;
 
-    private List<Explosion> _pool;
-    private Queue<Emission> _active;
-    private Effects _eftEffects;
+    private readonly List<Explosion> _pool;
+    private readonly Queue<Emission> _active;
 
-    // Provide factory method for creating explosions?
-    // public ExplosionPool(Effects eftEffects, GameObject prefab, int copyCount, float lifetime, float density)
-    // {
-    //     _lifetime = lifetime;
-    //     _eftEffects = eftEffects;
-    //     
-    //     _pool = [];
-    //     _active = new Queue<Emission>();
-    //
-    //     Plugin.Log.LogInfo($"Creating RigidbodyEffects for {prefab.name} lifetime {_lifetime}");
-    //
-    //     for (var i = 0; i < copyCount; i++)
-    //     {
-    //         Plugin.Log.LogInfo($"Instantiating Effects Prefab {prefab.name} installment {i + 1}");
-    //
-    //         var rootInstance = Instantiate(prefab);
-    //
-    //         foreach (var child in rootInstance.transform.GetChildren())
-    //         {
-    //             if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
-    //
-    //             child.parent = eftEffects.transform;
-    //             Singleton<MaterialRegistry>.Instance.Register(particleSystem, false);
-    //             _pool.Add(particleSystem);
-    //
-    //             foreach (var subSystem in particleSystem.GetComponentsInChildren<ParticleSystem>())
-    //             {
-    //                 ParticleHelpers.ScaleEmissionRate(subSystem, density);
-    //             }
-    //
-    //             Plugin.Log.LogInfo($"Adding Effect {child.name} density {density}");
-    //         }
-    //     }
-    //
-    //     foreach (var effect in _pool)
-    //     {
-    //         effect.gameObject.AddComponent<DetachOnDisable>();
-    //
-    //         var particleSystems = effect.GetComponentsInChildren<ParticleSystem>(true);
-    //
-    //         if (particleSystems == null)
-    //             continue;
-    //
-    //         foreach (var particleSystem in particleSystems)
-    //         {
-    //             if (!particleSystem.collision.enabled)
-    //                 continue;
-    //
-    //             particleSystem.gameObject.AddComponent<BloodSquirtCollisionHandler>();
-    //         }
-    //     }
-    // }
-
-    // public void Update()
-    // {
-    //     while (_active.Count > 0)
-    //     {
-    //         var emission = _active.Peek();
-    //
-    //         if (Time.time - emission.Timestamp > _lifetime)
-    //         {
-    //             _active.Dequeue();
-    //             emission.Effect.transform.SetParent(_eftEffects.transform);
-    //             _pool.Add(emission.Effect);
-    //         }
-    //         else
-    //         {
-    //             // The next item is still active, we bail out.
-    //             break;
-    //         }
-    //     }
-    // }
-
-    // public void Emit(Rigidbody rigidbody, Vector3 position, Vector3 normal, float scale = 1f)
-    // {
-    //     ParticleSystem effect;
-    //
-    //     if (_pool.Count > 0)
-    //     {
-    //         // Pick a random effect from the pool
-    //         var pick = _pool.Count == 1 ? 0 : Random.Range(0, _pool.Count);
-    //         effect = _pool[pick];
-    //         var last = _pool.Count - 1;
-    //         // Swap the last item to the one we just removed
-    //         _pool[pick] = _pool[last];
-    //         // Pop the last item in the list
-    //         _pool.RemoveAt(last);
-    //     }
-    //     else
-    //     {
-    //         // Steal an active emission
-    //         var emission = _active.Dequeue();
-    //         effect = emission.Effect;
-    //     }
-    //
-    //     effect.transform.position = position;
-    //     effect.transform.localScale = new Vector3(scale, scale, scale);
-    //     effect.transform.rotation = Quaternion.LookRotation(normal);
-    //     effect.transform.SetParent(rigidbody.transform);
-    //     effect.Play(true);
-    //
-    //     _active.Enqueue(new Emission(effect, Time.time));
-    // }
-
-    private struct Emission(ParticleSystem effect, float timestamp)
+    public ExplosionPool(Effects eftEffects, GameObject prefab, Func<Effects, GameObject, Explosion> builder, int copyCount, float lifetime)
     {
-        public readonly ParticleSystem Effect = effect;
+        _lifetime = lifetime;
+        
+        _pool = [];
+        _active = new Queue<Emission>();
+        
+        for (var i = 0; i < copyCount; i++)
+        {
+            Plugin.Log.LogInfo($"Instantiating Explosion Effects Prefab {prefab.name} installment {i + 1}");
+            var rootInstance = Object.Instantiate(prefab);
+            var explosion = builder(eftEffects, rootInstance);
+            _pool.Add(explosion);
+        }
+    }
+
+    public void Update()
+    {
+        while (_active.Count > 0)
+        {
+            var emission = _active.Peek();
+    
+            if (Time.time - emission.Timestamp > _lifetime)
+            {
+                _active.Dequeue();
+                _pool.Add(emission.Effect);
+            }
+            else
+            {
+                // The next item is still active, we bail out.
+                break;
+            }
+        }
+    }
+
+    public void Emit(Vector3 position, Vector3 normal)
+    {
+        Explosion effect;
+    
+        if (_pool.Count > 0)
+        {
+            var last = _pool.Count - 1;
+            // Pick the last item
+            effect = _pool[last];
+            // Pop the last item
+            _pool.RemoveAt(last);
+        }
+        else
+        {
+            // Steal an active emission
+            var emission = _active.Dequeue();
+            effect = emission.Effect;
+        }
+
+        effect.Emit(position, normal);
+        
+        _active.Enqueue(new Emission(effect, Time.time));
+    }
+
+    private struct Emission(Explosion effect, float timestamp)
+    {
+        public readonly Explosion Effect = effect;
         public readonly float Timestamp = timestamp;
     }
 }

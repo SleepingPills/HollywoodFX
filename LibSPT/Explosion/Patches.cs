@@ -23,13 +23,13 @@ public class EffectsWipeDefaultExplosionSystemsPatch : ModulePatch
     {
         if (__instance.name.Contains("HFX"))
         {
-            Plugin.Log.LogInfo($"Skipping EffectsAwakePrefixPatch Reentrancy for HFX effects {__instance.name}");
+            Plugin.Log.LogInfo($"Skipping EffectsWipeDefaultExplosionSystemsPatch Reentrancy for HFX effects {__instance.name}");
             return;
         }
 
         if (GameWorldAwakePrefixPatch.IsHideout)
         {
-            Plugin.Log.LogInfo("Skipping EffectsAwakePrefixPatch for the Hideout");
+            Plugin.Log.LogInfo("Skipping EffectsWipeDefaultExplosionSystemsPatch for the Hideout");
             return;
         }
 
@@ -39,7 +39,7 @@ public class EffectsWipeDefaultExplosionSystemsPatch : ModulePatch
         }
         catch (Exception e)
         {
-            Plugin.Log.LogError($"EffectsAwakePrefixPatch Exception: {e}");
+            Plugin.Log.LogError($"EffectsWipeDefaultExplosionSystemsPatch Exception: {e}");
             throw;
         }
     }
@@ -58,22 +58,8 @@ public class EffectsWipeDefaultExplosionSystemsPatch : ModulePatch
             }
 
             Plugin.Log.LogInfo($"Found grenade script {effect.Name}");
-            var grenadeParticles = new List<Effects.Effect.ParticleSys>();
-            foreach (var particle in effect.Particles)
-            {
-                if (particle.Particle.name.ToLower().Contains("shockwave"))
-                {
-                    Plugin.Log.LogInfo($"Keeping: {particle.Particle.name}");
-                    grenadeParticles.Add(particle);
-                }
-                else
-                {
-                    Plugin.Log.LogInfo($"Skipping: {particle.Particle.name}");
-                }
-            }
-
             effect.BasicParticleSystemMediator = null;
-            effect.Particles = grenadeParticles.ToArray();
+            effect.Particles = [];
         }
     }
 }
@@ -82,7 +68,6 @@ public class EffectsEmitGrenadePatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        // Need to disambiguate the correct emit method
         return typeof(Effects).GetMethod(nameof(Effects.EmitGrenade));
     }
 
@@ -94,7 +79,6 @@ public class EffectsEmitGrenadePatch : ModulePatch
             return;
 
         ConsoleScreen.Log($"Grenade: {ename}");
-
-        Singleton<ExplosionController>.Instance.Emit(position);
+        Singleton<ExplosionController>.Instance.Emit(ename, position, normal);
     }
 }

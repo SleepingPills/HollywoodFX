@@ -158,7 +158,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
     private static void WipeDefaultParticles(Effects effects)
     {
-        Plugin.Log.LogInfo("Dropping various default particle effects");
+        Plugin.Log.LogInfo("Dropping default impact effects");
 
         foreach (var effect in effects.EffectsArray)
         {
@@ -179,27 +179,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
             }
 
             Plugin.Log.LogInfo($"Processing {effect.Name}");
-            var filteredParticles = new List<Effects.Effect.ParticleSys>();
-
-            foreach (var particle in effect.Particles)
-            {
-                if (particle.Particle.name.ToLower().Contains("spark") || particle.Particle.name.ToLower().Contains("puff"))
-                {
-                    Plugin.Log.LogInfo($"Dropping {particle.Particle.name}");
-                    continue;
-                }
-
-                Plugin.Log.LogInfo($"Keeping {particle.Particle.name}");
-                filteredParticles.Add(particle);
-            }
-
-            Plugin.Log.LogInfo(
-                $"Clearing out particles for {effect.Name}: {effect.Particles}, {effect.Flash}, {effect.FlareID}"
-            );
-
-            effect.Particles = filteredParticles.ToArray();
-            effect.Flash = false;
-            effect.FlareID = 0;
+            effect.Particles = [];
         }
     }
 }
