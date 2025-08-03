@@ -32,7 +32,7 @@ public class BulletKinetics
         var speed = bulletInfo.VelocityMagnitude;
 
         // Only apply this to the local player
-        if (bulletInfo.Player.iPlayer.IsYourPlayer)
+        if (bulletInfo.Player is { iPlayer.IsYourPlayer: true })
             speed *= Plugin.KineticsScaling.Value;
         
         Impulse = mass * speed;

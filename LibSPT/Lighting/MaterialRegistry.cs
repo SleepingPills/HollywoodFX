@@ -55,7 +55,6 @@ public class MaterialRegistry
 
         if (!SeenMaterials.Add(materialId))
         {
-            Plugin.Log.LogInfo($"Skipping material {material} because it is already registered.");
             return;
         }
 
@@ -80,7 +79,6 @@ public class MaterialRegistry
 
             if (Textures.ContainsKey(textureId))
             {
-                Plugin.Log.LogInfo($"Skipping texture {texture} because it is already registered");
                 continue;
             }
             

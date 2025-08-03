@@ -13,58 +13,60 @@ public class ExplosionController
     {
         Plugin.Log.LogInfo("Loading Explosion Prefabs");
         var expMidPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Mid");
+        var expSmallPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
         
         _handGrenadeExplosionPool = new ExplosionPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
-        _smallGrenadeExplosionPool = new ExplosionPool(eftEffects, expMidPrefab, BuildExplosionSmall, 30, 10f);
+        _smallGrenadeExplosionPool = new ExplosionPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
 
         var scheduler = eftEffects.gameObject.AddComponent<ExplosionPoolScheduler>();
         scheduler.Pools.Add(_handGrenadeExplosionPool);
     }
 
-    private Explosion BuildExplosionMid(Effects eftEffects, GameObject prefab)
+    private static Explosion BuildExplosionMid(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
         EffectBundle[] explosionEffectsUp =
         [
-            ScaleDensity(mainEffects["Fireball_Mid"]),
-            mainEffects["Glow_Mid"],
-            mainEffects["Splash_Mid"],
-            mainEffects["Shockwave_Mid"],
-            ScaleDensity(mainEffects["Debris_Burning_Mid"]),
-            ScaleDensity(mainEffects["Dust_Linger_Mid"]),
+            ScaleDensity(mainEffects["Fireball"]),
+            mainEffects["Glow"],
+            mainEffects["Splash"],
+            mainEffects["Shockwave"],
+            ScaleDensity(mainEffects["Debris_Burning"]),
+            ScaleDensity(mainEffects["Dust_Linger"]),
         ];
 
         EffectBundle[] explosionEffectsAngled =
         [
-            ScaleDensity(mainEffects["Debris_Glow_Mid"]),
-            ScaleDensity(mainEffects["Debris_Rock_Mid"]),
-            ScaleDensity(mainEffects["Sparks_Mid"]),
-            ScaleDensity(mainEffects["Dust_Ring_Mid"]),
+            ScaleDensity(mainEffects["Debris_Glow"]),
+            ScaleDensity(mainEffects["Debris_Rock"]),
+            ScaleDensity(mainEffects["Sparks"]),
+            ScaleDensity(mainEffects["Dust_Ring"]),
         ];
 
-        return new Explosion(explosionEffectsUp, explosionEffectsAngled, 1f);
+        return new Explosion(explosionEffectsUp, explosionEffectsAngled);
     }
 
-    private Explosion BuildExplosionSmall(Effects eftEffects, GameObject prefab)
+    private static Explosion BuildExplosionSmall(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
         EffectBundle[] explosionEffectsUp =
         [
-            ScaleDensity(mainEffects["Fireball_Mid"], 1.5f),
-            mainEffects["Splash_Mid"],
-            mainEffects["Shockwave_Mid"],
+            ScaleDensity(mainEffects["Fireball"]),
+            mainEffects["Splash"],
+            mainEffects["Shockwave"],
         ];
 
         EffectBundle[] explosionEffectsAngled =
         [
-            ScaleDensity(mainEffects["Debris_Glow_Mid"], 0.25f),
-            ScaleDensity(mainEffects["Sparks_Mid"], 0.25f),
-            ScaleDensity(mainEffects["Dust_Ring_Mid"], 0.25f),
+            ScaleDensity(mainEffects["Debris_Glow"]),
+            ScaleDensity(mainEffects["Dust"]),
+            ScaleDensity(mainEffects["Dust_Linger"]),
+            ScaleDensity(mainEffects["Sparks"]),
         ];
 
-        return new Explosion(explosionEffectsUp, explosionEffectsAngled, 0.5f);
+        return new Explosion(explosionEffectsUp, explosionEffectsAngled);
     }
     
     private static EffectBundle ScaleDensity(EffectBundle effects, float scale=1f)
@@ -74,22 +76,28 @@ public class ExplosionController
             foreach (var subSystem in system.GetComponentsInChildren<ParticleSystem>())
             {
                 var densityScaling = 1f;
+
+                var name = subSystem.name.ToLower();
                 
-                if (subSystem.name.ToLower().Contains("fireball"))
+                if (name.Contains("fireball"))
                     densityScaling = Plugin.ExplosionDensityFireball.Value;
-                else if (subSystem.name.ToLower().Contains("debris"))
+                else if (name.Contains("debris"))
                     densityScaling = Plugin.ExplosionDensityDebris.Value;
-                else if (subSystem.name.ToLower().Contains("smoke"))
+                else if (name.Contains("smoke"))
                     densityScaling = Plugin.ExplosionDensitySmoke.Value;
-                else if (subSystem.name.ToLower().Contains("sparks"))
+                else if (name.Contains("sparks"))
                     densityScaling = Plugin.ExplosionDensitySparks.Value;
-                else if (subSystem.name.ToLower().Contains("dust"))
+                else if (name.Contains("dust"))
                     densityScaling = Plugin.ExplosionDensityDust.Value;
+
+                densityScaling *= scale;
+                
+                Plugin.Log.LogInfo($"Scaling explosion effect: {subSystem.name} {densityScaling}");
                 
                 if (Mathf.Approximately(densityScaling, 1f))
                     continue;
                 
-                ParticleHelpers.ScaleEmissionRate(subSystem, densityScaling * scale);
+                ParticleHelpers.ScaleEmissionRate(subSystem, densityScaling);
             }
         }
         
