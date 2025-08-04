@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
+using EFT.UI;
 using EFT.Weather;
 using UnityEngine;
 
@@ -22,10 +23,10 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
     private WeatherController _weatherController;
 
     private const float MaxLightingBoost = 2f;
-    
+
     private const float MinTintColorFactor = 0.9f;
     private const float MaxTintColorFactor = 1f;
-    
+
     private const float MinTintAlphaFactor = 0f;
     private const float MaxTintAlphaFactor = 0.15f;
 
@@ -66,6 +67,41 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
 
+        foreach (var colorKey in _weatherController.TimeOfDayController.LightColor.colorKeys)
+        {
+            Plugin.Log.LogInfo($"Light color time: {colorKey.time} key: {colorKey.color}");
+        }
+
+        /* Original color curve:
+         * [Info   :Janky's HollywoodFX] Light color time: 0 key: RGBA(0.809, 0.881, 1.000, 1.000)
+           [Info   :Janky's HollywoodFX] Light color time: 0.5115129 key: RGBA(0.000, 0.000, 0.000, 1.000)
+           [Info   :Janky's HollywoodFX] Light color time: 0.5266652 key: RGBA(1.000, 0.457, 0.322, 1.000)
+           [Info   :Janky's HollywoodFX] Light color time: 0.5535668 key: RGBA(0.859, 0.631, 0.392, 1.000)
+           [Info   :Janky's HollywoodFX] Light color time: 0.6971694 key: RGBA(1.000, 0.867, 0.537, 1.000)
+           [Info   :Janky's HollywoodFX] Light color time: 0.9992523 key: RGBA(0.585, 0.530, 0.361, 1.000)
+         */
+        // 0 -> 0.31, 6 -> 0.46, 12 -> 0.9, 18 - 0.76
+        if (Plugin.GraphicsConfig.RealLightTempEnabled.Value)
+        {
+            // Add back the missing blue component to natural daylight
+            _weatherController.TimeOfDayController.LightColor = new Gradient()
+            {
+                alphaKeys =
+                [
+                    new GradientAlphaKey(1f, 0.0f),
+                    new GradientAlphaKey(1f, 1f)
+                ],
+                colorKeys =
+                [
+                    new GradientColorKey(new Color(0f, 0f, 0f), 0.32f),
+                    new GradientColorKey(new Color(0.75f, 0.457f, 0.322f), 0.45f),
+                    new GradientColorKey(new Color(0.800f, 0.8f, 0.5f), 0.6f),
+                    new GradientColorKey(new Color(0.8f, 0.75f, 0.8f), 0.8f),
+                    new GradientColorKey(new Color(0.9f, 0.85f, 0.9f), 1f)
+                ]
+            };
+        }
+
         _lightingFactor = CalculateLightingFactor();
         UpdateMaterials(_lightingFactor);
         Plugin.Log.LogInfo($"Initialized lighting factor to {_lightingFactor}");
@@ -76,13 +112,14 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
         if (_timer <= 0)
         {
             var currentLightingFactor = CalculateLightingFactor();
-            
+
             if (Mathf.Abs(currentLightingFactor - _lightingFactor) > FactorChangeThreshold)
             {
                 _lightingFactor = currentLightingFactor;
                 UpdateMaterials(_lightingFactor);
             }
 
+            ConsoleScreen.Log($"Time: {_weatherController.TOD_Sky_0.SunDirection.y * 0.5 + 0.5} Color: {_weatherController.TOD_Sky_0.LightColor}");
             _timer = RepeatRate;
         }
 

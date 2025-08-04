@@ -26,6 +26,7 @@ public class GraphicsConfig
     public LodOverrides Current;
 
     public readonly ConfigEntry<float> MipBias;
+    public readonly ConfigEntry<bool> RealLightTempEnabled;
 
     private readonly Dictionary<string, LodOverrides> _overrides = new();
     private readonly Dictionary<string, string[]> _mapNames = new()
@@ -45,13 +46,19 @@ public class GraphicsConfig
 
     public GraphicsConfig(ConfigFile config, string section)
     {
+        
         MipBias = config.Bind(section, "Effect Quality Bias", 0f, new ConfigDescription(
             "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can have *heavy*" +
             "VRAM impact and cause stuttering.",
             new AcceptableValueRange<float>(-5f, 10f),
-            new ConfigurationManagerAttributes { Order = 1 }
+            new ConfigurationManagerAttributes { Order = 2 }
         ));
         MipBias.SettingChanged += (_, _) => { UpdateMipBias(); };
+        RealLightTempEnabled = config.Bind(section, "Realistic Light Color Temp", true, new ConfigDescription(
+            "Toggles the realistic light color temperature in outdoor areas. The default color temperature has way too much red compared to real sunlight.",
+            null,
+            new ConfigurationManagerAttributes { Order = 1}
+        ));
 
         AddDetailOverrides(config, section, "Default", browsable: false);
         AddDetailOverrides(config, section, "Customs", false, 4f, 2.5f, 2f);
