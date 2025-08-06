@@ -21,14 +21,286 @@ public class LodOverrides(
     public readonly ConfigEntry<float> DetailDensity = detailDensity;
 }
 
+public sealed class BloomConfig
+{
+    public event EventHandler ConfigChanged;
+
+    private readonly ConfigEntry<float> _bloomIntensity;
+
+    public readonly ConfigEntry<float> BloomDark;
+    public readonly ConfigEntry<float> BloomMid;
+    public readonly ConfigEntry<float> BloomBright;
+    public readonly ConfigEntry<float> BloomHighlight;
+    
+    private readonly ConfigEntry<float> _samplingMinHeight;
+    private readonly ConfigEntry<bool> _useLensDust;
+    private readonly ConfigEntry<float> _dustIntensity;
+    private readonly ConfigEntry<float> _dirtLightIntensity;
+    
+    private readonly ConfigEntry<bool> _useLensFlare;
+    private readonly ConfigEntry<UltimateBloom.FlareRendering> _flareRendering;
+    private readonly ConfigEntry<UltimateBloom.FlareBlurQuality> _flareBlurQuality;
+    private readonly ConfigEntry<UltimateBloom.FlareType> _flareType;
+    private readonly ConfigEntry<float> _flareIntensity;
+    private readonly ConfigEntry<float> _flareTreshold;
+    private readonly ConfigEntry<float> _flareGlobalScale;
+    private readonly ConfigEntry<Vector4> _flareScalesNear;
+    private readonly ConfigEntry<Vector4> _flareScales;
+    
+    private readonly ConfigEntry<bool> _useAnamorphicFlare;
+    private readonly ConfigEntry<float> _anamorphicFlareIntensity;
+    private readonly ConfigEntry<int> _anamorphicScale;
+    private readonly ConfigEntry<bool> _anamorphicSmallVerticalBlur;
+    private readonly ConfigEntry<int> _anamorphicBlurPass;
+    
+    private readonly ConfigEntry<bool> _useStarFlare;
+    private readonly ConfigEntry<float> _starFlareIntensity;
+    private readonly ConfigEntry<float> _starScale;
+    private readonly ConfigEntry<int> _starBlurPass;
+    
+    public BloomConfig(ConfigFile config, string section)
+    {
+        var bloomSection = $"{section} - Bloom";
+
+        _bloomIntensity = config.Bind(bloomSection, "Master Bloom Intensity", 0.2f, new ConfigDescription(
+            "Controls the overall intensity of the bloom effect.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 104 }
+        ));
+        _bloomIntensity.SettingChanged += OnConfigChanged;
+
+        BloomDark = config.Bind(bloomSection, "Bloom Curve Dark", -0.98f, new ConfigDescription(
+            "Bloom intensity of the dark colors range.",
+            new AcceptableValueRange<float>(-3f, 3f),
+            new ConfigurationManagerAttributes { Order = 103 }
+        ));
+        BloomDark.SettingChanged += OnConfigChanged;
+        
+        BloomMid = config.Bind(bloomSection, "Bloom Curve Mid", 0.4f, new ConfigDescription(
+            "Bloom intensity of the mid colors range.",
+            new AcceptableValueRange<float>(-3f, 3f),
+            new ConfigurationManagerAttributes { Order = 102 }
+        ));
+        BloomMid.SettingChanged += OnConfigChanged;
+
+        BloomBright = config.Bind(bloomSection, "Bloom Curve Bright", 0.75f, new ConfigDescription(
+            "Bloom intensity of the bright colors range.",
+            new AcceptableValueRange<float>(-3f, 3f),
+            new ConfigurationManagerAttributes { Order = 101 }
+        ));
+        BloomBright.SettingChanged += OnConfigChanged;
+        
+        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.5f, new ConfigDescription(
+            "Bloom intensity of the bright colors range.",
+            new AcceptableValueRange<float>(-3f, 3f),
+            new ConfigurationManagerAttributes { Order = 100 }
+        ));
+        BloomHighlight.SettingChanged += OnConfigChanged;
+        
+        _samplingMinHeight = config.Bind(bloomSection, "Sampling Min Height", 768f, new ConfigDescription(
+            "Minimum height for height-relative sampling mode.",
+            new AcceptableValueRange<float>(0f, 2048f),
+            new ConfigurationManagerAttributes { Order = 97 }
+        ));
+        _samplingMinHeight.SettingChanged += OnConfigChanged;
+
+        _useLensDust = config.Bind(bloomSection, "Use Lens Dust", true, new ConfigDescription(
+            "Enables lens dust effect.",
+            null,
+            new ConfigurationManagerAttributes { Order = 96 }
+        ));
+        _useLensDust.SettingChanged += OnConfigChanged;
+
+        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.15f, new ConfigDescription(
+            "Controls the intensity of the lens dust effect.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 95 }
+        ));
+        _dustIntensity.SettingChanged += OnConfigChanged;
+
+        _dirtLightIntensity = config.Bind(bloomSection, "Dirt Light Intensity", 0.5f, new ConfigDescription(
+            "Controls the intensity of dirt light effects.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 94 }
+        ));
+        _dirtLightIntensity.SettingChanged += OnConfigChanged;
+
+        _useLensFlare = config.Bind(bloomSection, "Use Lens Flare (BROKEN)", false, new ConfigDescription(
+            "Enables lens flare effects.",
+            null,
+            new ConfigurationManagerAttributes { Order = 93 }
+        ));
+        _useLensFlare.SettingChanged += OnConfigChanged;
+
+        _flareRendering = config.Bind(bloomSection, "Flare Rendering", UltimateBloom.FlareRendering.Blurred, new ConfigDescription(
+            "Determines how lens flares are rendered.",
+            null,
+            new ConfigurationManagerAttributes { Order = 92 }
+        ));
+        _flareRendering.SettingChanged += OnConfigChanged;
+
+        _flareBlurQuality = config.Bind(bloomSection, "Flare Blur Quality", UltimateBloom.FlareBlurQuality.High, new ConfigDescription(
+            "Quality setting for lens flare blur.",
+            null,
+            new ConfigurationManagerAttributes { Order = 91 }
+        ));
+        _flareBlurQuality.SettingChanged += OnConfigChanged;
+
+        _flareType = config.Bind(bloomSection, "Flare Type", UltimateBloom.FlareType.Double, new ConfigDescription(
+            "Type of lens flare effect to use.",
+            null,
+            new ConfigurationManagerAttributes { Order = 90 }
+        ));
+        _flareType.SettingChanged += OnConfigChanged;
+            
+
+        _flareIntensity = config.Bind(bloomSection, "Flare Intensity", 1.5f, new ConfigDescription(
+            "Controls the intensity of lens flares.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 89 }
+        ));
+        _flareIntensity.SettingChanged += OnConfigChanged;
+
+        _flareTreshold = config.Bind(bloomSection, "Flare Threshold", 0.6f, new ConfigDescription(
+            "Sets the brightness threshold for lens flares.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 88 }
+        ));
+        _flareTreshold.SettingChanged += OnConfigChanged;
+
+        _flareGlobalScale = config.Bind(bloomSection, "Flare Global Scale", 0.42f, new ConfigDescription(
+            "Global scaling factor for all lens flares.",
+            new AcceptableValueRange<float>(0f, 10f),
+            new ConfigurationManagerAttributes { Order = 87 }
+        ));
+        _flareGlobalScale.SettingChanged += OnConfigChanged;
+
+        _flareScalesNear = config.Bind(bloomSection, "Flare Scales Near", new Vector4(1f, 0.8f, 0.6f, 0.5f), new ConfigDescription(
+            "Near flare scales (x, y, z, w).",
+            null,
+            new ConfigurationManagerAttributes { Order = 86 }
+        ));
+        _flareScalesNear.SettingChanged += OnConfigChanged;
+
+        _flareScales = config.Bind(bloomSection, "Flare Scales", new Vector4(1f, 0.6f, 0.5f, 0.4f), new ConfigDescription(
+            "Flare scales (x, y, z, w).",
+            null,
+            new ConfigurationManagerAttributes { Order = 85 }
+        ));
+        _flareScales.SettingChanged += OnConfigChanged;
+
+        _useAnamorphicFlare = config.Bind(bloomSection, "Use Anamorphic Flare", true, new ConfigDescription(
+            "Enables anamorphic lens flare effects.",
+            null,
+            new ConfigurationManagerAttributes { Order = 84 }
+        ));
+        _useAnamorphicFlare.SettingChanged += OnConfigChanged;
+
+        _anamorphicFlareIntensity = config.Bind(bloomSection, "Anamorphic Flare Intensity", 2f, new ConfigDescription(
+            "Controls the intensity of anamorphic flares.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 83 }
+        ));
+        _anamorphicFlareIntensity.SettingChanged += OnConfigChanged;
+
+        _anamorphicScale = config.Bind(bloomSection, "Anamorphic Scale", 15, new ConfigDescription(
+            "Scaling factor for anamorphic flares.",
+            new AcceptableValueRange<int>(0, 50),
+            new ConfigurationManagerAttributes { Order = 82 }
+        ));
+        _anamorphicScale.SettingChanged += OnConfigChanged;
+
+        _anamorphicSmallVerticalBlur = config.Bind(bloomSection, "Anamorphic Small Vertical Blur", true, new ConfigDescription(
+            "Enables small vertical blur for anamorphic flares.",
+            null,
+            new ConfigurationManagerAttributes { Order = 81 }
+        ));
+        _anamorphicSmallVerticalBlur.SettingChanged += OnConfigChanged;
+
+        _anamorphicBlurPass = config.Bind(bloomSection, "Anamorphic Blur Pass", 3, new ConfigDescription(
+            "Number of blur passes for anamorphic flares.",
+            new AcceptableValueRange<int>(1, 5),
+            new ConfigurationManagerAttributes { Order = 80 }
+        ));
+        _anamorphicBlurPass.SettingChanged += OnConfigChanged;
+
+        _useStarFlare = config.Bind(bloomSection, "Use Star Flare", true, new ConfigDescription(
+            "Enables star-shaped lens flare effects.",
+            null,
+            new ConfigurationManagerAttributes { Order = 79 }
+        ));
+        _useStarFlare.SettingChanged += OnConfigChanged;
+
+        _starFlareIntensity = config.Bind(bloomSection, "Star Flare Intensity", 1f, new ConfigDescription(
+            "Controls the intensity of star flares.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 78 }
+        ));
+        _starFlareIntensity.SettingChanged += OnConfigChanged;
+
+        _starScale = config.Bind(bloomSection, "Star Scale", 5f, new ConfigDescription(
+            "Scaling factor for star flares.",
+            new AcceptableValueRange<float>(0f, 50f),
+            new ConfigurationManagerAttributes { Order = 77 }
+        ));
+        _starScale.SettingChanged += OnConfigChanged;
+
+        _starBlurPass = config.Bind(bloomSection, "Star Blur Pass", 3, new ConfigDescription(
+            "Number of blur passes for star flares.",
+            new AcceptableValueRange<int>(1, 5),
+            new ConfigurationManagerAttributes { Order = 76 }
+        ));
+        _starBlurPass.SettingChanged += OnConfigChanged;
+    }
+
+    public void ApplyConfig(UltimateBloom ultimateBloom)
+    {
+        ultimateBloom.m_BloomIntensity = _bloomIntensity.Value;
+        ultimateBloom.SetFilmicCurveParameters(BloomMid.Value, BloomDark.Value, BloomBright.Value, BloomHighlight.Value);
+        ultimateBloom.m_SamplingMinHeight = _samplingMinHeight.Value;
+
+        ultimateBloom.m_UseLensDust = _useLensDust.Value;
+        ultimateBloom.m_DustIntensity = _dustIntensity.Value;
+        ultimateBloom.m_DirtLightIntensity = _dirtLightIntensity.Value;
+
+        ultimateBloom.m_UseLensFlare = _useLensFlare.Value;
+        ultimateBloom.m_FlareRendering = _flareRendering.Value;
+        ultimateBloom.m_FlareBlurQuality = _flareBlurQuality.Value;
+        ultimateBloom.m_FlareType = _flareType.Value;
+        ultimateBloom.m_FlareIntensity = _flareIntensity.Value;
+        ultimateBloom.m_FlareTreshold = _flareTreshold.Value;
+        ultimateBloom.m_FlareGlobalScale = _flareGlobalScale.Value;
+        ultimateBloom.m_FlareScalesNear = _flareScalesNear.Value;
+        ultimateBloom.m_FlareScales = _flareScales.Value;
+
+        ultimateBloom.m_UseAnamorphicFlare = _useAnamorphicFlare.Value;
+        ultimateBloom.m_AnamorphicFlareIntensity = _anamorphicFlareIntensity.Value;
+        ultimateBloom.m_AnamorphicScale = _anamorphicScale.Value;
+        ultimateBloom.m_AnamorphicSmallVerticalBlur = _anamorphicSmallVerticalBlur.Value;
+        ultimateBloom.m_AnamorphicBlurPass = _anamorphicBlurPass.Value;
+
+        ultimateBloom.m_UseStarFlare = _useStarFlare.Value;
+        ultimateBloom.m_StarFlareIntensity = _starFlareIntensity.Value;
+        ultimateBloom.m_StarScale = _starScale.Value;
+        ultimateBloom.m_StarBlurPass = _starBlurPass.Value;
+    }
+
+    private void OnConfigChanged(object o, EventArgs e)
+    {
+        ConfigChanged?.Invoke(this, EventArgs.Empty);
+    }
+}
+
 public class GraphicsConfig
 {
     public LodOverrides Current;
 
     public readonly ConfigEntry<float> MipBias;
     public readonly ConfigEntry<bool> RealLightTempEnabled;
-
+    
+    public readonly BloomConfig Bloom;
     private readonly Dictionary<string, LodOverrides> _overrides = new();
+
     private readonly Dictionary<string, string[]> _mapNames = new()
     {
         { "Customs", ["bigmap"] },
@@ -46,7 +318,6 @@ public class GraphicsConfig
 
     public GraphicsConfig(ConfigFile config, string section)
     {
-        
         MipBias = config.Bind(section, "Effect Quality Bias", 0f, new ConfigDescription(
             "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can have *heavy*" +
             "VRAM impact and cause stuttering.",
@@ -57,8 +328,10 @@ public class GraphicsConfig
         RealLightTempEnabled = config.Bind(section, "Realistic Light Color Temp", true, new ConfigDescription(
             "Toggles the realistic light color temperature in outdoor areas. The default color temperature has way too much red compared to real sunlight.",
             null,
-            new ConfigurationManagerAttributes { Order = 1}
+            new ConfigurationManagerAttributes { Order = 1 }
         ));
+
+        Bloom = new BloomConfig(config, section);
 
         AddDetailOverrides(config, section, "Default", browsable: false);
         AddDetailOverrides(config, section, "Customs", false, 4f, 2.5f, 2f);
@@ -90,12 +363,7 @@ public class GraphicsConfig
 
     public void UpdateMipBias()
     {
-        var materialRegistry = Singleton<MaterialRegistry>.Instance;
-
-        if (materialRegistry == null)
-            return;
-
-        materialRegistry.SetMipBias(MipBias.Value);
+        Singleton<MaterialRegistry>.Instance?.SetMipBias(MipBias.Value);
     }
 
     public void UpdateLodBias()

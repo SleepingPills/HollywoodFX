@@ -59,7 +59,7 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         }
         else
         {
-            __instance.gameObject.AddComponent<DynamicMaterialAmbientLighting>();
+            __instance.gameObject.AddComponent<AmbientLightingController>();
         }
     }
 }

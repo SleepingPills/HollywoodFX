@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
-using EFT.UI;
 using EFT.Weather;
 using UnityEngine;
 
@@ -12,10 +11,10 @@ internal static class AmbientLightingPropertyIds
     public static readonly int LocalMinimalAmbientLightId = Shader.PropertyToID("_LocalMinimalAmbientLight");
 }
 
-public class DynamicMaterialAmbientLighting : MonoBehaviour
+public class AmbientLightingController : MonoBehaviour
 {
     private List<Material> _materials;
-
+    
     private List<Vector4> _ambientLightColors;
     private List<Vector4> _tintColors;
     private List<float> _tintAlphaFactors;
@@ -67,11 +66,6 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
 
-        foreach (var colorKey in _weatherController.TimeOfDayController.LightColor.colorKeys)
-        {
-            Plugin.Log.LogInfo($"Light color time: {colorKey.time} key: {colorKey.color}");
-        }
-
         /* Original color curve:
          * [Info   :Janky's HollywoodFX] Light color time: 0 key: RGBA(0.809, 0.881, 1.000, 1.000)
            [Info   :Janky's HollywoodFX] Light color time: 0.5115129 key: RGBA(0.000, 0.000, 0.000, 1.000)
@@ -94,9 +88,8 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
                 colorKeys =
                 [
                     new GradientColorKey(new Color(0f, 0f, 0f), 0.32f),
-                    new GradientColorKey(new Color(0.75f, 0.457f, 0.322f), 0.45f),
-                    new GradientColorKey(new Color(0.800f, 0.8f, 0.5f), 0.6f),
-                    new GradientColorKey(new Color(0.8f, 0.75f, 0.8f), 0.8f),
+                    new GradientColorKey(new Color(0.65f, 0.45f, 0.35f), 0.45f),
+                    new GradientColorKey(new Color(0.9f, 0.8f, 0.5f), 0.7f),
                     new GradientColorKey(new Color(0.9f, 0.85f, 0.9f), 1f)
                 ]
             };
@@ -118,8 +111,6 @@ public class DynamicMaterialAmbientLighting : MonoBehaviour
                 _lightingFactor = currentLightingFactor;
                 UpdateMaterials(_lightingFactor);
             }
-
-            ConsoleScreen.Log($"Time: {_weatherController.TOD_Sky_0.SunDirection.y * 0.5 + 0.5} Color: {_weatherController.TOD_Sky_0.LightColor}");
             _timer = RepeatRate;
         }
 

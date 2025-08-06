@@ -3,6 +3,7 @@ using EFT;
 using EFT.UI;
 using GPUInstancer;
 using HollywoodFX.Patches;
+using HollywoodFX.Postprocessing;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Graphics;
@@ -38,7 +39,7 @@ public class GraphicsLodOverridePatch : ModulePatch
 
     [PatchPostfix]
     // ReSharper disable once InconsistentNaming
-    public static void Postfix()
+    public static void Postfix(GameWorld __instance)
     {
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
@@ -48,6 +49,10 @@ public class GraphicsLodOverridePatch : ModulePatch
 
         Plugin.GraphicsConfig.UpdateLodBias();
         Plugin.Log.LogInfo($"Updated lod bias to {Plugin.GraphicsConfig.Current.LodBias.Value}");
+        
+        // Initialize Post-Processing Stack bloom effect
+        __instance.gameObject.AddComponent<BloomController>();
+        Plugin.Log.LogInfo("Bloom effect initialized");
     }
 }
 

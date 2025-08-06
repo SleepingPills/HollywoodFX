@@ -27,7 +27,7 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> EffectSize;
     public static ConfigEntry<bool> TracerImpactsEnabled;
-    
+
     public static ConfigEntry<float> ExplosionDensityFireball;
     public static ConfigEntry<float> ExplosionDensityDebris;
     public static ConfigEntry<float> ExplosionDensitySparks;
@@ -205,7 +205,7 @@ public class Plugin : BaseUnityPlugin
         {
             ConfigurationTemplates.SetPotato(entry.ConfigFile);
         }
-        
+
         if (GUILayout.Button("Defaults"))
         {
             ConfigurationTemplates.SetDefaults(entry.ConfigFile);
@@ -236,7 +236,7 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 1, CustomDrawer = LoadTemplateDrawer }
         ));
-        
+
         /*
          * Impacts
          */
@@ -251,40 +251,40 @@ public class Plugin : BaseUnityPlugin
             null,
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        
+
         /*
          * Explosions
          */
         ExplosionDensityFireball = Config.Bind(explosions, "Fireball Density", 1f, new ConfigDescription(
             "Adjusts the density of fireballs. Large values may have a performance impact",
-        new AcceptableValueRange<float>(0, 10f),
-        new ConfigurationManagerAttributes { Order = 5 }
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
 
         ExplosionDensityDebris = Config.Bind(explosions, "Debris Density", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 4}
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
-        
+
         ExplosionDensitySmoke = Config.Bind(explosions, "Smoke Density", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
-        
+
         ExplosionDensitySparks = Config.Bind(explosions, "Sparks Density", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 2 }
         ));
-        
+
         ExplosionDensityDust = Config.Bind(explosions, "Dust Density", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        
+
         /*
          * Muzzle Effects
          */
