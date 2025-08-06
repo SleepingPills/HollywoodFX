@@ -90,7 +90,7 @@ public sealed class BloomConfig
         ));
         BloomBright.SettingChanged += OnConfigChanged;
         
-        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.45f, new ConfigDescription(
+        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.5f, new ConfigDescription(
             "Bloom intensity of the bright colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
             new ConfigurationManagerAttributes { Order = 100 }
@@ -111,7 +111,7 @@ public sealed class BloomConfig
         ));
         _useLensDust.SettingChanged += OnConfigChanged;
 
-        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.15f, new ConfigDescription(
+        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.075f, new ConfigDescription(
             "Controls the intensity of the lens dust effect.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 95 }
@@ -196,14 +196,14 @@ public sealed class BloomConfig
         ));
         _useAnamorphicFlare.SettingChanged += OnConfigChanged;
 
-        _anamorphicFlareIntensity = config.Bind(bloomSection, "Anamorphic Flare Intensity", 2f, new ConfigDescription(
+        _anamorphicFlareIntensity = config.Bind(bloomSection, "Anamorphic Flare Intensity", 2.5f, new ConfigDescription(
             "Controls the intensity of anamorphic flares.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 83 }
         ));
         _anamorphicFlareIntensity.SettingChanged += OnConfigChanged;
 
-        _anamorphicScale = config.Bind(bloomSection, "Anamorphic Scale", 15, new ConfigDescription(
+        _anamorphicScale = config.Bind(bloomSection, "Anamorphic Scale", 10, new ConfigDescription(
             "Scaling factor for anamorphic flares.",
             new AcceptableValueRange<int>(0, 50),
             new ConfigurationManagerAttributes { Order = 82 }
@@ -231,21 +231,21 @@ public sealed class BloomConfig
         ));
         _useStarFlare.SettingChanged += OnConfigChanged;
 
-        _starFlareIntensity = config.Bind(bloomSection, "Star Flare Intensity", 1f, new ConfigDescription(
+        _starFlareIntensity = config.Bind(bloomSection, "Star Flare Intensity", 1.5f, new ConfigDescription(
             "Controls the intensity of star flares.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 78 }
         ));
         _starFlareIntensity.SettingChanged += OnConfigChanged;
 
-        _starScale = config.Bind(bloomSection, "Star Scale", 5f, new ConfigDescription(
+        _starScale = config.Bind(bloomSection, "Star Scale", 7.5f, new ConfigDescription(
             "Scaling factor for star flares.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 77 }
         ));
         _starScale.SettingChanged += OnConfigChanged;
 
-        _starBlurPass = config.Bind(bloomSection, "Star Blur Pass", 3, new ConfigDescription(
+        _starBlurPass = config.Bind(bloomSection, "Star Blur Pass", 2, new ConfigDescription(
             "Number of blur passes for star flares.",
             new AcceptableValueRange<int>(1, 5),
             new ConfigurationManagerAttributes { Order = 76 }

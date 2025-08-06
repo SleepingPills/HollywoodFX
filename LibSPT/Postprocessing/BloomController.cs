@@ -50,6 +50,33 @@ public class BloomController : MonoBehaviour
         ultimateBloom.m_FlareTint6 = new Color(97 / 255.0f, 139 / 255.0f, 0 / 255.0f);
         ultimateBloom.m_FlareTint7 = new Color(40 / 255.0f, 142 / 255.0f, 0 / 255.0f);
 
+        for (var i = 0; i < 10; i++)
+        {
+            if (i < ultimateBloom.m_BloomUsages.Length)
+            {
+                Plugin.Log.LogInfo($"Bloom: {ultimateBloom.m_BloomUsages[i]} {ultimateBloom.m_BloomIntensities[i]}");
+                ultimateBloom.m_BloomIntensities[i] = 1f;
+
+            }
+            if (i < ultimateBloom.m_AnamorphicBloomUsages.Length)
+            {
+                Plugin.Log.LogInfo($"AnamorphicBloom: {ultimateBloom.m_AnamorphicBloomUsages[i]} {ultimateBloom.m_AnamorphicBloomIntensities[i]}");
+                ultimateBloom.m_AnamorphicBloomIntensities[i] = 1f;
+
+            }
+            if (i < ultimateBloom.m_StarBloomUsages.Length)
+            {
+                Plugin.Log.LogInfo($"StarBloom: {ultimateBloom.m_StarBloomUsages[i]} {ultimateBloom.m_StarBloomIntensities[i]}");
+                ultimateBloom.m_StarBloomIntensities[i] = 1f;
+            }
+        }
+
+        // Turn these off as they form the "blob" part of the bloom and can oversaturate the entire screen.
+        ultimateBloom.m_BloomUsages[0] = ultimateBloom.m_BloomUsages[1] = false;
+        ultimateBloom.m_AnamorphicBloomUsages[0] = false;
+        ultimateBloom.m_AnamorphicBloomUsages[1] = true;
+        ultimateBloom.m_StarBloomUsages[0] = false;
+
         Plugin.GraphicsConfig.Bloom.ApplyConfig(ultimateBloom);
         Plugin.GraphicsConfig.Bloom.ConfigChanged += UpdateSettings;
         Plugin.Log.LogInfo($"UltimateBloomController: Ultimate Bloom effect applied to camera {targetCamera.name}");
@@ -71,8 +98,8 @@ public class BloomController : MonoBehaviour
         }
         else
         {
-            // Re-increase intensity a touch during peak daylight
-            sunLightFactorCur = 0.35f * Mathf.InverseLerp(0.6f, 0.7f, _weatherController.SunHeight);
+            // Decrease the intensity slightly around morning/dusk to avoid the sky being obliterated by bloom
+            sunLightFactorCur = -0.35f * Mathf.InverseLerp(0.7f, 0.5f, _weatherController.SunHeight);
         }
         
         if (Mathf.Abs(sunLightFactorCur - _sunLightFactor) < 0.03f)
@@ -80,6 +107,7 @@ public class BloomController : MonoBehaviour
 
         var highlightScaling = 1f + 0.3f * sunLightFactorCur;
         
+        // TODO: Delete this
         Plugin.Log.LogInfo($"Highlight scaling: {highlightScaling}");
 
         var bloomConfig = Plugin.GraphicsConfig.Bloom;
