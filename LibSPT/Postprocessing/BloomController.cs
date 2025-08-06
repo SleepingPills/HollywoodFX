@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace HollywoodFX.Postprocessing;
 
-// TODO: Convert this to a simple static class in case we don't need to adjust to daylight settings
 public class BloomController : MonoBehaviour
 {
     public UltimateBloom ultimateBloom;
@@ -63,20 +62,32 @@ public class BloomController : MonoBehaviour
         if (_weatherController == null)
             return;
 
-        var sunLightFactorCur = Mathf.InverseLerp(0f, -0.1f, _weatherController.SunHeight);
+        float sunLightFactorCur;
 
-        if (Mathf.Abs(sunLightFactorCur - _sunLightFactor) < 0.1f)
+        if (_weatherController.SunHeight < 0)
+        {
+            // Increase intensity in the dark
+            sunLightFactorCur = Mathf.InverseLerp(0f, -0.1f, _weatherController.SunHeight);
+        }
+        else
+        {
+            // Re-increase intensity a touch during peak daylight
+            sunLightFactorCur = 0.35f * Mathf.InverseLerp(0.6f, 0.7f, _weatherController.SunHeight);
+        }
+        
+        if (Mathf.Abs(sunLightFactorCur - _sunLightFactor) < 0.03f)
             return;
 
-        Plugin.Log.LogInfo($"Bloom Sunlight Factor: {sunLightFactorCur}");
+        var highlightScaling = 1f + 0.3f * sunLightFactorCur;
+        
+        Plugin.Log.LogInfo($"Highlight scaling: {highlightScaling}");
 
         var bloomConfig = Plugin.GraphicsConfig.Bloom;
-
         ultimateBloom.SetFilmicCurveParameters(
             bloomConfig.BloomMid.Value,
             bloomConfig.BloomDark.Value,
             bloomConfig.BloomBright.Value,
-            (1f + 0.3f * sunLightFactorCur) * bloomConfig.BloomHighlight.Value
+            highlightScaling * bloomConfig.BloomHighlight.Value
         );
 
         _sunLightFactor = sunLightFactorCur;
@@ -90,7 +101,7 @@ public class BloomController : MonoBehaviour
     private void UpdateSettings(object sender, EventArgs e)
     {
         Plugin.GraphicsConfig.Bloom.ApplyConfig(ultimateBloom);
-        
+
         // Force the recalculation of the sunlight factor
         _sunLightFactor = 10000f;
     }

@@ -123,7 +123,7 @@
     <Compile Include="ImpactController.cs" />
     <Compile Include="ImpactEffects.cs" />
     <Compile Include="ImpactStatic.cs" />
-    <Compile Include="Lighting\EffectMaterialAmbientLighting.cs" />
+    <Compile Include="Lighting\AmbientLightingController.cs" />
     <Compile Include="Lighting\MaterialRegistry.cs" />
     <Compile Include="Lighting\Patches\LampController.cs" />
     <Compile Include="Muzzle\MuzzleEffects.cs" />

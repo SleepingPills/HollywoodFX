@@ -111,6 +111,8 @@ public class AmbientLightingController : MonoBehaviour
                 _lightingFactor = currentLightingFactor;
                 UpdateMaterials(_lightingFactor);
             }
+            
+            Plugin.Log.LogInfo($"Sunheight {_weatherController.SunHeight}");
             _timer = RepeatRate;
         }
 

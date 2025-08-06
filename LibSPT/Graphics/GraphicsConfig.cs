@@ -90,7 +90,7 @@ public sealed class BloomConfig
         ));
         BloomBright.SettingChanged += OnConfigChanged;
         
-        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.5f, new ConfigDescription(
+        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.45f, new ConfigDescription(
             "Bloom intensity of the bright colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
             new ConfigurationManagerAttributes { Order = 100 }
