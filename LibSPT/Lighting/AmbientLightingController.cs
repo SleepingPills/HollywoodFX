@@ -66,10 +66,6 @@ public class AmbientLightingController : MonoBehaviour
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
 
-        _weatherController.TOD_Sky_0.Moon.MeshSize = 0.5f;
-        _weatherController.TOD_Sky_0.Moon.HaloSize = 1.0f;
-        _weatherController.TOD_Sky_0.Moon.MeshBrightness = 2f;
-
         /* Original color curve:
          * [Info   :Janky's HollywoodFX] Light color time: 0 key: RGBA(0.809, 0.881, 1.000, 1.000)
            [Info   :Janky's HollywoodFX] Light color time: 0.5115129 key: RGBA(0.000, 0.000, 0.000, 1.000)
@@ -81,6 +77,10 @@ public class AmbientLightingController : MonoBehaviour
         // 0 -> 0.31, 6 -> 0.46, 12 -> 0.9, 18 - 0.76
         if (Plugin.GraphicsConfig.RealLightTempEnabled.Value)
         {
+            _weatherController.TOD_Sky_0.Moon.MeshSize = 0.5f;
+            _weatherController.TOD_Sky_0.Moon.HaloSize = 1.0f;
+            _weatherController.TOD_Sky_0.Moon.MeshBrightness = 2f;
+            
             // Add back the missing blue component to natural daylight
             _weatherController.TimeOfDayController.LightColor = new Gradient()
             {
@@ -95,6 +95,20 @@ public class AmbientLightingController : MonoBehaviour
                     new GradientColorKey(new Color(0.65f, 0.45f, 0.35f), 0.45f),
                     new GradientColorKey(new Color(0.9f, 0.8f, 0.5f), 0.7f),
                     new GradientColorKey(new Color(0.9f, 0.85f, 0.9f), 1f)
+                ]
+            };
+            
+            _weatherController.TOD_Sky_0.Moon.HaloColor = new Gradient()
+            {
+                alphaKeys =
+                [
+                    new(1f, 0.0f),
+                    new(1f, 1f)
+                ],
+                colorKeys =
+                [
+                    new GradientColorKey(new Color( 0.45f,  0.50f,  0.6f, 1f), 0.0f),
+                    new GradientColorKey(new Color( 0.45f,  0.50f,  0.6f, 1f), 1f)
                 ]
             };
         }

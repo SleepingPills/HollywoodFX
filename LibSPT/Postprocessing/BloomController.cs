@@ -31,45 +31,16 @@ public class BloomController : MonoBehaviour
             ultimateBloom = targetCamera.gameObject.AddComponent<UltimateBloom>();
             Plugin.Log.LogInfo("UltimateBloomController: Added Ultimate Bloom component to camera");
         }
-        else
-        {
-            Plugin.Log.LogInfo("UltimateBloomController: Found existing Ultimate Bloom component on camera");
-        }
-
-        Plugin.Log.LogInfo($"UltimateBloomController: HDR is {ultimateBloom.m_HDR}");
 
         ultimateBloom.m_IntensityManagement = UltimateBloom.BloomIntensityManagement.FilmicCurve;
         ultimateBloom.m_SamplingMode = UltimateBloom.SamplingMode.HeightRelative;
-
-        ultimateBloom.m_FlareTint0 = new Color(137 / 255.0f, 82 / 255.0f, 0 / 255.0f);
-        ultimateBloom.m_FlareTint1 = new Color(0 / 255.0f, 63 / 255.0f, 126 / 255.0f);
-        ultimateBloom.m_FlareTint2 = new Color(72 / 255.0f, 151 / 255.0f, 0 / 255.0f);
-        ultimateBloom.m_FlareTint3 = new Color(114 / 255.0f, 35 / 255.0f, 0 / 255.0f);
-        ultimateBloom.m_FlareTint4 = new Color(122 / 255.0f, 88 / 255.0f, 0 / 255.0f);
-        ultimateBloom.m_FlareTint5 = new Color(137 / 255.0f, 71 / 255.0f, 0 / 255.0f);
-        ultimateBloom.m_FlareTint6 = new Color(97 / 255.0f, 139 / 255.0f, 0 / 255.0f);
-        ultimateBloom.m_FlareTint7 = new Color(40 / 255.0f, 142 / 255.0f, 0 / 255.0f);
-
-        for (var i = 0; i < 10; i++)
-        {
-            if (i < ultimateBloom.m_BloomUsages.Length)
-            {
-                Plugin.Log.LogInfo($"Bloom: {ultimateBloom.m_BloomUsages[i]} {ultimateBloom.m_BloomIntensities[i]}");
-                ultimateBloom.m_BloomIntensities[i] = 1f;
-
-            }
-            if (i < ultimateBloom.m_AnamorphicBloomUsages.Length)
-            {
-                Plugin.Log.LogInfo($"AnamorphicBloom: {ultimateBloom.m_AnamorphicBloomUsages[i]} {ultimateBloom.m_AnamorphicBloomIntensities[i]}");
-                ultimateBloom.m_AnamorphicBloomIntensities[i] = 1f;
-
-            }
-            if (i < ultimateBloom.m_StarBloomUsages.Length)
-            {
-                Plugin.Log.LogInfo($"StarBloom: {ultimateBloom.m_StarBloomUsages[i]} {ultimateBloom.m_StarBloomIntensities[i]}");
-                ultimateBloom.m_StarBloomIntensities[i] = 1f;
-            }
-        }
+        
+        Plugin.Log.LogInfo("Resetting Main Bloom intensities");
+        ResetIntensities(ultimateBloom.m_BloomIntensities);
+        Plugin.Log.LogInfo("Resetting Anamorphic Bloom intensities");
+        ResetIntensities(ultimateBloom.m_AnamorphicBloomIntensities);
+        Plugin.Log.LogInfo("Resetting Star Bloom intensities");
+        ResetIntensities(ultimateBloom.m_StarBloomIntensities);
 
         // Turn these off as they form the "blob" part of the bloom and can oversaturate the entire screen.
         ultimateBloom.m_BloomUsages[0] = ultimateBloom.m_BloomUsages[1] = false;
@@ -82,6 +53,15 @@ public class BloomController : MonoBehaviour
         Plugin.Log.LogInfo($"UltimateBloomController: Ultimate Bloom effect applied to camera {targetCamera.name}");
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
+    }
+
+    private static void ResetIntensities(float[] intensities)
+    {
+        for (var i = 0; i < intensities.Length; i++)
+        {
+            Plugin.Log.LogInfo($"Intensity: {intensities[i]}");
+            intensities[i] = 1f;
+        }
     }
 
     private void Update()
@@ -106,10 +86,6 @@ public class BloomController : MonoBehaviour
             return;
 
         var highlightScaling = 1f + 0.3f * sunLightFactorCur;
-        
-        // TODO: Delete this
-        Plugin.Log.LogInfo($"Highlight scaling: {highlightScaling}");
-
         var bloomConfig = Plugin.GraphicsConfig.Bloom;
         ultimateBloom.SetFilmicCurveParameters(
             bloomConfig.BloomMid.Value,
