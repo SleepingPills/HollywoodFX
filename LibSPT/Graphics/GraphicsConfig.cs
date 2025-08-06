@@ -39,13 +39,13 @@ public sealed class BloomConfig
     
     private readonly ConfigEntry<bool> _useAnamorphicFlare;
     private readonly ConfigEntry<float> _anamorphicFlareIntensity;
-    private readonly ConfigEntry<int> _anamorphicScale;
+    public readonly ConfigEntry<float> AnamorphicScale;
     private readonly ConfigEntry<bool> _anamorphicSmallVerticalBlur;
     private readonly ConfigEntry<int> _anamorphicBlurPass;
     
     private readonly ConfigEntry<bool> _useStarFlare;
     private readonly ConfigEntry<float> _starFlareIntensity;
-    private readonly ConfigEntry<float> _starScale;
+    public readonly ConfigEntry<float> StarScale;
     private readonly ConfigEntry<int> _starBlurPass;
     
     public BloomConfig(ConfigFile config, string section)
@@ -129,12 +129,12 @@ public sealed class BloomConfig
         ));
         _anamorphicFlareIntensity.SettingChanged += OnConfigChanged;
 
-        _anamorphicScale = config.Bind(bloomSection, "Anamorphic Scale", 10, new ConfigDescription(
+        AnamorphicScale = config.Bind(bloomSection, "Anamorphic Scale", 10f, new ConfigDescription(
             "Scaling factor for anamorphic flares.",
-            new AcceptableValueRange<int>(0, 50),
+            new AcceptableValueRange<float>(0, 50),
             new ConfigurationManagerAttributes { Order = 82 }
         ));
-        _anamorphicScale.SettingChanged += OnConfigChanged;
+        AnamorphicScale.SettingChanged += OnConfigChanged;
 
         _anamorphicSmallVerticalBlur = config.Bind(bloomSection, "Anamorphic Small Vertical Blur", true, new ConfigDescription(
             "Enables small vertical blur for anamorphic flares.",
@@ -164,12 +164,12 @@ public sealed class BloomConfig
         ));
         _starFlareIntensity.SettingChanged += OnConfigChanged;
 
-        _starScale = config.Bind(bloomSection, "Star Scale", 5f, new ConfigDescription(
+        StarScale = config.Bind(bloomSection, "Star Scale", 5f, new ConfigDescription(
             "Scaling factor for star flares.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 77 }
         ));
-        _starScale.SettingChanged += OnConfigChanged;
+        StarScale.SettingChanged += OnConfigChanged;
 
         _starBlurPass = config.Bind(bloomSection, "Star Blur Pass", 2, new ConfigDescription(
             "Number of blur passes for star flares.",
@@ -191,13 +191,13 @@ public sealed class BloomConfig
 
         ultimateBloom.m_UseAnamorphicFlare = _useAnamorphicFlare.Value;
         ultimateBloom.m_AnamorphicFlareIntensity = _anamorphicFlareIntensity.Value;
-        ultimateBloom.m_AnamorphicScale = _anamorphicScale.Value;
+        ultimateBloom.m_AnamorphicScale = AnamorphicScale.Value;
         ultimateBloom.m_AnamorphicSmallVerticalBlur = _anamorphicSmallVerticalBlur.Value;
         ultimateBloom.m_AnamorphicBlurPass = _anamorphicBlurPass.Value;
 
         ultimateBloom.m_UseStarFlare = _useStarFlare.Value;
         ultimateBloom.m_StarFlareIntensity = _starFlareIntensity.Value;
-        ultimateBloom.m_StarScale = _starScale.Value;
+        ultimateBloom.m_StarScale = StarScale.Value;
         ultimateBloom.m_StarBlurPass = _starBlurPass.Value;
     }
 

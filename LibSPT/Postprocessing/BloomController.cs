@@ -34,7 +34,7 @@ public class BloomController : MonoBehaviour
 
         ultimateBloom.m_IntensityManagement = UltimateBloom.BloomIntensityManagement.FilmicCurve;
         ultimateBloom.m_SamplingMode = UltimateBloom.SamplingMode.HeightRelative;
-        
+
         Plugin.Log.LogInfo("Resetting Main Bloom intensities");
         ResetIntensities(ultimateBloom.m_BloomIntensities);
         Plugin.Log.LogInfo("Resetting Anamorphic Bloom intensities");
@@ -69,24 +69,30 @@ public class BloomController : MonoBehaviour
         if (_weatherController == null)
             return;
 
+        var streakScale = 1f;
         float sunLightFactorCur;
 
         if (_weatherController.SunHeight < 0)
         {
             // Increase intensity in the dark
             sunLightFactorCur = Mathf.InverseLerp(0f, -0.1f, _weatherController.SunHeight);
+            // Decrease streak size 
+            streakScale = 1f - 0.75f * sunLightFactorCur;
         }
         else
         {
             // Decrease the intensity slightly around morning/dusk to avoid the sky being obliterated by bloom
             sunLightFactorCur = -0.35f * Mathf.InverseLerp(0.7f, 0.5f, _weatherController.SunHeight);
         }
-        
+
         if (Mathf.Abs(sunLightFactorCur - _sunLightFactor) < 0.03f)
             return;
 
-        var highlightScaling = 1f + 0.3f * sunLightFactorCur;
         var bloomConfig = Plugin.GraphicsConfig.Bloom;
+        ultimateBloom.m_AnamorphicScale = streakScale * bloomConfig.AnamorphicScale.Value;
+        ultimateBloom.m_StarScale = streakScale * bloomConfig.StarScale.Value;
+
+        var highlightScaling = 1f + 0.3f * sunLightFactorCur;
         ultimateBloom.SetFilmicCurveParameters(
             bloomConfig.BloomMid.Value,
             bloomConfig.BloomDark.Value,
