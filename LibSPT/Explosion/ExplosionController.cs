@@ -9,17 +9,19 @@ public class ExplosionController
     private readonly ExplosionPool _handGrenadeExplosionPool;
     private readonly ExplosionPool _smallGrenadeExplosionPool;
     private readonly ExplosionPool _flashbangExplosionPool;
-    
+    private readonly ExplosionPool _fiftyExplosionPool;
+
     public ExplosionController(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading Explosion Prefabs");
         var expMidPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Mid");
         var expSmallPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
         var expFlashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
-        
+
         _handGrenadeExplosionPool = new ExplosionPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
         _smallGrenadeExplosionPool = new ExplosionPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
         _flashbangExplosionPool = new ExplosionPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
+        _fiftyExplosionPool = new ExplosionPool(eftEffects, expSmallPrefab, BuildExplosionFifty, 30, 10f);
 
         var scheduler = eftEffects.gameObject.AddComponent<ExplosionPoolScheduler>();
         scheduler.Pools.Add(_handGrenadeExplosionPool);
@@ -43,6 +45,7 @@ public class ExplosionController
         [
             ScaleDensity(mainEffects["Debris_Glow"]),
             ScaleDensity(mainEffects["Debris_Rock"]),
+            ScaleDensity(mainEffects["Debris_Generic"]),
             ScaleDensity(mainEffects["Sparks"]),
             ScaleDensity(mainEffects["Dust_Ring"]),
         ];
@@ -64,6 +67,7 @@ public class ExplosionController
         EffectBundle[] explosionEffectsAngled =
         [
             ScaleDensity(mainEffects["Debris_Glow"]),
+            ScaleDensity(mainEffects["Debris_Generic"]),
             ScaleDensity(mainEffects["Dust"]),
             ScaleDensity(mainEffects["Dust_Linger"]),
             ScaleDensity(mainEffects["Sparks"]),
@@ -88,12 +92,27 @@ public class ExplosionController
             ScaleDensity(mainEffects["Dust"]),
             ScaleDensity(mainEffects["Dust_Linger"]),
             ScaleDensity(mainEffects["Sparks"]),
+            ScaleDensity(mainEffects["Sparks Bright"]),
         ];
 
         return new Explosion(explosionEffectsUp, explosionEffectsAngled);
     }
-    
-    private static EffectBundle ScaleDensity(EffectBundle effects, float scale=1f)
+
+    private static Explosion BuildExplosionFifty(Effects eftEffects, GameObject prefab)
+    {
+        var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
+
+        EffectBundle[] explosionEffectsAngled =
+        [
+            ScaleDensity(mainEffects["Fireball"]),
+            ScaleDensity(mainEffects["Dust"]),
+            ScaleDensity(mainEffects["Sparks"]),
+        ];
+
+        return new Explosion([], explosionEffectsAngled);
+    }
+
+    private static EffectBundle ScaleDensity(EffectBundle effects, float scale = 1f)
     {
         foreach (var system in effects.ParticleSystems)
         {
@@ -102,7 +121,7 @@ public class ExplosionController
                 var densityScaling = 1f;
 
                 var name = subSystem.name.ToLower();
-                
+
                 if (name.Contains("fireball"))
                     densityScaling = Plugin.ExplosionDensityFireball.Value;
                 else if (name.Contains("debris"))
@@ -115,16 +134,16 @@ public class ExplosionController
                     densityScaling = Plugin.ExplosionDensityDust.Value;
 
                 densityScaling *= scale;
-                
+
                 Plugin.Log.LogInfo($"Scaling explosion effect: {subSystem.name} {densityScaling}");
-                
+
                 if (Mathf.Approximately(densityScaling, 1f))
                     continue;
-                
+
                 ParticleHelpers.ScaleEmissionRate(subSystem, densityScaling);
             }
         }
-        
+
         return effects;
     }
 
@@ -132,7 +151,7 @@ public class ExplosionController
     {
         if (name.StartsWith("big_round"))
             return;
-        
+
         if (name.StartsWith("Flashbang"))
         {
             _flashbangExplosionPool.Emit(position, normal);

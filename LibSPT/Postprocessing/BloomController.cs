@@ -41,7 +41,7 @@ public class BloomController : MonoBehaviour
         ResetIntensities(ultimateBloom.m_AnamorphicBloomIntensities);
         Plugin.Log.LogInfo("Resetting Star Bloom intensities");
         ResetIntensities(ultimateBloom.m_StarBloomIntensities);
-
+        
         // Turn these off as they form the "blob" part of the bloom and can oversaturate the entire screen.
         ultimateBloom.m_BloomUsages[0] = ultimateBloom.m_BloomUsages[1] = false;
         ultimateBloom.m_AnamorphicBloomUsages[0] = false;
@@ -52,7 +52,12 @@ public class BloomController : MonoBehaviour
         Plugin.GraphicsConfig.Bloom.ConfigChanged += UpdateSettings;
         Plugin.Log.LogInfo($"UltimateBloomController: Ultimate Bloom effect applied to camera {targetCamera.name}");
 
-        _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
+        var weather = GameObject.Find("Weather");
+        
+        if (weather == null)
+            return;
+        
+        _weatherController = weather.GetComponent<WeatherController>();
     }
 
     private static void ResetIntensities(float[] intensities)
