@@ -84,8 +84,7 @@ public static class DebugGizmos
         return Sphere(position, 0.25f, RandomColor, expiretime > 0, expiretime);
     }
 
-    public static GameObject Line(Vector3 startPoint, Vector3 endPoint, Color color, float lineWidth = 0.05f, bool temporary = false,
-        float expiretime = 1f, bool taperLine = false)
+    public static GameObject Line(Vector3 startPoint, Vector3 endPoint, Color color, float lineWidth = 0.05f, float expiretime = 1f, bool taperLine = false)
     {
         var lineObject = new GameObject();
         var lineRenderer = lineObject.AddComponent<LineRenderer>();
@@ -118,14 +117,14 @@ public static class DebugGizmos
 
     public static GameObject Line(Vector3 startPoint, Vector3 endPoint, float lineWidth = 0.05f, float expiretime = 1f, bool taperLine = false)
     {
-        return Line(startPoint, endPoint, RandomColor, lineWidth, expiretime > 0, expiretime, taperLine);
+        return Line(startPoint, endPoint, RandomColor, lineWidth, expiretime, taperLine);
     }
 
     public static GameObject Ray(Vector3 startPoint, Vector3 direction, Color color, float length = 0.35f, float lineWidth = 0.05f,
         bool temporary = false, float expiretime = 1f, bool taperLine = false)
     {
         var endPoint = startPoint + direction.normalized * length;
-        return Line(startPoint, endPoint, color, lineWidth, expiretime > 0, expiretime, taperLine);
+        return Line(startPoint, endPoint, color, lineWidth, expiretime, taperLine);
     }
 
     public static List<GameObject> DrawLinesBetweenPoints(float lineSize, float raisePoints, params Vector3[] points)

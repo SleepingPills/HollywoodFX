@@ -101,14 +101,14 @@ public sealed class BloomConfig
         ));
         _useLensDust.SettingChanged += OnConfigChanged;
 
-        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.075f, new ConfigDescription(
+        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.1f, new ConfigDescription(
             "Controls the intensity of the lens dust effect.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 95 }
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
 
-        _dirtLightIntensity = config.Bind(bloomSection, "Dirt Light Intensity", 0.5f, new ConfigDescription(
+        _dirtLightIntensity = config.Bind(bloomSection, "Dirt Light Intensity", 0.75f, new ConfigDescription(
             "Controls the intensity of dirt light effects.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 94 }
@@ -122,7 +122,7 @@ public sealed class BloomConfig
         ));
         _useAnamorphicFlare.SettingChanged += OnConfigChanged;
 
-        _anamorphicFlareIntensity = config.Bind(bloomSection, "Anamorphic Flare Intensity", 2.5f, new ConfigDescription(
+        _anamorphicFlareIntensity = config.Bind(bloomSection, "Anamorphic Flare Intensity", 2f, new ConfigDescription(
             "Controls the intensity of anamorphic flares.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 83 }
@@ -143,7 +143,7 @@ public sealed class BloomConfig
         ));
         _anamorphicSmallVerticalBlur.SettingChanged += OnConfigChanged;
 
-        _anamorphicBlurPass = config.Bind(bloomSection, "Anamorphic Blur Pass", 3, new ConfigDescription(
+        _anamorphicBlurPass = config.Bind(bloomSection, "Anamorphic Blur Pass", 4, new ConfigDescription(
             "Number of blur passes for anamorphic flares.",
             new AcceptableValueRange<int>(1, 5),
             new ConfigurationManagerAttributes { Order = 80 }

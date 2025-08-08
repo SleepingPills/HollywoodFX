@@ -44,8 +44,8 @@ public class ExplosionController
         EffectBundle[] explosionEffectsAngled =
         [
             ScaleDensity(mainEffects["Debris_Glow"]),
-            ScaleDensity(mainEffects["Debris_Rock"]),
             ScaleDensity(mainEffects["Debris_Generic"]),
+            ScaleDensity(mainEffects["Debris_Sparks"]),
             ScaleDensity(mainEffects["Sparks"]),
             ScaleDensity(mainEffects["Dust_Ring"]),
         ];
