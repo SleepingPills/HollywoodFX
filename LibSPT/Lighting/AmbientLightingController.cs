@@ -77,6 +77,8 @@ public class AmbientLightingController : MonoBehaviour
         // 0 -> 0.31, 6 -> 0.46, 12 -> 0.9, 18 - 0.76
         if (Plugin.GraphicsConfig.RealLightTempEnabled.Value)
         {
+            _weatherController.TOD_Sky_0.Sun.MeshBrightness = 10f;
+            
             _weatherController.TOD_Sky_0.Moon.MeshSize = 0.5f;
             _weatherController.TOD_Sky_0.Moon.HaloSize = 1.0f;
             _weatherController.TOD_Sky_0.Moon.MeshBrightness = 2f;
@@ -93,8 +95,8 @@ public class AmbientLightingController : MonoBehaviour
                 [
                     new GradientColorKey(new Color(0.55f, 0.6f, 0.7f), 0.32f),
                     new GradientColorKey(new Color(0.65f, 0.45f, 0.35f), 0.45f),
-                    new GradientColorKey(new Color(0.9f, 0.8f, 0.5f), 0.7f),
-                    new GradientColorKey(new Color(0.9f, 0.85f, 0.9f), 1f)
+                    new GradientColorKey(new Color(0.7f, 0.6f, 0.5f), 0.7f),
+                    new GradientColorKey(new Color(0.7f, 0.65f, 0.7f), 1f)
                 ]
             };
             

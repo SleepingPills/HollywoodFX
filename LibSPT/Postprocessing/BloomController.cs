@@ -97,13 +97,13 @@ public class BloomController : MonoBehaviour
         ultimateBloom.m_AnamorphicScale = streakScale * bloomConfig.AnamorphicScale.Value;
         ultimateBloom.m_StarScale = streakScale * bloomConfig.StarScale.Value;
 
-        var highlightScaling = 1f + 0.3f * sunLightFactorCur;
-        ultimateBloom.SetFilmicCurveParameters(
-            bloomConfig.BloomMid.Value,
-            bloomConfig.BloomDark.Value,
-            bloomConfig.BloomBright.Value,
-            highlightScaling * bloomConfig.BloomHighlight.Value
-        );
+        // var highlightScaling = 1f + 0.3f * sunLightFactorCur;
+        // ultimateBloom.SetFilmicCurveParameters(
+        //     bloomConfig.BloomMid.Value,
+        //     bloomConfig.BloomDark.Value,
+        //     bloomConfig.BloomBright.Value,
+        //     highlightScaling * bloomConfig.BloomHighlight.Value
+        // );
 
         _sunLightFactor = sunLightFactorCur;
     }

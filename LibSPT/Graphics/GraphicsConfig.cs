@@ -66,7 +66,7 @@ public sealed class BloomConfig
         ));
         BloomDark.SettingChanged += OnConfigChanged;
         
-        BloomMid = config.Bind(bloomSection, "Bloom Curve Mid", 0.4f, new ConfigDescription(
+        BloomMid = config.Bind(bloomSection, "Bloom Curve Mid", 0.6f, new ConfigDescription(
             "Bloom intensity of the mid colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
             new ConfigurationManagerAttributes { Order = 102 }
@@ -80,7 +80,7 @@ public sealed class BloomConfig
         ));
         BloomBright.SettingChanged += OnConfigChanged;
         
-        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.5f, new ConfigDescription(
+        BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.6f, new ConfigDescription(
             "Bloom intensity of the bright colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
             new ConfigurationManagerAttributes { Order = 100 }
@@ -108,7 +108,7 @@ public sealed class BloomConfig
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
 
-        _dirtLightIntensity = config.Bind(bloomSection, "Dirt Light Intensity", 0.75f, new ConfigDescription(
+        _dirtLightIntensity = config.Bind(bloomSection, "Dirt Light Intensity", 1.5f, new ConfigDescription(
             "Controls the intensity of dirt light effects.",
             new AcceptableValueRange<float>(0f, 50f),
             new ConfigurationManagerAttributes { Order = 94 }
