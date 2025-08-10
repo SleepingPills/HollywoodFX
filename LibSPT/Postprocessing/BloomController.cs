@@ -34,6 +34,9 @@ public class BloomController : MonoBehaviour
 
         ultimateBloom.m_IntensityManagement = UltimateBloom.BloomIntensityManagement.FilmicCurve;
         ultimateBloom.m_SamplingMode = UltimateBloom.SamplingMode.HeightRelative;
+        ultimateBloom.m_SamplingMinHeight = 768;
+        // Reduces flicker
+        ultimateBloom.m_AnamorphicSmallVerticalBlur = true;
 
         Plugin.Log.LogInfo("Resetting Main Bloom intensities");
         ResetIntensities(ultimateBloom.m_BloomIntensities);
@@ -42,16 +45,18 @@ public class BloomController : MonoBehaviour
         Plugin.Log.LogInfo("Resetting Star Bloom intensities");
         ResetIntensities(ultimateBloom.m_StarBloomIntensities);
         
-        // Turn these off as they form the "blob" part of the bloom and can oversaturate the entire screen.
+        // Turn these off as they form the "blob" part of the bloom and can oversaturate things.
         ultimateBloom.m_BloomUsages[0] = ultimateBloom.m_BloomUsages[1] = false;
         ultimateBloom.m_AnamorphicBloomUsages[0] = false;
         ultimateBloom.m_AnamorphicBloomUsages[1] = true;
         ultimateBloom.m_StarBloomUsages[0] = false;
-        
-        ultimateBloom.m_SamplingMinHeight = 768;
-        // Reduces flicker
-        ultimateBloom.m_AnamorphicSmallVerticalBlur = true;
 
+        // Disable high order star blooms because they end up applying everywhere on the screen
+        for (var i = 3; i < ultimateBloom.m_StarBloomUsages.Length; i++)
+        {
+            ultimateBloom.m_StarBloomUsages[i] = false;
+        }
+        
         Plugin.GraphicsConfig.Bloom.ApplyConfig(ultimateBloom);
         Plugin.GraphicsConfig.Bloom.ConfigChanged += UpdateSettings;
         Plugin.Log.LogInfo($"UltimateBloomController: Ultimate Bloom effect applied to camera {targetCamera.name}");

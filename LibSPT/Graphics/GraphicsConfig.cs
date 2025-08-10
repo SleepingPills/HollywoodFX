@@ -92,14 +92,14 @@ public sealed class BloomConfig
         ));
         _useLensDust.SettingChanged += OnConfigChanged;
 
-        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.1f, new ConfigDescription(
+        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.2f, new ConfigDescription(
             "Controls the intensity of the lens dust effect.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 95 }
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
 
-        _dirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 1.5f, new ConfigDescription(
+        _dirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 2f, new ConfigDescription(
             "Controls the intensity of lens bloom.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 94 }
@@ -194,7 +194,6 @@ public class GraphicsConfig
     public LodOverrides Current;
 
     public readonly ConfigEntry<float> MipBias;
-    public readonly ConfigEntry<bool> RealLightTempEnabled;
     
     public readonly BloomConfig Bloom;
     private readonly Dictionary<string, LodOverrides> _overrides = new();
@@ -223,12 +222,7 @@ public class GraphicsConfig
             new ConfigurationManagerAttributes { Order = 2 }
         ));
         MipBias.SettingChanged += (_, _) => { UpdateMipBias(); };
-        RealLightTempEnabled = config.Bind(section, "Realistic Light Color Temp", true, new ConfigDescription(
-            "Toggles the realistic light color temperature in outdoor areas. The default color temperature has way too much red compared to real sunlight.",
-            null,
-            new ConfigurationManagerAttributes { Order = 1 }
-        ));
-
+        
         Bloom = new BloomConfig(config, section);
 
         AddDetailOverrides(config, section, "Default", browsable: false);
