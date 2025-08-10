@@ -83,26 +83,27 @@ public class BloomController : MonoBehaviour
         if (_weatherController == null)
             return;
 
-        var sunLightFactorCur = Mathf.InverseLerp(0f, -0.1f, _weatherController.SunHeight);
+        var nightFactor = Mathf.InverseLerp(0f, -0.1f, _weatherController.SunHeight);
         
-        if (Mathf.Abs(sunLightFactorCur - _sunLightFactor) < 0.05f)
+        if (Mathf.Abs(nightFactor - _sunLightFactor) < 0.05f)
             return;
 
         var bloomConfig = Plugin.GraphicsConfig.Bloom;
         // Decrease streak size at night
-        var streakScale = 1f - 0.75f * sunLightFactorCur;
-        ultimateBloom.m_AnamorphicScale = streakScale * bloomConfig.AnamorphicScale.Value;
-        ultimateBloom.m_StarScale = streakScale * bloomConfig.StarScale.Value;
+        var streakScale = 1f - 0.5f * nightFactor;
+        ultimateBloom.m_AnamorphicScale = bloomConfig.AnamorphicScale.Value * streakScale;
+        ultimateBloom.m_DirtLightIntensity = bloomConfig.DirtLightIntensity.Value + nightFactor;
+        ultimateBloom.m_StarFlareIntensity = bloomConfig.DirtLightIntensity.Value + 0.5f * nightFactor;
 
-        var highlightScaling = 1f + 0.1f * sunLightFactorCur;
+        var highlightScaling = 1f + 0.1f * nightFactor;
         ultimateBloom.SetFilmicCurveParameters(
             bloomConfig.BloomMid.Value,
             bloomConfig.BloomDark.Value,
             bloomConfig.BloomBright.Value,
-            highlightScaling * bloomConfig.BloomHighlight.Value
+            bloomConfig.BloomHighlight.Value * highlightScaling
         );
 
-        _sunLightFactor = sunLightFactorCur;
+        _sunLightFactor = nightFactor;
     }
 
     private void OnDestroy()

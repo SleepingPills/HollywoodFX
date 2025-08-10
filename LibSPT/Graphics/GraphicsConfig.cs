@@ -34,7 +34,7 @@ public sealed class BloomConfig
     
     private readonly ConfigEntry<bool> _useLensDust;
     private readonly ConfigEntry<float> _dustIntensity;
-    private readonly ConfigEntry<float> _dirtLightIntensity;
+    public readonly ConfigEntry<float> DirtLightIntensity;
     
     private readonly ConfigEntry<bool> _useAnamorphicFlare;
     private readonly ConfigEntry<float> _anamorphicFlareIntensity;
@@ -99,12 +99,12 @@ public sealed class BloomConfig
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
 
-        _dirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 2f, new ConfigDescription(
+        DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 2f, new ConfigDescription(
             "Controls the intensity of lens bloom.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 94 }
         ));
-        _dirtLightIntensity.SettingChanged += OnConfigChanged;
+        DirtLightIntensity.SettingChanged += OnConfigChanged;
 
         _useAnamorphicFlare = config.Bind(bloomSection, "Use Anamorphic Flare", true, new ConfigDescription(
             "Enables anamorphic lens flare effects.",
@@ -170,7 +170,7 @@ public sealed class BloomConfig
 
         ultimateBloom.m_UseLensDust = _useLensDust.Value;
         ultimateBloom.m_DustIntensity = _dustIntensity.Value;
-        ultimateBloom.m_DirtLightIntensity = _dirtLightIntensity.Value;
+        ultimateBloom.m_DirtLightIntensity = DirtLightIntensity.Value;
 
         ultimateBloom.m_UseAnamorphicFlare = _useAnamorphicFlare.Value;
         ultimateBloom.m_AnamorphicFlareIntensity = _anamorphicFlareIntensity.Value;
