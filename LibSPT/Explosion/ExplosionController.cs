@@ -45,7 +45,6 @@ public class ExplosionController
         [
             ScaleDensity(mainEffects["Debris_Glow"]),
             ScaleDensity(mainEffects["Debris_Generic"]),
-            ScaleDensity(mainEffects["Debris_Sparks"]),
             ScaleDensity(mainEffects["Sparks"]),
             ScaleDensity(mainEffects["Dust_Ring"]),
         ];
@@ -68,7 +67,6 @@ public class ExplosionController
         [
             ScaleDensity(mainEffects["Debris_Glow"]),
             ScaleDensity(mainEffects["Debris_Generic"]),
-            ScaleDensity(mainEffects["Debris_Sparks"]),
             ScaleDensity(mainEffects["Dust"]),
             ScaleDensity(mainEffects["Dust_Linger"]),
             ScaleDensity(mainEffects["Sparks"]),
