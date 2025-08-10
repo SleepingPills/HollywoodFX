@@ -83,7 +83,6 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> LightFlareEnabled;
     public static ConfigEntry<float> LightFlareIntensity;
     public static ConfigEntry<float> LightFlareSize;
-    public static ConfigEntry<float> AmbientLightContrast;
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
     public static ConfigEntry<float> MiscShellVelocity;
@@ -564,12 +563,6 @@ public class Plugin : BaseUnityPlugin
             "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
-        ));
-        
-        AmbientLightContrast = Config.Bind(misc, "Ambient Light Contrast (RESTART)", 2.0f, new ConfigDescription(
-            "Adjusts the contrast on ambient light.",
-            new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 1 }
         ));
 
         /*

@@ -72,15 +72,6 @@ public class AmbientLightingController : MonoBehaviour
         _weatherController.TOD_Sky_0.Moon.HaloSize = 0.5f;
         _weatherController.TOD_Sky_0.Moon.MeshBrightness = 2f;
         
-        var keyFrames = _weatherController.TimeOfDayController.AmbientContrast.keys;
-        for (var i = 0; i < keyFrames.Length; i++)
-        {
-            var frame = keyFrames[i];
-            frame.value *= Plugin.AmbientLightContrast.Value;
-            keyFrames[i] = frame;
-        }
-        _weatherController.TimeOfDayController.AmbientContrast.keys = keyFrames;
-        
         // _weatherController.TOD_Sky_0.Day.LightIntensity = 0.75f;
         // _weatherController.TimeOfDayController.ScatteringBrightnessMultiplier = 0.75f;
         

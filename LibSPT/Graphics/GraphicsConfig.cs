@@ -43,7 +43,7 @@ public sealed class BloomConfig
 
     private readonly ConfigEntry<bool> _useStarFlare;
     private readonly ConfigEntry<float> _starFlareIntensity;
-    public readonly ConfigEntry<float> StarScale;
+    private readonly ConfigEntry<float> _starScale;
     private readonly ConfigEntry<int> _starBlurPass;
 
     public BloomConfig(ConfigFile config, string section)
@@ -99,7 +99,7 @@ public sealed class BloomConfig
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
 
-        DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 2f, new ConfigDescription(
+        DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 1.75f, new ConfigDescription(
             "Controls the intensity of lens bloom.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 94, IsAdvanced = true }
@@ -148,12 +148,12 @@ public sealed class BloomConfig
         ));
         _starFlareIntensity.SettingChanged += OnConfigChanged;
 
-        StarScale = config.Bind(bloomSection, "Star Flare Scale", 5f, new ConfigDescription(
+        _starScale = config.Bind(bloomSection, "Star Flare Scale", 5f, new ConfigDescription(
             "Scaling factor for star flares.",
             new AcceptableValueRange<float>(0f, 20f),
             new ConfigurationManagerAttributes { Order = 77 }
         ));
-        StarScale.SettingChanged += OnConfigChanged;
+        _starScale.SettingChanged += OnConfigChanged;
 
         _starBlurPass = config.Bind(bloomSection, "Star Flare Blur Passes", 2, new ConfigDescription(
             "Number of blur passes for star flares.",
@@ -179,7 +179,7 @@ public sealed class BloomConfig
 
         ultimateBloom.m_UseStarFlare = _useStarFlare.Value;
         ultimateBloom.m_StarFlareIntensity = _starFlareIntensity.Value;
-        ultimateBloom.m_StarScale = StarScale.Value;
+        ultimateBloom.m_StarScale = _starScale.Value;
         ultimateBloom.m_StarBlurPass = _starBlurPass.Value;
     }
 
