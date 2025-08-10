@@ -47,6 +47,10 @@ public class BloomController : MonoBehaviour
         ultimateBloom.m_AnamorphicBloomUsages[0] = false;
         ultimateBloom.m_AnamorphicBloomUsages[1] = true;
         ultimateBloom.m_StarBloomUsages[0] = false;
+        
+        ultimateBloom.m_SamplingMinHeight = 768;
+        // Reduces flicker
+        ultimateBloom.m_AnamorphicSmallVerticalBlur = true;
 
         Plugin.GraphicsConfig.Bloom.ApplyConfig(ultimateBloom);
         Plugin.GraphicsConfig.Bloom.ConfigChanged += UpdateSettings;

@@ -32,7 +32,6 @@ public sealed class BloomConfig
     public readonly ConfigEntry<float> BloomBright;
     public readonly ConfigEntry<float> BloomHighlight;
     
-    private readonly ConfigEntry<float> _samplingMinHeight;
     private readonly ConfigEntry<bool> _useLensDust;
     private readonly ConfigEntry<float> _dustIntensity;
     private readonly ConfigEntry<float> _dirtLightIntensity;
@@ -40,7 +39,6 @@ public sealed class BloomConfig
     private readonly ConfigEntry<bool> _useAnamorphicFlare;
     private readonly ConfigEntry<float> _anamorphicFlareIntensity;
     public readonly ConfigEntry<float> AnamorphicScale;
-    private readonly ConfigEntry<bool> _anamorphicSmallVerticalBlur;
     private readonly ConfigEntry<int> _anamorphicBlurPass;
     
     private readonly ConfigEntry<bool> _useStarFlare;
@@ -54,7 +52,7 @@ public sealed class BloomConfig
 
         _bloomIntensity = config.Bind(bloomSection, "Master Bloom Intensity", 0.2f, new ConfigDescription(
             "Controls the overall intensity of the bloom effect.",
-            new AcceptableValueRange<float>(0f, 50f),
+            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 104 }
         ));
         _bloomIntensity.SettingChanged += OnConfigChanged;
@@ -87,13 +85,6 @@ public sealed class BloomConfig
         ));
         BloomHighlight.SettingChanged += OnConfigChanged;
         
-        _samplingMinHeight = config.Bind(bloomSection, "Sampling Min Height", 768f, new ConfigDescription(
-            "Minimum height for height-relative sampling mode.",
-            new AcceptableValueRange<float>(0f, 2048f),
-            new ConfigurationManagerAttributes { Order = 97 }
-        ));
-        _samplingMinHeight.SettingChanged += OnConfigChanged;
-
         _useLensDust = config.Bind(bloomSection, "Use Lens Dust", true, new ConfigDescription(
             "Enables lens dust effect.",
             null,
@@ -103,14 +94,14 @@ public sealed class BloomConfig
 
         _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.1f, new ConfigDescription(
             "Controls the intensity of the lens dust effect.",
-            new AcceptableValueRange<float>(0f, 50f),
+            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 95 }
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
 
-        _dirtLightIntensity = config.Bind(bloomSection, "Dirt Light Intensity", 1.5f, new ConfigDescription(
-            "Controls the intensity of dirt light effects.",
-            new AcceptableValueRange<float>(0f, 50f),
+        _dirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 1.5f, new ConfigDescription(
+            "Controls the intensity of lens bloom.",
+            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 94 }
         ));
         _dirtLightIntensity.SettingChanged += OnConfigChanged;
@@ -124,26 +115,19 @@ public sealed class BloomConfig
 
         _anamorphicFlareIntensity = config.Bind(bloomSection, "Anamorphic Flare Intensity", 2f, new ConfigDescription(
             "Controls the intensity of anamorphic flares.",
-            new AcceptableValueRange<float>(0f, 50f),
+            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 83 }
         ));
         _anamorphicFlareIntensity.SettingChanged += OnConfigChanged;
 
-        AnamorphicScale = config.Bind(bloomSection, "Anamorphic Scale", 10f, new ConfigDescription(
+        AnamorphicScale = config.Bind(bloomSection, "Anamorphic Flare Scale", 10f, new ConfigDescription(
             "Scaling factor for anamorphic flares.",
-            new AcceptableValueRange<float>(0, 50),
+            new AcceptableValueRange<float>(0, 20),
             new ConfigurationManagerAttributes { Order = 82 }
         ));
         AnamorphicScale.SettingChanged += OnConfigChanged;
 
-        _anamorphicSmallVerticalBlur = config.Bind(bloomSection, "Anamorphic Small Vertical Blur", true, new ConfigDescription(
-            "Enables small vertical blur for anamorphic flares.",
-            null,
-            new ConfigurationManagerAttributes { Order = 81 }
-        ));
-        _anamorphicSmallVerticalBlur.SettingChanged += OnConfigChanged;
-
-        _anamorphicBlurPass = config.Bind(bloomSection, "Anamorphic Blur Pass", 4, new ConfigDescription(
+        _anamorphicBlurPass = config.Bind(bloomSection, "Anamorphic Flare Blur Passes", 4, new ConfigDescription(
             "Number of blur passes for anamorphic flares.",
             new AcceptableValueRange<int>(1, 5),
             new ConfigurationManagerAttributes { Order = 80 }
@@ -159,19 +143,19 @@ public sealed class BloomConfig
 
         _starFlareIntensity = config.Bind(bloomSection, "Star Flare Intensity", 1.5f, new ConfigDescription(
             "Controls the intensity of star flares.",
-            new AcceptableValueRange<float>(0f, 50f),
+            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 78 }
         ));
         _starFlareIntensity.SettingChanged += OnConfigChanged;
 
-        StarScale = config.Bind(bloomSection, "Star Scale", 5f, new ConfigDescription(
+        StarScale = config.Bind(bloomSection, "Star Flare Scale", 5f, new ConfigDescription(
             "Scaling factor for star flares.",
-            new AcceptableValueRange<float>(0f, 50f),
+            new AcceptableValueRange<float>(0f, 20f),
             new ConfigurationManagerAttributes { Order = 77 }
         ));
         StarScale.SettingChanged += OnConfigChanged;
 
-        _starBlurPass = config.Bind(bloomSection, "Star Blur Pass", 2, new ConfigDescription(
+        _starBlurPass = config.Bind(bloomSection, "Star Flare Blur Passes", 2, new ConfigDescription(
             "Number of blur passes for star flares.",
             new AcceptableValueRange<int>(1, 5),
             new ConfigurationManagerAttributes { Order = 76 }
@@ -183,7 +167,6 @@ public sealed class BloomConfig
     {
         ultimateBloom.m_BloomIntensity = _bloomIntensity.Value;
         ultimateBloom.SetFilmicCurveParameters(BloomMid.Value, BloomDark.Value, BloomBright.Value, BloomHighlight.Value);
-        ultimateBloom.m_SamplingMinHeight = _samplingMinHeight.Value;
 
         ultimateBloom.m_UseLensDust = _useLensDust.Value;
         ultimateBloom.m_DustIntensity = _dustIntensity.Value;
@@ -192,7 +175,6 @@ public sealed class BloomConfig
         ultimateBloom.m_UseAnamorphicFlare = _useAnamorphicFlare.Value;
         ultimateBloom.m_AnamorphicFlareIntensity = _anamorphicFlareIntensity.Value;
         ultimateBloom.m_AnamorphicScale = AnamorphicScale.Value;
-        ultimateBloom.m_AnamorphicSmallVerticalBlur = _anamorphicSmallVerticalBlur.Value;
         ultimateBloom.m_AnamorphicBlurPass = _anamorphicBlurPass.Value;
 
         ultimateBloom.m_UseStarFlare = _useStarFlare.Value;
