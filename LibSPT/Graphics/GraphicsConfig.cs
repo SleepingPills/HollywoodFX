@@ -31,21 +31,21 @@ public sealed class BloomConfig
     public readonly ConfigEntry<float> BloomMid;
     public readonly ConfigEntry<float> BloomBright;
     public readonly ConfigEntry<float> BloomHighlight;
-    
+
     private readonly ConfigEntry<bool> _useLensDust;
     private readonly ConfigEntry<float> _dustIntensity;
     public readonly ConfigEntry<float> DirtLightIntensity;
-    
+
     private readonly ConfigEntry<bool> _useAnamorphicFlare;
     private readonly ConfigEntry<float> _anamorphicFlareIntensity;
     public readonly ConfigEntry<float> AnamorphicScale;
     private readonly ConfigEntry<int> _anamorphicBlurPass;
-    
+
     private readonly ConfigEntry<bool> _useStarFlare;
     private readonly ConfigEntry<float> _starFlareIntensity;
     public readonly ConfigEntry<float> StarScale;
     private readonly ConfigEntry<int> _starBlurPass;
-    
+
     public BloomConfig(ConfigFile config, string section)
     {
         var bloomSection = $"{section} - Bloom";
@@ -60,31 +60,31 @@ public sealed class BloomConfig
         BloomDark = config.Bind(bloomSection, "Bloom Curve Dark", -0.98f, new ConfigDescription(
             "Bloom intensity of the dark colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
-            new ConfigurationManagerAttributes { Order = 103 }
+            new ConfigurationManagerAttributes { Order = 103, IsAdvanced = true }
         ));
         BloomDark.SettingChanged += OnConfigChanged;
-        
+
         BloomMid = config.Bind(bloomSection, "Bloom Curve Mid", 0.6f, new ConfigDescription(
             "Bloom intensity of the mid colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
-            new ConfigurationManagerAttributes { Order = 102 }
+            new ConfigurationManagerAttributes { Order = 102, IsAdvanced = true }
         ));
         BloomMid.SettingChanged += OnConfigChanged;
 
         BloomBright = config.Bind(bloomSection, "Bloom Curve Bright", 0.75f, new ConfigDescription(
             "Bloom intensity of the bright colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
-            new ConfigurationManagerAttributes { Order = 101 }
+            new ConfigurationManagerAttributes { Order = 101, IsAdvanced = true }
         ));
         BloomBright.SettingChanged += OnConfigChanged;
-        
+
         BloomHighlight = config.Bind(bloomSection, "Bloom Curve Highlight", 0.6f, new ConfigDescription(
             "Bloom intensity of the bright colors range.",
             new AcceptableValueRange<float>(-3f, 3f),
-            new ConfigurationManagerAttributes { Order = 100 }
+            new ConfigurationManagerAttributes { Order = 100, IsAdvanced = true }
         ));
         BloomHighlight.SettingChanged += OnConfigChanged;
-        
+
         _useLensDust = config.Bind(bloomSection, "Use Lens Dust", true, new ConfigDescription(
             "Enables lens dust effect.",
             null,
@@ -102,7 +102,7 @@ public sealed class BloomConfig
         DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 2f, new ConfigDescription(
             "Controls the intensity of lens bloom.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 94 }
+            new ConfigurationManagerAttributes { Order = 94, IsAdvanced = true }
         ));
         DirtLightIntensity.SettingChanged += OnConfigChanged;
 
@@ -130,7 +130,7 @@ public sealed class BloomConfig
         _anamorphicBlurPass = config.Bind(bloomSection, "Anamorphic Flare Blur Passes", 4, new ConfigDescription(
             "Number of blur passes for anamorphic flares.",
             new AcceptableValueRange<int>(1, 5),
-            new ConfigurationManagerAttributes { Order = 80 }
+            new ConfigurationManagerAttributes { Order = 80, IsAdvanced = true }
         ));
         _anamorphicBlurPass.SettingChanged += OnConfigChanged;
 
@@ -158,7 +158,7 @@ public sealed class BloomConfig
         _starBlurPass = config.Bind(bloomSection, "Star Flare Blur Passes", 2, new ConfigDescription(
             "Number of blur passes for star flares.",
             new AcceptableValueRange<int>(1, 5),
-            new ConfigurationManagerAttributes { Order = 76 }
+            new ConfigurationManagerAttributes { Order = 76, IsAdvanced = true }
         ));
         _starBlurPass.SettingChanged += OnConfigChanged;
     }
@@ -194,7 +194,7 @@ public class GraphicsConfig
     public LodOverrides Current;
 
     public readonly ConfigEntry<float> MipBias;
-    
+
     public readonly BloomConfig Bloom;
     private readonly Dictionary<string, LodOverrides> _overrides = new();
 
@@ -222,7 +222,7 @@ public class GraphicsConfig
             new ConfigurationManagerAttributes { Order = 2 }
         ));
         MipBias.SettingChanged += (_, _) => { UpdateMipBias(); };
-        
+
         Bloom = new BloomConfig(config, section);
 
         AddDetailOverrides(config, section, "Default", browsable: false);
@@ -309,12 +309,12 @@ public class GraphicsConfig
             config.Bind(mapSection, $"{map} Detail Cull Range Scaling", detailDistance, new ConfigDescription(
                 "Scales the maximum visible distance for detail like rocks, debris and foliage.",
                 new AcceptableValueRange<float>(0.5f, 10f),
-                new ConfigurationManagerAttributes { Order = 2, Browsable = browsable }
+                new ConfigurationManagerAttributes { Order = 2, Browsable = browsable, IsAdvanced = true }
             )),
             config.Bind(mapSection, $"{map} Detail Density Scaling", detailDensityScaling, new ConfigDescription(
                 "Scales the density of detail like rocks, debris and foliage.",
                 new AcceptableValueRange<float>(0.5f, 5f),
-                new ConfigurationManagerAttributes { Order = 1, Browsable = browsable }
+                new ConfigurationManagerAttributes { Order = 1, Browsable = browsable, IsAdvanced = true }
             ))
         );
 

@@ -343,7 +343,7 @@ public class Plugin : BaseUnityPlugin
         AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 25f, new ConfigDescription(
             "Ambient battle effects are simulated in this range around the player, even if not immediately visible. Helps create ambience from bot fights.",
             new AcceptableValueRange<float>(0, 250f),
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }
         ));
 
         AmbientEffectDensity = Config.Bind(battleAmbience, "Ambient Effect Emission Rate", 1f, new ConfigDescription(
@@ -355,7 +355,7 @@ public class Plugin : BaseUnityPlugin
         AmbientParticleLimit = Config.Bind(battleAmbience, "Ambient Effect Particle Limit", 1f, new ConfigDescription(
             "Scales the internal limits on the number of active particles. Since there are different limits for different components, this scales everything proportionally.",
             new AcceptableValueRange<float>(0.1f, 5f),
-            new ConfigurationManagerAttributes { Order = 2 }
+            new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
         ));
 
         AmbientParticleLifetime = Config.Bind(battleAmbience, "Ambient Effect Particle Lifetime", 1f, new ConfigDescription(
@@ -494,7 +494,7 @@ public class Plugin : BaseUnityPlugin
         RagdollForceMultiplier = Config.Bind(ragdoll, "Ragdoll Force Multiplier", 1f, new ConfigDescription(
             "Multiplies the force that is applied to ragdolls when enemies die.",
             new AcceptableValueRange<float>(0f, 100f),
-            new ConfigurationManagerAttributes { Order = 1, ReadOnly = visceralCombatDetected }
+            new ConfigurationManagerAttributes { Order = 1, ReadOnly = visceralCombatDetected, IsAdvanced = true }
         ));
 
         /*
@@ -515,7 +515,7 @@ public class Plugin : BaseUnityPlugin
         MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (RESTART)", 100, new ConfigDescription(
             "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
             new AcceptableValueRange<int>(10, 1000),
-            new ConfigurationManagerAttributes { Order = 9 }
+            new ConfigurationManagerAttributes { Order = 9, IsAdvanced = true }
         ));
 
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(
@@ -543,7 +543,7 @@ public class Plugin : BaseUnityPlugin
         MiscShellPhysicsEnabled = Config.Bind(misc, "Enhanced Shell Physics (RESTART)", true, new ConfigDescription(
             "Toggles whether to enhance the spent shell physics, resulting in finer grained simulation of bouncing and rolling.",
             null,
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 5, IsAdvanced = true }
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
@@ -551,19 +551,19 @@ public class Plugin : BaseUnityPlugin
         LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
             "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
             null,
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }
         ));
 
         LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (RESTART)", 1f, new ConfigDescription(
             "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 3 }
+            new ConfigurationManagerAttributes { Order = 3, IsAdvanced = true }
         ));
 
         LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (RESTART)", 1f, new ConfigDescription(
             "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 2 }
+            new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
         ));
         
         AmbientLightContrast = Config.Bind(misc, "Ambient Light Contrast (RESTART)", 2.0f, new ConfigDescription(
@@ -583,7 +583,7 @@ public class Plugin : BaseUnityPlugin
         KineticsScaling = Config.Bind(whimsy, "Bullet Kinetics Scaling", 1f, new ConfigDescription(
             "Scales the overall kinetic energy, impulse, etc.",
             new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 3 }
+            new ConfigurationManagerAttributes { Order = 3, IsAdvanced = true }
         ));
         
         _michelinManEnabled = Config.Bind(whimsy, "AcidPhantasm Michelin Man Mode", false, new ConfigDescription(
