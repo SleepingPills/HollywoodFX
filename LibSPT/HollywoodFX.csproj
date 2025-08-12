@@ -106,10 +106,12 @@
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="Decal\DecalPainter.cs" />
     <Compile Include="Decal\Decals.cs" />
+    <Compile Include="Explosion\Confinement.cs" />
     <Compile Include="Explosion\Explosion.cs" />
     <Compile Include="Explosion\ExplosionController.cs" />
     <Compile Include="Explosion\ExplosionPool.cs" />
     <Compile Include="Explosion\Patches.cs" />
+    <Compile Include="Explosion\RadialRaycastBatch.cs" />
     <Compile Include="Gore\Finisher.cs" />
     <Compile Include="Gore\RigidbodyEffects.cs" />
     <Compile Include="Gore\BloodEffects.cs" />

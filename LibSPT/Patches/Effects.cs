@@ -235,6 +235,8 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
 public class EffectsEmitPatch : ModulePatch
 {
+    private static readonly Confinement Confinement = new(GClass3449.HitMask, 5, Mathf.Sqrt(0.1f));
+    
     protected override MethodBase GetTargetMethod()
     {
         // Need to disambiguate the correct emit method
@@ -255,5 +257,11 @@ public class EffectsEmitPatch : ModulePatch
 
         ImpactStatic.Kinetics.Update(material, position, normal, isHitPointVisible);
         Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
+        
+        var bulletInfo = ImpactStatic.Kinetics.Bullet.Info;
+        if (bulletInfo is { Player.IsAI: false })
+        {
+            Confinement.Calculate(__instance, position, normal);
+        }
     }
 }
