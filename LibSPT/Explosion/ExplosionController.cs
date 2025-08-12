@@ -9,7 +9,6 @@ public class ExplosionController
     private readonly ExplosionPool _handGrenadeExplosionPool;
     private readonly ExplosionPool _smallGrenadeExplosionPool;
     private readonly ExplosionPool _flashbangExplosionPool;
-    private readonly ExplosionPool _fiftyExplosionPool;
 
     public ExplosionController(Effects eftEffects)
     {
@@ -21,7 +20,6 @@ public class ExplosionController
         _handGrenadeExplosionPool = new ExplosionPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
         _smallGrenadeExplosionPool = new ExplosionPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
         _flashbangExplosionPool = new ExplosionPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
-        _fiftyExplosionPool = new ExplosionPool(eftEffects, expSmallPrefab, BuildExplosionFifty, 30, 10f);
 
         var scheduler = eftEffects.gameObject.AddComponent<ExplosionPoolScheduler>();
         scheduler.Pools.Add(_handGrenadeExplosionPool);
@@ -96,21 +94,7 @@ public class ExplosionController
 
         return new Explosion(explosionEffectsUp, explosionEffectsAngled);
     }
-
-    private static Explosion BuildExplosionFifty(Effects eftEffects, GameObject prefab)
-    {
-        var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-
-        EffectBundle[] explosionEffectsAngled =
-        [
-            ScaleDensity(mainEffects["Fireball"]),
-            ScaleDensity(mainEffects["Dust"]),
-            ScaleDensity(mainEffects["Sparks"]),
-        ];
-
-        return new Explosion([], explosionEffectsAngled);
-    }
-
+    
     private static EffectBundle ScaleDensity(EffectBundle effects, float scale = 1f)
     {
         foreach (var system in effects.ParticleSystems)
