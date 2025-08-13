@@ -21,7 +21,7 @@ internal readonly struct DirectionalEffect(
 
 internal class EffectSystem(
     DirectionalEffect[] directional,
-    [CanBeNull] EffectBundle generic = null,
+    EffectBundle generic = null,
     float forceGeneric = 0f,
     bool useOffsetNormals = false
 )
