@@ -235,7 +235,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
 
 public class EffectsEmitPatch : ModulePatch
 {
-    private static readonly Confinement Confinement = new(GClass3449.HitMask, 5, Mathf.Sqrt(0.1f));
+    private static readonly Confinement Confinement = new(GClass3449.HitMask, 5f, Mathf.Sqrt(0.1f));
     
     protected override MethodBase GetTargetMethod()
     {
@@ -261,7 +261,7 @@ public class EffectsEmitPatch : ModulePatch
         var bulletInfo = ImpactStatic.Kinetics.Bullet.Info;
         if (bulletInfo is { Player.IsAI: false })
         {
-            Confinement.Calculate(__instance, position, normal);
+            Confinement.Calculate(__instance, position + Vector3.up * 0.05f, Vector3.up);
         }
     }
 }
