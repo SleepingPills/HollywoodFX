@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace HollywoodFX.Explosion;
 
-public class Explosion(EffectBundle[] effectsUp, EffectBundle[] effectsAngled, float scale = 1f)
+public class Blast(EffectBundle[] effectsUp, EffectBundle[] effectsAngled, float scale = 1f)
 {
     public void Emit(Vector3 position, Vector3 normal)
     {

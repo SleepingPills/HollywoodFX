@@ -79,6 +79,6 @@ public class EffectsEmitGrenadePatch : ModulePatch
             return;
 
         ConsoleScreen.Log($"Grenade: {ename}");
-        Singleton<ExplosionController>.Instance.Emit(ename, position, normal);
+        Singleton<BlastController>.Instance.Emit(ename, position, normal);
     }
 }

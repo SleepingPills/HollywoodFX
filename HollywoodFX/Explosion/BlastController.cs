@@ -4,28 +4,32 @@ using UnityEngine;
 
 namespace HollywoodFX.Explosion;
 
-public class ExplosionController
+public class BlastController
 {
-    private readonly ExplosionPool _handGrenadeExplosionPool;
-    private readonly ExplosionPool _smallGrenadeExplosionPool;
-    private readonly ExplosionPool _flashbangExplosionPool;
+    private readonly BlastPool _handGrenadeBlastPool;
+    private readonly BlastPool _smallGrenadeBlastPool;
+    private readonly BlastPool _flashbangBlastPool;
 
-    public ExplosionController(Effects eftEffects)
+    private readonly ConfinedBlast _testBlast;
+
+    public BlastController(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading Explosion Prefabs");
         var expMidPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Mid");
         var expSmallPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
         var expFlashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
 
-        _handGrenadeExplosionPool = new ExplosionPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
-        _smallGrenadeExplosionPool = new ExplosionPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
-        _flashbangExplosionPool = new ExplosionPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
+        _handGrenadeBlastPool = new BlastPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
+        _smallGrenadeBlastPool = new BlastPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
+        _flashbangBlastPool = new BlastPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
 
-        var scheduler = eftEffects.gameObject.AddComponent<ExplosionPoolScheduler>();
-        scheduler.Pools.Add(_handGrenadeExplosionPool);
+        _testBlast = new ConfinedBlast(eftEffects, 5f, Mathf.Sqrt(0.1f));
+
+        var scheduler = eftEffects.gameObject.AddComponent<BlastPoolScheduler>();
+        scheduler.Pools.Add(_handGrenadeBlastPool);
     }
 
-    private static Explosion BuildExplosionMid(Effects eftEffects, GameObject prefab)
+    private static Blast BuildExplosionMid(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
@@ -47,10 +51,10 @@ public class ExplosionController
             ScaleDensity(mainEffects["Dust_Ring"]),
         ];
 
-        return new Explosion(explosionEffectsUp, explosionEffectsAngled);
+        return new Blast(explosionEffectsUp, explosionEffectsAngled);
     }
 
-    private static Explosion BuildExplosionSmall(Effects eftEffects, GameObject prefab)
+    private static Blast BuildExplosionSmall(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
@@ -70,10 +74,10 @@ public class ExplosionController
             ScaleDensity(mainEffects["Sparks"]),
         ];
 
-        return new Explosion(explosionEffectsUp, explosionEffectsAngled);
+        return new Blast(explosionEffectsUp, explosionEffectsAngled);
     }
 
-    private static Explosion BuildExplosionFlashbang(Effects eftEffects, GameObject prefab)
+    private static Blast BuildExplosionFlashbang(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
@@ -92,7 +96,7 @@ public class ExplosionController
             ScaleDensity(mainEffects["Sparks Bright"]),
         ];
 
-        return new Explosion(explosionEffectsUp, explosionEffectsAngled);
+        return new Blast(explosionEffectsUp, explosionEffectsAngled);
     }
     
     private static EffectBundle ScaleDensity(EffectBundle effects, float scale = 1f)
@@ -137,15 +141,16 @@ public class ExplosionController
 
         if (name.StartsWith("Flashbang"))
         {
-            _flashbangExplosionPool.Emit(position, normal);
+            _flashbangBlastPool.Emit(position, normal);
         }
         else if (name.StartsWith("small") || name.StartsWith("Small"))
         {
-            _smallGrenadeExplosionPool.Emit(position, normal);
+            _smallGrenadeBlastPool.Emit(position, normal);
+            _testBlast.Emit(position, normal);
         }
         else
         {
-            _handGrenadeExplosionPool.Emit(position, normal);
+            _handGrenadeBlastPool.Emit(position, normal);
         }
     }
 }

@@ -6,9 +6,9 @@ using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Explosion;
 
-public class ExplosionPoolScheduler : MonoBehaviour
+public class BlastPoolScheduler : MonoBehaviour
 {
-    public readonly List<ExplosionPool> Pools = [];
+    public readonly List<BlastPool> Pools = [];
     
     public void Update()
     {
@@ -19,14 +19,14 @@ public class ExplosionPoolScheduler : MonoBehaviour
     }
 }
 
-public class ExplosionPool
+public class BlastPool
 {
     private  readonly float _lifetime;
 
-    private readonly List<Explosion> _pool;
+    private readonly List<Blast> _pool;
     private readonly Queue<Emission> _active;
 
-    public ExplosionPool(Effects eftEffects, GameObject prefab, Func<Effects, GameObject, Explosion> builder, int copyCount, float lifetime)
+    public BlastPool(Effects eftEffects, GameObject prefab, Func<Effects, GameObject, Blast> builder, int copyCount, float lifetime)
     {
         _lifetime = lifetime;
         
@@ -63,7 +63,7 @@ public class ExplosionPool
 
     public void Emit(Vector3 position, Vector3 normal)
     {
-        Explosion effect;
+        Blast effect;
     
         if (_pool.Count > 0)
         {
@@ -85,9 +85,9 @@ public class ExplosionPool
         _active.Enqueue(new Emission(effect, Time.time));
     }
 
-    private struct Emission(Explosion effect, float timestamp)
+    private struct Emission(Blast effect, float timestamp)
     {
-        public readonly Explosion Effect = effect;
+        public readonly Blast Effect = effect;
         public readonly float Timestamp = timestamp;
     }
 }

@@ -8,44 +8,51 @@ namespace HollywoodFX.Explosion;
 
 public class RadialRaycastBatch : IDisposable
 {
-    private JobHandle _jobHandle;
+    public Vector3 Origin;
+    public NativeArray<RaycastCommand> Commands;
+    public NativeArray<RaycastHit> Results;
+    public readonly int RayCount;
+    public JobHandle JobHandle;
+
     private bool _isDisposed;
 
     private readonly float _radius;
     private readonly LayerMask _layerMask;
     private readonly int _minCommandsPerJob;
-
-    public NativeArray<RaycastCommand> Commands;
-    public NativeArray<RaycastHit> Results;
-    public readonly int RayCount;
     
     public RadialRaycastBatch(int rayCount, LayerMask layerMask, float radius = 5f, int minCommandsPerJob=128)
     {
-        this.RayCount = Mathf.Max(3, rayCount);
         _radius = radius;
         _layerMask = layerMask;
         _minCommandsPerJob = minCommandsPerJob;
 
+        RayCount = Mathf.Max(3, rayCount);
         Commands = new NativeArray<RaycastCommand>(RayCount, Allocator.Persistent);
         Results = new NativeArray<RaycastHit>(RayCount, Allocator.Persistent);
     }
     
-    public JobHandle ScheduleRaycasts(Vector3 origin, Vector3 normal)
+    public void ScheduleRaycasts(Vector3 origin, Vector3 normal)
     {
-        GenerateHemisphericalDirections(origin, normal);
+        Origin = origin;
+        
+        GenerateHemisphericalDirections(normal);
 
-        _jobHandle = RaycastCommand.ScheduleBatch(Commands, Results, _minCommandsPerJob);
-        return _jobHandle;
+        JobHandle = RaycastCommand.ScheduleBatch(Commands, Results, _minCommandsPerJob);
+    }
+
+    public void Complete()
+    {
+        JobHandle.Complete();
     }
     
-    private void GenerateHemisphericalDirections(Vector3 origin, Vector3 upDirection)
+    private void GenerateHemisphericalDirections(Vector3 normal)
     {
         var query = new QueryParameters(_layerMask);
         
         for (var i = 0; i < RayCount; i++)
         {
-            var direction = GenerateUniformHemisphereDirection(i, RayCount, upDirection);
-            Commands[i] = new RaycastCommand(origin, direction, query, _radius);
+            var direction = GenerateUniformHemisphereDirection(i, RayCount, normal);
+            Commands[i] = new RaycastCommand(Origin, direction, query, _radius);
         }
     }
 

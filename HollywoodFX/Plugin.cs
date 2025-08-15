@@ -133,7 +133,6 @@ public class Plugin : BaseUnityPlugin
         new EffectsAwakePrefixPatch().Enable();
         new EffectsAwakePostfixPatch().Enable();
         new BulletImpactPatch().Enable();
-        new EffectsEmitPatch().Enable();
         new TextureDecalsPainterVisCheckPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
