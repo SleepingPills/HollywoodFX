@@ -23,7 +23,7 @@ public class BlastController
         _smallGrenadeBlastPool = new BlastPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
         _flashbangBlastPool = new BlastPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
 
-        _testBlast = new ConfinedBlast(eftEffects, 5f, Mathf.Sqrt(0.1f));
+        _testBlast = new ConfinedBlast(eftEffects, 6f, Mathf.Sqrt(0.125f));
 
         var scheduler = eftEffects.gameObject.AddComponent<BlastPoolScheduler>();
         scheduler.Pools.Add(_handGrenadeBlastPool);
@@ -146,11 +146,12 @@ public class BlastController
         else if (name.StartsWith("small") || name.StartsWith("Small"))
         {
             _smallGrenadeBlastPool.Emit(position, normal);
-            _testBlast.Emit(position, normal);
         }
         else
         {
             _handGrenadeBlastPool.Emit(position, normal);
         }
+        
+        _testBlast.Emit(position, normal);
     }
 }

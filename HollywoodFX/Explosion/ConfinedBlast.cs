@@ -6,6 +6,14 @@ using UnityEngine;
 
 namespace HollywoodFX.Explosion;
 
+/*
+ * TODO:
+ * Ring will contain dust puffs.
+ * Weight the amount of puffs and speed based on the length of the cell vector. Cell vectors > than 90% of the radius will get a speed boost. We want to
+ * emit about 1 puff per 1.5 meters of size.
+ * We'll emit puffs for each ring cell, and we'll pick randomly from the 3 available puffs (or just rotate through them).
+ */
+
 public class ConfinedBlast(Effects eftEffects, float radius, float granularity)
 {
     private readonly Confinement _confinement = new(GClass3449.HitMask, radius, granularity);
@@ -17,7 +25,7 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity)
     
     private IEnumerator Detonate(Vector3 origin, Vector3 normal)
     {
-        _confinement.Schedule(origin, normal);
+        _confinement.Schedule(origin, Vector3.up);
         yield return null;
         _confinement.Complete();
         

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Comfort.Common;
 using DeferredDecals;
@@ -86,8 +85,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
             if (decalRenderer == null) return;
 
             var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
-            var bleedingDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_bleedingDecal")
-                .GetValue<DeferredDecalRenderer.SingleDecal>();
+            var bleedingDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
 
             if (bleedingDecalOrig == null || bleedingDecalNew == null) return;
 
@@ -98,8 +96,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
             bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
 
             var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
-            var splatterDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_environmentBlood")
-                .GetValue<DeferredDecalRenderer.SingleDecal>();
+            var splatterDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
 
             if (splatterDecalOrig == null || splatterDecalNew == null) return;
 
@@ -232,5 +229,30 @@ public class EffectsAwakePostfixPatch : ModulePatch
             Plugin.Log.LogError($"EffectsAwakePostfixPatch Exception: {e}");
             throw;
         }
+    }
+}
+
+public class EffectsEmitPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        // Need to disambiguate the correct emit method
+        return typeof(Effects).GetMethod(nameof(Effects.Emit),
+        [
+            typeof(MaterialType), typeof(BallisticCollider), typeof(Vector3), typeof(Vector3), typeof(float),
+            typeof(bool), typeof(bool), typeof(EPointOfView)
+        ]);
+    }
+
+    [PatchPrefix]
+    // ReSharper disable once InconsistentNaming
+    public static void Prefix(Effects __instance, MaterialType material, BallisticCollider hitCollider,
+        Vector3 position, Vector3 normal, float volume, bool isKnife, bool isHitPointVisible, EPointOfView pov)
+    {
+        if (GameWorldAwakePrefixPatch.IsHideout)
+            return;
+
+        ImpactStatic.Kinetics.Update(material, position, normal, isHitPointVisible);
+        Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
     }
 }

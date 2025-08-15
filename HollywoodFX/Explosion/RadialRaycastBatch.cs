@@ -12,8 +12,8 @@ public class RadialRaycastBatch : IDisposable
     public NativeArray<RaycastCommand> Commands;
     public NativeArray<RaycastHit> Results;
     public readonly int RayCount;
-    public JobHandle JobHandle;
 
+    private JobHandle _jobHandle;
     private bool _isDisposed;
 
     private readonly float _radius;
@@ -37,12 +37,12 @@ public class RadialRaycastBatch : IDisposable
         
         GenerateHemisphericalDirections(normal);
 
-        JobHandle = RaycastCommand.ScheduleBatch(Commands, Results, _minCommandsPerJob);
+        _jobHandle = RaycastCommand.ScheduleBatch(Commands, Results, _minCommandsPerJob);
     }
 
     public void Complete()
     {
-        JobHandle.Complete();
+        _jobHandle.Complete();
     }
     
     private void GenerateHemisphericalDirections(Vector3 normal)

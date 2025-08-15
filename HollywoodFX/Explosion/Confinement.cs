@@ -18,14 +18,6 @@ public struct Cell
     public bool Occupied;
 }
 
-/*
- * TODO:
- * Ring will contain dust puffs.
- * Weight the amount of puffs and speed based on the length of the cell vector. Cell vectors > than 90% of the radius will get a speed boost. We want to
- * emit about 1 puff per 1.5 meters of size.
- * We'll emit puffs for each ring cell, and we'll pick randomly from the 3 available puffs (or just rotate through them).
- */
-
 public class Grid
 {
     public readonly List<Vector3Int> Entries;
@@ -133,13 +125,13 @@ public class Confinement
         var rayCount = CalculateRayCountForHemisphere(radius, spacing);
         _raycastBatch = new RadialRaycastBatch(rayCount, layerMask, radius);
         var gridSize = 2 * Mathf.CeilToInt(radius) + 1;
-        Up = new Grid(gridSize, 2);
-        Ring = new Grid(gridSize, 2);
+        Up = new Grid(gridSize, 3);
+        Ring = new Grid(gridSize, 3);
     }
 
     public void Schedule(Vector3 origin, Vector3 normal)
     {
-        _raycastBatch.ScheduleRaycasts(origin, normal);
+        _raycastBatch.ScheduleRaycasts(origin + 0.05f * normal, normal);
     }
 
     public void Complete()
@@ -147,7 +139,7 @@ public class Confinement
         _raycastBatch.Complete();
 
         var origin = _raycastBatch.Origin;
-        var threshLongRange = _radius * 0.9f;
+        var threshLongRange = _radius * 0.75f;
         
         for (var i = 0; i < _raycastBatch.RayCount; i++)
         {
@@ -159,7 +151,7 @@ public class Confinement
             var distance = Vector3.Distance(origin, coords);
             var angle = Vector3.Angle(Vector3.up, coords - origin);
             
-            if (distance >= threshLongRange & angle >= 45)
+            if (distance >= threshLongRange && angle <= 75)
             {
                 Up.Add(origin, coords);
             }
