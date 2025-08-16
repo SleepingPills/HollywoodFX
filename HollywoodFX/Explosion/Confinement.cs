@@ -22,7 +22,7 @@ public class Grid
 {
     public readonly List<Vector3Int> Entries;
     public readonly Cell[,,] Cells;
-    
+
     private readonly Vector3Int _sizeVector;
     private readonly int _radius;
     private readonly float _rounding;
@@ -33,7 +33,7 @@ public class Grid
         _radius = Mathf.CeilToInt(radius / rounding);
         var size = 2 * _radius + 1;
         var cellCount = size * size * size;
-        
+
         Entries = new(cellCount);
         Cells = new Cell[size, size, size];
 
@@ -88,22 +88,22 @@ public class Grid
         // Clear out all the entries
         Entries.Clear();
     }
-    
+
     public List<Vector3Int> Sample(int count)
     {
         if (count > Entries.Count)
             count = Entries.Count;
-        
+
         if (count <= 0)
             return Entries;
-        
+
         // Partial Fisher-Yates: only shuffle the first 'count' positions
         for (var i = 0; i < count; i++)
         {
             var randomIndex = Random.Range(i, Entries.Count);
             (Entries[i], Entries[randomIndex]) = (Entries[randomIndex], Entries[i]);
         }
-        
+
         // First 'count' elements are now the random sample
         return Entries;
     }
@@ -113,12 +113,13 @@ public class Confinement
 {
     public readonly Grid Up;
     public readonly Grid Ring;
+    public readonly Grid Confined;
 
     public RadialRaycastBatch raycastBatch => _raycastBatch;
 
     private readonly float _radius;
     private readonly RadialRaycastBatch _raycastBatch;
-    
+
     public Confinement(LayerMask layerMask, float radius, float spacing)
     {
         _radius = radius;
@@ -126,6 +127,7 @@ public class Confinement
         _raycastBatch = new RadialRaycastBatch(rayCount, layerMask, radius);
         Up = new Grid(radius, 3);
         Ring = new Grid(radius, 2);
+        Confined = new Grid(radius, 1.5f);
     }
 
     public void Schedule(Vector3 origin, Vector3 normal)
@@ -139,7 +141,8 @@ public class Confinement
 
         var origin = _raycastBatch.Origin;
         var threshLongRange = _radius * 0.75f;
-        
+        var threshConfined = _radius * 0.9f;
+
         for (var i = 0; i < _raycastBatch.RayCount; i++)
         {
             var command = _raycastBatch.Commands[i];
@@ -149,10 +152,15 @@ public class Confinement
 
             var distance = Vector3.Distance(origin, coords);
             var angle = Vector3.Angle(Vector3.up, coords - origin);
-            
+
             if (distance >= threshLongRange && angle <= 75)
             {
                 Up.Add(origin, coords);
+            }
+
+            if (distance >= threshConfined && angle is >= 60 and <= 80)
+            {
+                Confined.Add(origin, coords);
             }
 
             if (angle > 80)
@@ -166,8 +174,9 @@ public class Confinement
     {
         Up.Clear();
         Ring.Clear();
+        Confined.Clear();
     }
-    
+
     private static int CalculateRayCountForHemisphere(float radius, float spacing)
     {
         return CalculateRayCountForSphere(radius, spacing) / 2;
