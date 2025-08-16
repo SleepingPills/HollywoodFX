@@ -25,19 +25,19 @@ public class Grid
     
     private readonly Vector3Int _sizeVector;
     private readonly int _radius;
-    private readonly int _rounding;
+    private readonly float _rounding;
 
-    public Grid(int radius, int rounding)
+    public Grid(float radius, float rounding)
     {
         // Add a bit of buffer around the desired size
-        var size = 2 * radius + 1;
+        _radius = Mathf.CeilToInt(radius / rounding);
+        var size = 2 * _radius + 1;
         var cellCount = size * size * size;
         
         Entries = new(cellCount);
         Cells = new Cell[size, size, size];
 
         _rounding = rounding;
-        _radius = Mathf.CeilToInt(radius) + 1;
         _sizeVector = new Vector3Int(size, size, size);
     }
 
@@ -48,9 +48,9 @@ public class Grid
         var coords = position - origin;
         // Need to offset the grid coordinates so that we get rid of -ve vector components and everything is in the +ve quadrant of the grid.
         var coordsInt = new Vector3Int(
-            Mathf.RoundToInt(coords.x / _rounding) * _rounding + _radius,
-            Mathf.RoundToInt(coords.y / _rounding) * _rounding + _radius,
-            Mathf.RoundToInt(coords.z / _rounding) * _rounding + _radius
+            Mathf.RoundToInt(coords.x / _rounding) + _radius,
+            Mathf.RoundToInt(coords.y / _rounding) + _radius,
+            Mathf.RoundToInt(coords.z / _rounding) + _radius
         );
 
         // Ensure we don't go out of bounds
@@ -124,9 +124,8 @@ public class Confinement
         _radius = radius;
         var rayCount = CalculateRayCountForHemisphere(radius, spacing);
         _raycastBatch = new RadialRaycastBatch(rayCount, layerMask, radius);
-        var gridSize = 2 * Mathf.CeilToInt(radius) + 1;
-        Up = new Grid(gridSize, 3);
-        Ring = new Grid(gridSize, 3);
+        Up = new Grid(radius, 3);
+        Ring = new Grid(radius, 2);
     }
 
     public void Schedule(Vector3 origin, Vector3 normal)
@@ -156,7 +155,7 @@ public class Confinement
                 Up.Add(origin, coords);
             }
 
-            if (angle > 60)
+            if (angle > 80)
             {
                 Ring.Add(origin, coords);
             }

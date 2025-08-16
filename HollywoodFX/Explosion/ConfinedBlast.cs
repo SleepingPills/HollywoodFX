@@ -41,6 +41,10 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity)
         foreach (var coords in _confinement.Ring.Entries)
         {
             var cell = _confinement.Ring.Cells[coords.x, coords.y, coords.z];
+            
+            if (cell.Count < 4)
+                continue;
+            
             var countScale = Mathf.InverseLerp(1f, 10f, cell.Count);
             
             ConsoleScreen.Log($"Ring Grid Cell pos: {cell.Position} angle: {Vector3.Angle(Vector3.up, cell.Position - origin)} count: {cell.Count}");
