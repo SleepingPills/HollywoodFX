@@ -175,8 +175,7 @@ public class Confinement
         _raycastBatch.Complete();
 
         var origin = _raycastBatch.Origin;
-        var threshLongRange = _radius * 0.75f;
-        var threshConfined = _radius * 0.75f;
+        var threshold = _radius * 0.75f;
 
         for (var i = 0; i < _raycastBatch.RayCount; i++)
         {
@@ -188,16 +187,18 @@ public class Confinement
             var distance = Vector3.Distance(origin, coords);
             var angle = Vector3.Angle(Vector3.up, coords - origin);
 
-            if (distance >= threshLongRange && angle <= 75)
+            if (distance >= threshold)
             {
-                Up.Add(origin, coords);
+                if (angle <= 75)
+                {
+                    Up.Add(origin, coords);
+                }
+                if (angle is >= 60 and <= 80)
+                {
+                    Confined.Add(origin, coords);
+                }
             }
-
-            if (distance >= threshConfined && angle is >= 60 and <= 80)
-            {
-                Confined.Add(origin, coords);
-            }
-
+            
             if (angle > 80)
             {
                 Ring.Add(origin, coords);

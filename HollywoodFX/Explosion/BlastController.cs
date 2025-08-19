@@ -18,12 +18,14 @@ public class BlastController
         var expMidPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Mid");
         var expSmallPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
         var expFlashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
+        var expDynPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
 
         _handGrenadeBlastPool = new BlastPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
         _smallGrenadeBlastPool = new BlastPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
         _flashbangBlastPool = new BlastPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
 
-        _testBlast = new ConfinedBlast(eftEffects, 6f, Mathf.Sqrt(0.125f));
+        var dynEffects = EffectBundle.LoadPrefab(eftEffects, expDynPrefab, true);
+        _testBlast = new ConfinedBlast(eftEffects, 6f, Mathf.Sqrt(0.125f), dynEffects["Dust"], dynEffects["Dust_Ring"]);
 
         var scheduler = eftEffects.gameObject.AddComponent<BlastPoolScheduler>();
         scheduler.Pools.Add(_handGrenadeBlastPool);
