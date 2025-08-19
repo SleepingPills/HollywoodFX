@@ -89,13 +89,48 @@ public class Grid
         Entries.Clear();
     }
 
-    public List<Vector3Int> Sample(int count)
+    
+    public void FilterByCount(int minCount)
+    {
+        var writeIndex = 0;
+        var removedCount = 0;
+    
+        // First pass: move all valid elements to the front of the list
+        for (var readIndex = 0; readIndex < Entries.Count; readIndex++)
+        {
+            var coords = Entries[readIndex];
+            
+            if (Cells[coords.x, coords.y, coords.z].Count >= minCount)
+            {
+                // Keep this element - move it to the write position
+                if (writeIndex != readIndex)
+                {
+                    Entries[writeIndex] = Entries[readIndex];
+                }
+                writeIndex++;
+            }
+            else
+            {
+                // This element should be removed
+                removedCount++;
+            }
+        }
+    
+        // Second pass: remove the excess elements from the end
+        // RemoveRange is more efficient than multiple RemoveAt calls
+        if (removedCount > 0)
+        {
+            Entries.RemoveRange(writeIndex, removedCount);
+        }
+    }
+
+    public int Sample(int count)
     {
         if (count > Entries.Count)
-            count = Entries.Count;
+            return Entries.Count;
 
         if (count <= 0)
-            return Entries;
+            return 0;
 
         // Partial Fisher-Yates: only shuffle the first 'count' positions
         for (var i = 0; i < count; i++)
@@ -105,7 +140,7 @@ public class Grid
         }
 
         // First 'count' elements are now the random sample
-        return Entries;
+        return count;
     }
 }
 
@@ -141,7 +176,7 @@ public class Confinement
 
         var origin = _raycastBatch.Origin;
         var threshLongRange = _radius * 0.75f;
-        var threshConfined = _radius * 0.9f;
+        var threshConfined = _radius * 0.75f;
 
         for (var i = 0; i < _raycastBatch.RayCount; i++)
         {
