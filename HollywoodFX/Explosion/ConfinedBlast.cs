@@ -46,7 +46,7 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity, 
         ConfinedEffects(origin);
 
         // TODO: reduce the speed here to 35-45 or something like that
-        EmitDust(dustRing, _confinement.Ring, _confinement.Ring.Entries.Count, origin, 2f, 0.5f, minSpeed: 25f, maxSpeed: 40);
+        EmitDust(dustRing, _confinement.Ring, _confinement.Ring.Entries.Count, origin, 2f, 0.5f, minSpeed: 30f, maxSpeed: 45);
 
         ConsoleScreen.Log($"Long Range cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Up.Entries.Count} cells");
         ConsoleScreen.Log($"Ring Grid cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Ring.Entries.Count} cells");
@@ -99,7 +99,7 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity, 
             {
                 var pick = effect.ParticleSystems[state % (ulong)effect.ParticleSystems.Length];
                 // Scaler as a function of the puff sequence. We start with the slowest puff travelling the shortest distance and end with the fastest.
-                var seqScale = puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j);
+                var seqScale = Mathf.Sqrt(puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j));
                 // Add a bit of randomness to the direction
                 var directionRandom = VectorMath.AddRandomRotation(directionNormalized, randomDegrees);
 
