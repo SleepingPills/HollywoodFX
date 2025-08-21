@@ -129,20 +129,6 @@ public class BloodEffects
             // Emit bleeding if a squirt was not generated
             _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodBleedSize.Value);
         }
-
-        // Other stuff gets emitted only if the flipped normal is angled (otherwise there's no point) 
-        var camDir = Orientation.GetCamDir(flippedNormal);
-
-        if (!camDir.IsSet(CamDir.Angled)) return;
-
-        var worldDir = Orientation.GetWorldDir(flippedNormal);
-        
-        for (var i = 0; i < _puffs.Length; i++)
-        {
-            _puffs[i].Emit(kinetics, camDir, worldDir, position, flippedNormal, mistSizeScale, miscChance);            
-        }
-        
-        _squibs.Emit(kinetics, camDir, worldDir, position, flippedNormal, squibSizeScale, miscChance);
     }
 
     public void EmitBleedout(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)

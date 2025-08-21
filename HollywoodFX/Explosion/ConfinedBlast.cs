@@ -42,11 +42,11 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity, 
             // DebugGizmos.Line(origin, cell.Position, expiretime: 30f, color: new Color(countScale, 0, 0));
         }
 
-        // TODO: reduce the speed here to 35-45 or something like that
-        EmitDust(dustRing, _confinement.Ring, _confinement.Ring.Entries.Count, origin);
-
         // TODO: pass in the shortfall in emitting long range effects (trails, sparks) and emit some through this if possible.
         ConfinedEffects(origin);
+
+        // TODO: reduce the speed here to 35-45 or something like that
+        EmitDust(dustRing, _confinement.Ring, _confinement.Ring.Entries.Count, origin, 2f, 0.5f, minSpeed: 25f, maxSpeed: 40);
 
         ConsoleScreen.Log($"Long Range cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Up.Entries.Count} cells");
         ConsoleScreen.Log($"Ring Grid cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Ring.Entries.Count} cells");
@@ -58,25 +58,28 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity, 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ConfinedEffects(Vector3 origin)
     {
-        // TODO: Make this threshold depend on how much of the ring was emitted, if most of the ring was emitted, halve this threshold
         if (_confinement.Confined.Entries.Count > 35)
             return;
 
         var pickCount = _confinement.Confined.Sample(Random.Range(15, 25));
-        
-        EmitDust(dust, _confinement.Confined, pickCount, origin);
+
+        EmitDust(dust, _confinement.Confined, pickCount, origin, 1.5f);
     }
 
-    private void EmitDust(EffectBundle effect, Grid grid, int count, Vector3 origin, float puffPerDistance = 1f)
+    private void EmitDust(
+        EffectBundle effect, Grid grid, int count, Vector3 origin, float puffPerDistance = 1f, float puffSpread = 0.5f,
+        float minSpeed = 50f, float maxSpeed = 60f
+    )
     {
         const float randomDegrees = 2.5f;
-        
+
+        var puffSpreadInv = 1 - puffSpread;
         var state = (ulong)Random.Range(int.MinValue, int.MaxValue);
 
         for (var i = 0; i < count; i++)
         {
-            var baseSpeed = Random.Range(50f, 60f);
-            
+            var baseSpeed = Random.Range(minSpeed, maxSpeed);
+
             var coords = grid.Entries[i];
             var cell = grid.Cells[coords.x, coords.y, coords.z];
 
@@ -85,9 +88,9 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity, 
             var magnitude = direction.magnitude;
             var lengthScale = Mathf.InverseLerp(0f, radius, magnitude);
 
-            var puffPerCell = Mathf.RoundToInt(magnitude / puffPerDistance);
+            var puffPerCell = Mathf.RoundToInt(magnitude / puffPerDistance) - 1 + (int)(state % 3);
             var seqScaleNorm = puffPerCell - 1f;
-            
+
             // DebugGizmos.Line(origin, cell.Position, expiretime: 30f, color: new Color(0, 0, 1));
             // ConsoleScreen.Log($"Confined ppc: {puffPerCell} lengthscale: {lengthScale}");
 
@@ -96,15 +99,14 @@ public class ConfinedBlast(Effects eftEffects, float radius, float granularity, 
             {
                 var pick = effect.ParticleSystems[state % (ulong)effect.ParticleSystems.Length];
                 // Scaler as a function of the puff sequence. We start with the slowest puff travelling the shortest distance and end with the fastest.
-                var seqScale = 0.25f + 0.75f * Mathf.InverseLerp(0f, seqScaleNorm, j);
+                var seqScale = puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j);
                 // Add a bit of randomness to the direction
                 var directionRandom = VectorMath.AddRandomRotation(directionNormalized, randomDegrees);
-                
+
                 var emitParams = new ParticleSystem.EmitParams
                 {
                     position = origin,
                     velocity = directionRandom * (baseSpeed * lengthScale * seqScale),
-                    
                 };
                 pick.Emit(emitParams, 1);
 

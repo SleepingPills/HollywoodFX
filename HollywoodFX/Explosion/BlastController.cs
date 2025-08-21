@@ -141,18 +141,18 @@ public class BlastController
         if (name.StartsWith("big_round"))
             return;
 
-        if (name.StartsWith("Flashbang"))
-        {
-            _flashbangBlastPool.Emit(position, normal);
-        }
-        else if (name.StartsWith("small") || name.StartsWith("Small"))
-        {
-            _smallGrenadeBlastPool.Emit(position, normal);
-        }
-        else
-        {
-            _handGrenadeBlastPool.Emit(position, normal);
-        }
+        // if (name.StartsWith("Flashbang"))
+        // {
+        //     _flashbangBlastPool.Emit(position, normal);
+        // }
+        // else if (name.StartsWith("small") || name.StartsWith("Small"))
+        // {
+        //     _smallGrenadeBlastPool.Emit(position, normal);
+        // }
+        // else
+        // {
+        //     _handGrenadeBlastPool.Emit(position, normal);
+        // }
         
         _testBlast.Emit(position, normal);
     }
