@@ -24,12 +24,32 @@ public class BlastController
         _smallGrenadeBlastPool = new BlastPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
         _flashbangBlastPool = new BlastPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
 
-        var dynEffects = EffectBundle.LoadPrefab(eftEffects, expDynPrefab, true);
-        _testBlast = new ConfinedBlast(eftEffects, 6f, Mathf.Sqrt(0.125f), dynEffects["Dust"], dynEffects["Dust_Ring"]);
+        _testBlast = BuildExplosionDynamic(eftEffects, expDynPrefab);
 
         var scheduler = eftEffects.gameObject.AddComponent<BlastPoolScheduler>();
         scheduler.Pools.Add(_handGrenadeBlastPool);
     }
+
+    private static ConfinedBlast BuildExplosionDynamic(Effects eftEffects, GameObject prefab)
+    {
+        var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
+
+        EffectBundle[] premade =
+        [
+            ScaleDensity(mainEffects["Fireball"]),
+            mainEffects["Glow"],
+            mainEffects["Splash"],
+            mainEffects["Shockwave"],
+            ScaleDensity(mainEffects["Debris_Burning"]),
+            ScaleDensity(mainEffects["Dust_Linger"]),
+        ];
+
+        return new ConfinedBlast(
+            eftEffects, 6f, Mathf.Sqrt(0.125f),
+            premade, mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"], mainEffects["Dyn_Sparks"]
+        );
+    }
+
 
     private static Blast BuildExplosionMid(Effects eftEffects, GameObject prefab)
     {
@@ -100,7 +120,7 @@ public class BlastController
 
         return new Blast(explosionEffectsUp, explosionEffectsAngled);
     }
-    
+
     private static EffectBundle ScaleDensity(EffectBundle effects, float scale = 1f)
     {
         foreach (var system in effects.ParticleSystems)
@@ -153,7 +173,7 @@ public class BlastController
         // {
         //     _handGrenadeBlastPool.Emit(position, normal);
         // }
-        
-        _testBlast.Emit(position, normal);
+
+        _testBlast.Emit(position);
     }
 }
