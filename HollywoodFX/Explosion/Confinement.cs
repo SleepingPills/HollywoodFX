@@ -140,8 +140,6 @@ public class Confinement
     public readonly Grid Ring;
     public readonly Grid Confined;
 
-    public RadialRaycastBatch raycastBatch => _raycastBatch;
-
     private readonly float _radius;
     private readonly RadialRaycastBatch _raycastBatch;
 
@@ -155,12 +153,12 @@ public class Confinement
         Confined = new Grid(radius, 1.5f);
     }
 
-    public void Schedule(Vector3 origin, Vector3 normal)
+    public void ScheduleMain(Vector3 origin, Vector3 normal)
     {
         _raycastBatch.ScheduleRaycasts(origin + 0.05f * normal, normal);
     }
 
-    public void Complete()
+    public void CompleteMain()
     {
         _raycastBatch.Complete();
 

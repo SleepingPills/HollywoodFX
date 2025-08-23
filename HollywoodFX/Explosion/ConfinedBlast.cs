@@ -53,15 +53,17 @@ public class ConfinedBlast(
     {
         _emitting = true;
 
+        var normal = Vector3.up;
+        
         try
         {
-            _confinement.Schedule(origin, Vector3.up);
+            _confinement.ScheduleMain(origin, normal);
 
             MiscEffects(origin);
 
             yield return _waitEmit;
 
-            _confinement.Complete();
+            _confinement.CompleteMain();
 
             var shortfall = UpEffects(origin);
             ConfinedEffects(origin, shortfall);
@@ -70,12 +72,12 @@ public class ConfinedBlast(
             if (_confinement.Confined.Entries.Count >= 10 && _confinement.Up.Entries.Count >= 6)
             {
                 // Only emit the splash if we are not super confined
-                splash.Emit(origin, Vector3.up, 1f);
+                splash.Emit(origin, normal, 1f);
             }
 
-            ConsoleScreen.Log($"Long Range cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Up.Entries.Count} cells");
-            ConsoleScreen.Log($"Ring Grid cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Ring.Entries.Count} cells");
-            ConsoleScreen.Log($"Confined Grid cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Confined.Entries.Count} cells");
+            ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
+            ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
+            ConsoleScreen.Log($"Confined Grid cells: {_confinement.Confined.Entries.Count} cells");
 
             _confinement.Clear();
         }
