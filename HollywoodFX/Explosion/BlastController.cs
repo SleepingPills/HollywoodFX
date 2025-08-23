@@ -38,15 +38,16 @@ public class BlastController
         [
             ScaleDensity(mainEffects["Fireball"]),
             mainEffects["Glow"],
-            mainEffects["Splash"],
             mainEffects["Shockwave"],
             ScaleDensity(mainEffects["Debris_Burning"]),
+            ScaleDensity(mainEffects["Debris_Generic"]),
             ScaleDensity(mainEffects["Dust_Linger"]),
         ];
 
         return new ConfinedBlast(
             eftEffects, 6f, Mathf.Sqrt(0.125f),
-            premade, mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"], mainEffects["Dyn_Sparks"]
+            premade, mainEffects["Splash"], mainEffects["Dyn_Debris"], mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"],
+            mainEffects["Dyn_Sparks"], mainEffects["Dyn_Sparks_Bright"]
         );
     }
 

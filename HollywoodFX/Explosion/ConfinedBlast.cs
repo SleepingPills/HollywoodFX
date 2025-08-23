@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using EFT.UI;
 using HollywoodFX.Helpers;
@@ -23,13 +24,16 @@ public class ConfinedBlast(
     Effects eftEffects,
     float radius,
     float granularity,
-    EffectBundle[] premade,
+    EffectBundle[] misc,
+    EffectBundle splash,
+    EffectBundle debrisGlow,
     EffectBundle dust,
     EffectBundle dustRing,
-    EffectBundle sparks
+    EffectBundle sparks,
+    EffectBundle sparksBig
 )
 {
-    private bool _emitting = false;
+    private bool _emitting;
     private readonly WaitForSeconds _waitEmit = new(0.115f);
     private readonly Confinement _confinement = new(GClass3449.HitMask, radius, granularity);
 
@@ -37,7 +41,10 @@ public class ConfinedBlast(
     {
         // If we are emitting, do the static effects only and bail out
         if (_emitting)
-            EmitStatic(origin);
+        {
+            MiscEffects(origin);
+            splash.Emit(origin, Vector3.up, 1f);
+        }
 
         eftEffects.StartCoroutine(Detonate(origin));
     }
@@ -50,25 +57,21 @@ public class ConfinedBlast(
         {
             _confinement.Schedule(origin, Vector3.up);
 
-            EmitStatic(origin);
+            MiscEffects(origin);
 
             yield return _waitEmit;
 
             _confinement.Complete();
 
-            foreach (var coords in _confinement.Up.Entries)
-            {
-                var cell = _confinement.Up.Cells[coords.x, coords.y, coords.z];
-                var countScale = Mathf.InverseLerp(1f, 10f, cell.Count);
-
-                // ConsoleScreen.Log($"Long Range Cell pos: {cell.Position} aabb pos: {cell.Bounds.center} aabb size: {cell.Bounds.size.magnitude} count: {cell.Count}");
-                // DebugGizmos.Line(origin, cell.Position, expiretime: 30f, color: new Color(countScale, 0, 0));
-            }
-
-            // TODO: pass in the shortfall in emitting long range effects (trails, sparks) and emit some through this if possible.
-            ConfinedEffects(origin);
-
+            var shortfall = UpEffects(origin);
+            ConfinedEffects(origin, shortfall);
             RingEffects(origin);
+
+            if (_confinement.Confined.Entries.Count >= 10 && _confinement.Up.Entries.Count >= 6)
+            {
+                // Only emit the splash if we are not super confined
+                splash.Emit(origin, Vector3.up, 1f);
+            }
 
             ConsoleScreen.Log($"Long Range cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Up.Entries.Count} cells");
             ConsoleScreen.Log($"Ring Grid cells: {_confinement.raycastBatch.RayCount} rays into {_confinement.Ring.Entries.Count} cells");
@@ -83,112 +86,186 @@ public class ConfinedBlast(
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ConfinedEffects(Vector3 origin)
+    private int UpEffects(Vector3 origin)
+    {
+        var count = Random.Range(3, 7);
+        var samples = _confinement.Up.Pick(count);
+        var debrisEmitter = new ChunkEmitter(debrisGlow);
+        var sparksEmitter = new BigSparkEmitter(sparksBig);
+        
+        for (var i = 0; i < samples.Count; i++)
+        {
+            var sample = samples[i];
+            
+            debrisEmitter.Emit(sample, origin);
+            sparksEmitter.Emit(sample, origin, i);
+        }
+        
+        return samples.Count - count;
+    }
+
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ConfinedEffects(Vector3 origin, int shortfall)
     {
         if (_confinement.Confined.Entries.Count > 35)
             return;
 
-        var pickCount = _confinement.Confined.Sample(Random.Range(15, 25));
+        var samples = _confinement.Confined.Pick(Random.Range(15, 25));
+        var dustEmitter = new DustEmitter(dust, 1.5f, 0.75f, 50f, 60f);
+        var sparksEmitter = new BigSparkEmitter(sparksBig);
+        
+        for (var i = 0; i < samples.Count; i++)
+        {
+            var sample = samples[i];
+            
+            var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
+            
+            dustEmitter.Emit(sample, origin, lengthScale);
+            sparksEmitter.Emit(sample, origin, i);
+        }
 
-        EmitDust(dust, _confinement.Confined, pickCount, origin, 1f, 0.75f);
+        // Bail out if we don't have a shortfall
+        if (shortfall <=0)
+            return;
+        
+        var debrisEmitter = new ChunkEmitter(debrisGlow);
+        
+        for (var i = 0; i < Mathf.Min(shortfall, samples.Count); i++)
+        {
+            var sample = samples[i];
+            debrisEmitter.Emit(sample, origin);
+        }
     }
 
     private void RingEffects(Vector3 origin)
     {
-        if (_confinement.Confined.Entries.Count < 10 && _confinement.Up.Entries.Count < 6)
+        var samples = _confinement.Ring.Pick();
+        var dustEmitter = new DustEmitter(dustRing, 2f, 0.5f, 30f, 45f);
+        var sparksEmitter = new SmallSparkEmitter(sparks);
+        
+        for (var i = 0; i < samples.Count; i++)
         {
-            EmitSparks(_confinement.Ring, origin);
+            var sample = samples[i];
+            
+            var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
+            
+            dustEmitter.Emit(sample, origin, lengthScale);
+            sparksEmitter.Emit(sample, origin, lengthScale, i);
         }
-
-        EmitDust(dustRing, _confinement.Ring, _confinement.Ring.Entries.Count, origin, 2f, 0.5f, minSpeed: 30f, maxSpeed: 45);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void EmitStatic(Vector3 origin)
+    private void MiscEffects(Vector3 origin)
     {
-        for (var i = 0; i < premade.Length; i++)
-            premade[i].Emit(origin, Vector3.up, 1f);
+        for (var i = 0; i < misc.Length; i++)
+            misc[i].Emit(origin, Vector3.up, 1f);
     }
+}
 
-    private void EmitDust(
-        EffectBundle effect, Grid grid, int count, Vector3 origin, float puffPerDistance = 1f, float puffSpread = 0.5f,
-        float minSpeed = 50f, float maxSpeed = 60f
-    )
+public readonly struct ChunkEmitter(EffectBundle effect)
+{
+    private const float RandomDegrees = 2.5f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(Sample sample, Vector3 origin)
     {
-        const float randomDegrees = 2.5f;
+        var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
+        effect.EmitDirect(origin, directionRandom, 1f, 1);
+    }
+}
 
-        var puffSpreadInv = 1 - puffSpread;
-        var state = (ulong)Random.Range(int.MinValue, int.MaxValue);
+public readonly struct BigSparkEmitter(EffectBundle effect)
+{
+    private const float RandomDegrees = 2.5f;
+    private const float MinSpeed = 50f;
+    private const float MaxSpeed = 80f;
 
-        for (var i = 0; i < count; i++)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(Sample sample, Vector3 origin, int pickSeed)
+    {
+        for (var j = 0; j < Random.Range(1, 3); j++)
         {
-            var baseSpeed = Random.Range(minSpeed, maxSpeed);
+            var pick = effect.ParticleSystems[(pickSeed + j) % effect.ParticleSystems.Length];
+            
+            // Add a bit of randomness to the direction
+            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
 
-            var coords = grid.Entries[i];
-            var cell = grid.Cells[coords.x, coords.y, coords.z];
+            var baseSpeed = Random.Range(MinSpeed, MaxSpeed);
 
-            var direction = cell.Position - origin;
-            var directionNormalized = direction.normalized;
-            var magnitude = direction.magnitude;
-            var lengthScale = Mathf.InverseLerp(0f, radius, magnitude);
-
-            var puffPerCell = Mathf.RoundToInt(magnitude / puffPerDistance) - 1 + (int)(state % 3);
-            var seqScaleNorm = puffPerCell - 1f;
-
-            // Emit N puffs, scaling the speed up with each to cover the distance
-            for (var j = 0; j < puffPerCell; j++)
+            var emitParams = new ParticleSystem.EmitParams
             {
-                var pick = effect.ParticleSystems[state % (ulong)effect.ParticleSystems.Length];
-                // Scaler as a function of the puff sequence. We start with the slowest puff travelling the shortest distance and end with the fastest.
-                // NB: apply an sqrt to account for the nonlinear damping effect. 50% speed travels less than 50% of the distance of 100% speed.
-                var seqScale = Mathf.Sqrt(puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j));
-                // Add a bit of randomness to the direction
-                var directionRandom = VectorMath.AddRandomRotation(directionNormalized, randomDegrees);
+                position = origin,
+                velocity = directionRandom * baseSpeed,
+            };
 
-                var emitParams = new ParticleSystem.EmitParams
-                {
-                    position = origin,
-                    velocity = directionRandom * (baseSpeed * lengthScale * seqScale),
-                };
-                pick.Emit(emitParams, 1);
-
-                // xorshift algo: https://en.wikipedia.org/wiki/Xorshift
-                state ^= state << 7;
-                state ^= state >> 9;
-            }
+            pick.Emit(emitParams, 1);
         }
     }
+}
 
-    private void EmitSparks(Grid grid, Vector3 origin)
+public readonly struct SmallSparkEmitter(EffectBundle effect)
+{
+    private const float RandomDegrees = 2.5f;
+    private const float MinSpeed = 50f;
+    private const float MaxSpeed = 80f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(Sample sample, Vector3 origin, float lengthScale, int pickSeed)
     {
-        const float randomDegrees = 5f;
-
-        for (var i = 0; i < grid.Entries.Count; i++)
+        for (var j = 0; j < Random.Range(3, 7); j++)
         {
-            var coords = grid.Entries[i];
-            var cell = grid.Cells[coords.x, coords.y, coords.z];
+            var pick = effect.ParticleSystems[(pickSeed + j) % effect.ParticleSystems.Length];
 
-            var direction = cell.Position - origin;
-            var directionNormalized = direction.normalized;
-            var magnitude = direction.magnitude;
-            var lengthScale = Mathf.InverseLerp(0f, radius, magnitude);
+            // Add a bit of randomness to the direction
+            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
 
-            for (var j = 0; j < Random.Range(3, 7); j++)
+            var baseSpeed = Random.Range(MinSpeed, MaxSpeed);
+
+            var emitParams = new ParticleSystem.EmitParams
             {
-                var pick = sparks.ParticleSystems[(i + j) % sparks.ParticleSystems.Length];
+                position = origin,
+                velocity = directionRandom * (baseSpeed * lengthScale),
+            };
+            
+            pick.Emit(emitParams, 1);
+        }
+    }
+}
 
-                // Add a bit of randomness to the direction
-                var directionRandom = VectorMath.AddRandomRotation(directionNormalized, randomDegrees);
+public struct DustEmitter(EffectBundle effect, float puffPerDistance, float puffSpread, float minSpeed, float maxSpeed)
+{
+    private ulong _randState = (ulong)Random.Range(int.MinValue, int.MaxValue);
+    private readonly float _puffSpreadInv = 1 - puffSpread;
+    private const float RandomDegrees = 2.5f;
 
-                var baseSpeed = Random.Range(10f, 40f);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(Sample sample, Vector3 origin, float lengthScale)
+    {
+        var baseSpeed = Random.Range(minSpeed, maxSpeed);
+        var puffPerCell = Mathf.RoundToInt(sample.Magnitude / puffPerDistance) - 1 + (int)(_randState % 3);
+        var seqScaleNorm = puffPerCell - 1f;
+        
+        // Emit N puffs, scaling the speed up with each to cover the distance
+        for (var j = 0; j < puffPerCell; j++)
+        {
+            var pick = effect.ParticleSystems[_randState % (ulong)effect.ParticleSystems.Length];
+            // Scaler as a function of the puff sequence. We start with the slowest puff travelling the shortest distance and end with the fastest.
+            // NB: apply an sqrt to account for the nonlinear damping effect. 50% speed travels less than 50% of the distance of 100% speed.
+            var seqScale = Mathf.Sqrt(_puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j));
+            // Add a bit of randomness to the direction
+            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
 
-                var emitParams = new ParticleSystem.EmitParams
-                {
-                    position = origin,
-                    velocity = directionRandom * (baseSpeed * lengthScale),
-                };
-                pick.Emit(emitParams, 1);
-            }
+            var emitParams = new ParticleSystem.EmitParams
+            {
+                position = origin,
+                velocity = directionRandom * (baseSpeed * lengthScale * seqScale),
+            };
+            pick.Emit(emitParams, 1);
+
+            // xorshift algo: https://en.wikipedia.org/wiki/Xorshift
+            _randState ^= _randState << 7;
+            _randState ^= _randState >> 9;
         }
     }
 }

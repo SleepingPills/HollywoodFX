@@ -18,11 +18,20 @@ public struct Cell
     public bool Occupied;
 }
 
+public struct Sample
+{
+    public Vector3 Direction;
+    public float Magnitude;
+}
+
 public class Grid
 {
     public readonly List<Vector3Int> Entries;
     public readonly Cell[,,] Cells;
 
+    public Vector3 Origin;
+
+    private readonly List<Sample> _samples;
     private readonly Vector3Int _sizeVector;
     private readonly int _radius;
     private readonly float _rounding;
@@ -34,6 +43,7 @@ public class Grid
         var size = 2 * _radius + 1;
         var cellCount = size * size * size;
 
+        _samples = new(cellCount);
         Entries = new(cellCount);
         Cells = new Cell[size, size, size];
 
@@ -43,9 +53,9 @@ public class Grid
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Add(Vector3 origin, Vector3 position)
+    public void Add(Vector3 position)
     {
-        var coords = position - origin;
+        var coords = position - Origin;
         // Need to offset the grid coordinates so that we get rid of -ve vector components and everything is in the +ve quadrant of the grid.
         var coordsInt = new Vector3Int(
             Mathf.RoundToInt(coords.x / _rounding) + _radius,
@@ -56,7 +66,7 @@ public class Grid
         // Ensure we don't go out of bounds
         coordsInt.Clamp(Vector3Int.zero, _sizeVector);
 
-        var cell = Cells[coordsInt.x, coordsInt.y, coordsInt.z];
+        ref var cell = ref Cells[coordsInt.x, coordsInt.y, coordsInt.z];
 
         if (cell.Occupied)
         {
@@ -72,8 +82,6 @@ public class Grid
             cell.Occupied = true;
             Entries.Add(coordsInt);
         }
-
-        Cells[coordsInt.x, coordsInt.y, coordsInt.z] = cell;
     }
 
     public void Clear()
@@ -87,60 +95,42 @@ public class Grid
 
         // Clear out all the entries
         Entries.Clear();
+        _samples.Clear();
     }
-
     
-    public void FilterByCount(int minCount)
+    public List<Sample> Pick(int count=0)
     {
-        var writeIndex = 0;
-        var removedCount = 0;
-    
-        // First pass: move all valid elements to the front of the list
-        for (var readIndex = 0; readIndex < Entries.Count; readIndex++)
+        _samples.Clear();
+
+        if (count >= Entries.Count || count <= 0)
         {
-            var coords = Entries[readIndex];
-            
-            if (Cells[coords.x, coords.y, coords.z].Count >= minCount)
-            {
-                // Keep this element - move it to the write position
-                if (writeIndex != readIndex)
-                {
-                    Entries[writeIndex] = Entries[readIndex];
-                }
-                writeIndex++;
-            }
-            else
-            {
-                // This element should be removed
-                removedCount++;
-            }
+            count = Entries.Count;
         }
-    
-        // Second pass: remove the excess elements from the end
-        // RemoveRange is more efficient than multiple RemoveAt calls
-        if (removedCount > 0)
+        else
         {
-            Entries.RemoveRange(writeIndex, removedCount);
+            // Partial Fisher-Yates: only shuffle the first 'count' positions
+            for (var i = 0; i < count; i++)
+            {
+                var randomIndex = Random.Range(i, Entries.Count);
+                (Entries[i], Entries[randomIndex]) = (Entries[randomIndex], Entries[i]);
+            }            
         }
-    }
-
-    public int Sample(int count)
-    {
-        if (count > Entries.Count)
-            return Entries.Count;
-
-        if (count <= 0)
-            return 0;
-
-        // Partial Fisher-Yates: only shuffle the first 'count' positions
+        
         for (var i = 0; i < count; i++)
         {
-            var randomIndex = Random.Range(i, Entries.Count);
-            (Entries[i], Entries[randomIndex]) = (Entries[randomIndex], Entries[i]);
+            var coords = Entries[i];
+            ref var cell = ref Cells[coords.x, coords.y, coords.z];
+
+            var ray = cell.Position - Origin;
+            _samples.Add(new Sample
+            {
+                Direction = ray.normalized,
+                Magnitude = ray.magnitude,
+            });
         }
 
         // First 'count' elements are now the random sample
-        return count;
+        return _samples;
     }
 }
 
@@ -176,6 +166,8 @@ public class Confinement
 
         var origin = _raycastBatch.Origin;
         var threshold = _radius * 0.75f;
+        
+        Confined.Origin = Ring.Origin = Up.Origin = origin;
 
         for (var i = 0; i < _raycastBatch.RayCount; i++)
         {
@@ -191,17 +183,17 @@ public class Confinement
             {
                 if (angle <= 75)
                 {
-                    Up.Add(origin, coords);
+                    Up.Add(coords);
                 }
                 if (angle is >= 60 and <= 80)
                 {
-                    Confined.Add(origin, coords);
+                    Confined.Add(coords);
                 }
             }
             
             if (angle > 80)
             {
-                Ring.Add(origin, coords);
+                Ring.Add(coords);
             }
         }
     }
