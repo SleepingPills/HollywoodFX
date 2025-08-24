@@ -51,13 +51,15 @@ public class EffectsWipeDefaultExplosionSystemsPatch : ModulePatch
         foreach (var effect in effects.EffectsArray)
         {
             // Skip non-grenade effects
-            if (!effect.Name.ToLower().Contains("grenade"))
+            var name = effect.Name.ToLower();
+            
+            if (!name.Contains("grenade") && !name.Contains("explosion") && !name.Contains("mine"))
             {
                 Plugin.Log.LogInfo($"Skipping {effect.Name}");
                 continue;
             }
 
-            Plugin.Log.LogInfo($"Found grenade script {effect.Name}");
+            Plugin.Log.LogInfo($"Found explosion script {effect.Name}");
             effect.BasicParticleSystemMediator = null;
             effect.Particles = [];
         }

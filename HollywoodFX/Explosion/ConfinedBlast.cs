@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Runtime.CompilerServices;
 using EFT.UI;
 using HollywoodFX.Helpers;
@@ -10,15 +8,6 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace HollywoodFX.Explosion;
-
-/*
- * TODO:
- * Ring will contain dust puffs.
- * Weight the amount of puffs and speed based on the length of the cell vector. Cell vectors > than 90% of the radius will get a speed boost. We want to
- * emit about 1 puff per 1.5 meters of size.
- * We'll emit puffs for each ring cell, and we'll pick randomly from the 3 available puffs (or just rotate through them).
- *
- */
 
 public class ConfinedBlast(
     Effects eftEffects,
@@ -52,17 +41,16 @@ public class ConfinedBlast(
     private IEnumerator Detonate(Vector3 origin)
     {
         _emitting = true;
-
-        var normal = Vector3.up;
         
         try
         {
-            _confinement.ScheduleMain(origin, normal);
-
+            _confinement.ScheduleNormal(origin);
+            yield return null;
+            _confinement.CompleteNormal();
+            
+            _confinement.ScheduleMain(origin);
             MiscEffects(origin);
-
             yield return _waitEmit;
-
             _confinement.CompleteMain();
 
             var shortfall = UpEffects(origin);
@@ -72,7 +60,7 @@ public class ConfinedBlast(
             if (_confinement.Confined.Entries.Count >= 10 && _confinement.Up.Entries.Count >= 6)
             {
                 // Only emit the splash if we are not super confined
-                splash.Emit(origin, normal, 1f);
+                splash.Emit(origin, _confinement.Normal, 1f);
             }
 
             ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");

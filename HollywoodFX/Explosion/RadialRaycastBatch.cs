@@ -31,21 +31,41 @@ public class RadialRaycastBatch : IDisposable
         Results = new NativeArray<RaycastHit>(RayCount, Allocator.Persistent);
     }
     
-    public void ScheduleRaycasts(Vector3 origin, Vector3 normal)
+    public void ScheduleHemisphere(Vector3 origin, Vector3 normal)
     {
         Origin = origin;
         
-        GenerateHemisphericalDirections(normal);
+        GenerateHemisphereRays(normal);
 
         _jobHandle = RaycastCommand.ScheduleBatch(Commands, Results, _minCommandsPerJob);
     }
 
+    public void ScheduleSphere(Vector3 origin)
+    {
+        Origin = origin;
+        
+        GenerateSphereRays();
+
+        _jobHandle = RaycastCommand.ScheduleBatch(Commands, Results, _minCommandsPerJob);
+    }
+    
     public void Complete()
     {
         _jobHandle.Complete();
     }
+
+    private void GenerateSphereRays()
+    {
+        var query = new QueryParameters(_layerMask);
+        
+        for (var i = 0; i < RayCount; i++)
+        {
+            var direction = GenerateUniformSphereDirection(i, RayCount);
+            Commands[i] = new RaycastCommand(Origin, direction, query, _radius);
+        }
+    }
     
-    private void GenerateHemisphericalDirections(Vector3 normal)
+    private void GenerateHemisphereRays(Vector3 normal)
     {
         var query = new QueryParameters(_layerMask);
         

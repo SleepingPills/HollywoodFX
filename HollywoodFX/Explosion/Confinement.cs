@@ -134,28 +134,50 @@ public class Grid
     }
 }
 
-public class Confinement
+public class Confinement(LayerMask layerMask, float radius, float spacing)
 {
-    public readonly Grid Up;
-    public readonly Grid Ring;
-    public readonly Grid Confined;
+    public readonly Grid Up = new(radius, 3);
+    public readonly Grid Ring = new(radius, 2);
+    public readonly Grid Confined = new(radius, 1.5f);
 
-    private readonly float _radius;
-    private readonly RadialRaycastBatch _raycastBatch;
+    public Vector3 Normal = Vector3.up;
+    
+    private readonly RadialRaycastBatch _normalBatch = new(CalculateRayCountForSphere(2f, 2f * spacing), layerMask, radius);
+    private readonly RadialRaycastBatch _raycastBatch = new(CalculateRayCountForHemisphere(radius, spacing), layerMask, radius);
 
-    public Confinement(LayerMask layerMask, float radius, float spacing)
+    public void ScheduleNormal(Vector3 origin)
     {
-        _radius = radius;
-        var rayCount = CalculateRayCountForHemisphere(radius, spacing);
-        _raycastBatch = new RadialRaycastBatch(rayCount, layerMask, radius);
-        Up = new Grid(radius, 3);
-        Ring = new Grid(radius, 2);
-        Confined = new Grid(radius, 1.5f);
+        _normalBatch.ScheduleSphere(origin);
     }
 
-    public void ScheduleMain(Vector3 origin, Vector3 normal)
+    public void CompleteNormal()
     {
-        _raycastBatch.ScheduleRaycasts(origin + 0.05f * normal, normal);
+        _normalBatch.Complete();
+        
+        var origin = _normalBatch.Origin;
+        Normal = Vector3.zero;
+
+        for (var i = 0; i < _normalBatch.RayCount; i++)
+        {
+            var command = _normalBatch.Commands[i];
+            var result = _normalBatch.Results[i];
+
+            var offset = result.collider == null ? command.distance * command.direction : result.point - origin;
+            
+            Normal += offset;
+        }
+        
+        Normal /= _normalBatch.RayCount;
+        
+        ConsoleScreen.Log($"Norm calc ray count: {_normalBatch.RayCount} offset mag: {Normal.magnitude}");
+        DebugGizmos.Line(origin, origin + Normal, expiretime: 30f, color: new Color(0f, 1f, 0f));
+        
+        Normal.Normalize();
+    }
+    
+    public void ScheduleMain(Vector3 origin)
+    {
+        _raycastBatch.ScheduleHemisphere(origin + 0.05f * Normal, Normal);
     }
 
     public void CompleteMain()
@@ -163,7 +185,7 @@ public class Confinement
         _raycastBatch.Complete();
 
         var origin = _raycastBatch.Origin;
-        var threshold = _radius * 0.75f;
+        var threshold = radius * 0.75f;
         
         Confined.Origin = Ring.Origin = Up.Origin = origin;
 
