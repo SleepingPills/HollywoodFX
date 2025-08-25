@@ -46,7 +46,7 @@ public class BlastController
 
         return new ConfinedBlast(
             eftEffects, 6f, Mathf.Sqrt(0.125f),
-            premade, mainEffects["Splash"], mainEffects["Dyn_Debris"], mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"],
+            premade, mainEffects["Splash"], mainEffects["Dyn_Trail"], mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"],
             mainEffects["Dyn_Sparks"], mainEffects["Dyn_Sparks_Bright"]
         );
     }

@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using EFT.UI;
 using HollywoodFX.Helpers;
-using Systems.Effects;
-using Unity.Jobs;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -27,10 +24,9 @@ public struct Sample
 public class Grid
 {
     public readonly List<Vector3Int> Entries;
-    public readonly Cell[,,] Cells;
-
     public Vector3 Origin;
 
+    private readonly Cell[,,] _cells;
     private readonly List<Sample> _samples;
     private readonly Vector3Int _sizeVector;
     private readonly int _radius;
@@ -45,7 +41,7 @@ public class Grid
 
         _samples = new(cellCount);
         Entries = new(cellCount);
-        Cells = new Cell[size, size, size];
+        _cells = new Cell[size, size, size];
 
         _rounding = rounding;
         _sizeVector = new Vector3Int(size, size, size);
@@ -66,7 +62,7 @@ public class Grid
         // Ensure we don't go out of bounds
         coordsInt.Clamp(Vector3Int.zero, _sizeVector);
 
-        ref var cell = ref Cells[coordsInt.x, coordsInt.y, coordsInt.z];
+        ref var cell = ref _cells[coordsInt.x, coordsInt.y, coordsInt.z];
 
         if (cell.Occupied)
         {
@@ -90,7 +86,7 @@ public class Grid
         for (var i = 0; i < Entries.Count; i++)
         {
             var coords = Entries[i];
-            Cells[coords.x, coords.y, coords.z] = default;
+            _cells[coords.x, coords.y, coords.z] = default;
         }
 
         // Clear out all the entries
@@ -119,7 +115,7 @@ public class Grid
         for (var i = 0; i < count; i++)
         {
             var coords = Entries[i];
-            ref var cell = ref Cells[coords.x, coords.y, coords.z];
+            ref var cell = ref _cells[coords.x, coords.y, coords.z];
 
             var ray = cell.Position - Origin;
             _samples.Add(new Sample
@@ -141,38 +137,50 @@ public class Confinement(LayerMask layerMask, float radius, float spacing)
     public readonly Grid Confined = new(radius, 1.5f);
 
     public Vector3 Normal = Vector3.up;
+    public float Proximity = 1f;
     
-    private readonly RadialRaycastBatch _normalBatch = new(CalculateRayCountForSphere(2f, 2f * spacing), layerMask, radius);
+    private readonly RadialRaycastBatch _proximityBatch = new(CalculateRayCountForSphere(2f, 0.7f), layerMask, radius);
     private readonly RadialRaycastBatch _raycastBatch = new(CalculateRayCountForHemisphere(radius, spacing), layerMask, radius);
 
-    public void ScheduleNormal(Vector3 origin)
+    public void ScheduleProximity(Vector3 origin)
     {
-        _normalBatch.ScheduleSphere(origin);
+        _proximityBatch.ScheduleSphere(origin);
     }
 
-    public void CompleteNormal()
+    public void CompleteProximity()
     {
-        _normalBatch.Complete();
+        _proximityBatch.Complete();
         
-        var origin = _normalBatch.Origin;
-        Normal = Vector3.zero;
+        var origin = _proximityBatch.Origin;
+        var candidate = Vector3.zero;
 
-        for (var i = 0; i < _normalBatch.RayCount; i++)
+        for (var i = 0; i < _proximityBatch.RayCount; i++)
         {
-            var command = _normalBatch.Commands[i];
-            var result = _normalBatch.Results[i];
+            var command = _proximityBatch.Commands[i];
+            var result = _proximityBatch.Results[i];
 
             var offset = result.collider == null ? command.distance * command.direction : result.point - origin;
             
-            Normal += offset;
+            candidate += offset;
         }
         
-        Normal /= _normalBatch.RayCount;
+        candidate /= _proximityBatch.RayCount;
         
-        ConsoleScreen.Log($"Norm calc ray count: {_normalBatch.RayCount} offset mag: {Normal.magnitude}");
+        Proximity = candidate.magnitude;
+        
+        // Force the normal upright unless it's at a very horizontal angle and there's nothing nearby blocking it
+        if (Vector3.Angle(Vector3.up, candidate) <= 60f || Proximity <= 0.5f)
+        {
+            Normal = Vector3.up;
+        }
+        else
+        {
+            Normal = candidate;
+            Normal.Normalize();
+        }
+        
+        ConsoleScreen.Log($"Norm calc ray count: {_proximityBatch.RayCount} offset mag: {Proximity}");
         DebugGizmos.Line(origin, origin + Normal, expiretime: 30f, color: new Color(0f, 1f, 0f));
-        
-        Normal.Normalize();
     }
     
     public void ScheduleMain(Vector3 origin)
@@ -197,11 +205,11 @@ public class Confinement(LayerMask layerMask, float radius, float spacing)
             var coords = result.collider == null ? origin + command.distance * command.direction : result.point;
 
             var distance = Vector3.Distance(origin, coords);
-            var angle = Vector3.Angle(Vector3.up, coords - origin);
+            var angle = Vector3.Angle(Normal, coords - origin);
 
             if (distance >= threshold)
             {
-                if (angle <= 75)
+                if (angle <= 60)
                 {
                     Up.Add(coords);
                 }

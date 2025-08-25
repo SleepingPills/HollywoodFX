@@ -45,6 +45,22 @@ public class EffectBundle(ParticleSystem[] particleSystems)
         pick.Emit(count);
     }
 
+    public void Shuffle(int count=0)
+    {
+        if (count >= ParticleSystems.Length || count <= 0)
+        {
+            count = ParticleSystems.Length;
+        }
+        
+        // Partial Fisher-Yates: only shuffle the first 'count' positions
+        for (var i = 0; i < count; i++)
+        {
+            var randomIndex = Random.Range(i, ParticleSystems.Length);
+            (ParticleSystems[i], ParticleSystems[randomIndex]) = (ParticleSystems[randomIndex], ParticleSystems[i]);
+        }
+    }
+
+
     public static EffectBundle Merge(params EffectBundle[] bundles)
     {
         return new EffectBundle(bundles.SelectMany(b => b.ParticleSystems).ToArray());

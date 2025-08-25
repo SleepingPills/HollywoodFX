@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using EFT.UI;
 using HollywoodFX.Helpers;
@@ -15,7 +16,7 @@ public class ConfinedBlast(
     float granularity,
     EffectBundle[] misc,
     EffectBundle splash,
-    EffectBundle debrisGlow,
+    EffectBundle trail,
     EffectBundle dust,
     EffectBundle dustRing,
     EffectBundle sparks,
@@ -31,7 +32,7 @@ public class ConfinedBlast(
         // If we are emitting, do the static effects only and bail out
         if (_emitting)
         {
-            MiscEffects(origin);
+            MiscEffects(origin, Vector3.up);
             splash.Emit(origin, Vector3.up, 1f);
         }
 
@@ -44,22 +45,27 @@ public class ConfinedBlast(
         
         try
         {
-            _confinement.ScheduleNormal(origin);
+            _confinement.ScheduleProximity(origin);
             yield return null;
-            _confinement.CompleteNormal();
+            _confinement.CompleteProximity();
             
             _confinement.ScheduleMain(origin);
-            MiscEffects(origin);
+            MiscEffects(origin, _confinement.Normal);
             yield return _waitEmit;
             _confinement.CompleteMain();
 
-            var shortfall = UpEffects(origin);
-            ConfinedEffects(origin, shortfall);
+            var trailCount = Random.Range(3, 7);
+            trail.Shuffle(trailCount);
+            var trailEmitter = new TrailEmitter(trail, trailCount);
+            
+            // Has to be a ref otherwise the struct gets copied (since it's a value type).
+            UpEffects(origin, ref trailEmitter);
+            ConfinedEffects(origin, ref trailEmitter);
             RingEffects(origin);
 
-            if (_confinement.Confined.Entries.Count >= 10 && _confinement.Up.Entries.Count >= 6)
+            // Only emit the splash if we are not super confined
+            if (_confinement.Proximity >= 0.75f)
             {
-                // Only emit the splash if we are not super confined
                 splash.Emit(origin, _confinement.Normal, 1f);
             }
 
@@ -76,31 +82,26 @@ public class ConfinedBlast(
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int UpEffects(Vector3 origin)
+    private void UpEffects(Vector3 origin, ref TrailEmitter trailEmitter)
     {
-        var count = Random.Range(3, 7);
+        var count = Random.Range(10, 15);
         var samples = _confinement.Up.Pick(count);
-        var debrisEmitter = new ChunkEmitter(debrisGlow);
         var sparksEmitter = new BigSparkEmitter(sparksBig);
         
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
             
-            debrisEmitter.Emit(sample, origin);
             sparksEmitter.Emit(sample, origin, i);
         }
         
-        return samples.Count - count;
+        trailEmitter.Emit(samples, origin);
     }
 
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ConfinedEffects(Vector3 origin, int shortfall)
+    private void ConfinedEffects(Vector3 origin, ref TrailEmitter trailEmitter)
     {
-        if (_confinement.Confined.Entries.Count > 35)
-            return;
-
         var samples = _confinement.Confined.Pick(Random.Range(15, 25));
         var dustEmitter = new DustEmitter(dust, 1.5f, 0.75f, 50f, 60f);
         var sparksEmitter = new BigSparkEmitter(sparksBig);
@@ -115,17 +116,8 @@ public class ConfinedBlast(
             sparksEmitter.Emit(sample, origin, i);
         }
 
-        // Bail out if we don't have a shortfall
-        if (shortfall <=0)
-            return;
-        
-        var debrisEmitter = new ChunkEmitter(debrisGlow);
-        
-        for (var i = 0; i < Mathf.Min(shortfall, samples.Count); i++)
-        {
-            var sample = samples[i];
-            debrisEmitter.Emit(sample, origin);
-        }
+        // Emit any leftover trails
+        trailEmitter.Emit(samples, origin);
     }
 
     private void RingEffects(Vector3 origin)
@@ -146,22 +138,42 @@ public class ConfinedBlast(
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void MiscEffects(Vector3 origin)
+    private void MiscEffects(Vector3 origin, Vector3 normal)
     {
         for (var i = 0; i < misc.Length; i++)
-            misc[i].Emit(origin, Vector3.up, 1f);
+            misc[i].Emit(origin, normal, 1f);
     }
 }
 
-public readonly struct ChunkEmitter(EffectBundle effect)
+public struct TrailEmitter(EffectBundle effect, int count)
 {
+    private int _iter = 0;
+    private readonly ParticleSystem[] _particles = effect.ParticleSystems;
+    private readonly int _limit = Mathf.Min(effect.ParticleSystems.Length, count);
     private const float RandomDegrees = 2.5f;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(Sample sample, Vector3 origin)
+    public void Emit(List<Sample> samples, Vector3 origin)
     {
-        var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
-        effect.EmitDirect(origin, directionRandom, 1f, 1);
+        // Iterate through the samples until we reach the target iteration count
+        for (var i = 0; i < samples.Count; i++)
+        {
+            if (_iter >= _limit)
+                break;
+            
+            var sample = samples[i];
+            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
+            var rotation = Quaternion.LookRotation(directionRandom);
+
+            var pick = _particles[_iter];
+            pick.transform.position = origin;
+            pick.transform.rotation = rotation;
+            pick.Play(true);
+            
+            ConsoleScreen.Log($"Emitted {_iter}/{_limit} sample {i}.");
+            
+            _iter++;
+        }
     }
 }
 
