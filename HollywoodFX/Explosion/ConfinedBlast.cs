@@ -15,7 +15,9 @@ public class ConfinedBlast(
     float radius,
     float granularity,
     EffectBundle[] misc,
-    EffectBundle splash,
+    EffectBundle splashUp,
+    EffectBundle splashGeneric,
+    EffectBundle splashFront,
     EffectBundle trailMain,
     EffectBundle trailSparks,
     EffectBundle dust,
@@ -34,7 +36,7 @@ public class ConfinedBlast(
         if (_emitting)
         {
             MiscEffects(origin, Vector3.up);
-            splash.Emit(origin, Vector3.up, 1f);
+            EmitSplash(origin, Vector3.up);
         }
 
         eftEffects.StartCoroutine(Detonate(origin));
@@ -59,12 +61,7 @@ public class ConfinedBlast(
             UpEffects(origin);
             ConfinedEffects(origin);
             RingEffects(origin);
-
-            // Only emit the splash if we are not super confined
-            if (_confinement.Proximity >= 0.4f)
-            {
-                splash.Emit(origin, _confinement.Normal, 1f);
-            }
+            EmitSplash(origin, _confinement.Normal);
 
             ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
             ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
@@ -78,7 +75,6 @@ public class ConfinedBlast(
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void UpEffects(Vector3 origin)
     {
         var count = Random.Range(10, 15);
@@ -100,7 +96,6 @@ public class ConfinedBlast(
     }
 
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ConfinedEffects(Vector3 origin)
     {
         var samples = _confinement.Confined.Pick(Random.Range(15, 25));
@@ -138,6 +133,31 @@ public class ConfinedBlast(
             
             dustEmitter.Emit(sample, origin, lengthScale);
             sparksEmitter.Emit(sample, origin, lengthScale, i);
+        }
+    }
+
+    private void EmitSplash(Vector3 origin, Vector3 normal)
+    {
+        var camDir = Orientation.GetCamDir(normal);
+
+        if (camDir.IsSet(CamDir.Front))
+            splashFront.Emit(origin, _confinement.Normal, 1f);
+        
+        // Don't emit the vertical splash in very confined spaces
+        if (!(_confinement.Proximity >= 0.4f)) return;
+        
+        var adjNormal = Orientation.GetNormOffset(normal, camDir);
+        var worldDir = Orientation.GetWorldDir(adjNormal);
+
+        if (worldDir.IsSet(WorldDir.Up) && Random.Range(0f, 1f) <= 0.5f)
+        {
+            // Emit the up facing splash
+            splashUp.Emit(origin, adjNormal, 1f);
+        }
+        else
+        {
+            // Emit a generic splash
+            splashGeneric.Emit(origin, adjNormal, 1f);
         }
     }
 

@@ -33,7 +33,7 @@ public static class OrientationEnumExtensions
     {
         return (self & flag) == flag;
     }
-    
+
     public static bool IsSet(this WorldDir self, WorldDir flag)
     {
         return (self & flag) == flag;
@@ -44,26 +44,25 @@ public static class Orientation
 {
     private const float FrontAngle = 107.5f;
     private const float FrontAngleInv = 180f - FrontAngle;
-    
+
     private const float AngledAngle = 170.0f;
 
     private const float AdjustmentAngle = 40f;
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 GetNormOffset(Vector3 normal, CamDir camDir)
     {
         if (!camDir.IsSet(CamDir.Front) || !camDir.IsSet(CamDir.Angled)) return normal;
-        
+
         var camera = CameraClass.Instance.Camera;
         var backward = -camera.transform.forward;
         var angle = Vector3.Angle(backward, normal);
         var adjustment = Mathf.Min(FrontAngleInv - angle, AdjustmentAngle);
-            
-        return adjustment <= 1e-3f ? normal : VectorMath.IncreaseAngleBetweenVectors(backward, normal, adjustment);
 
+        return adjustment <= 1e-3f ? normal : VectorMath.IncreaseAngleBetweenVectors(backward, normal, adjustment);
     }
 
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CamDir GetCamDir(Vector3 normal)
     {
