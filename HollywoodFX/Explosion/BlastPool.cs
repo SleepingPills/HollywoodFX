@@ -6,27 +6,32 @@ using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Explosion;
 
-public class BlastPoolScheduler : MonoBehaviour
+public class BlastPoolScheduler<T> : MonoBehaviour where T : IBlast
 {
-    public readonly List<BlastPool> Pools = [];
+    private readonly List<BlastPool<T>> _pools = [];
+
+    public void Add(BlastPool<T> pool)
+    {
+        _pools.Add(pool);
+    }
     
     public void Update()
     {
-        for (var i = 0; i < Pools.Count; i++)
+        for (var i = 0; i < _pools.Count; i++)
         {
-            Pools[i].Update();
+            _pools[i].Update();
         }
     }
 }
 
-public class BlastPool
+public class BlastPool<T> where T : IBlast
 {
     private  readonly float _lifetime;
 
-    private readonly List<Blast> _pool;
+    private readonly List<T> _pool;
     private readonly Queue<Emission> _active;
 
-    public BlastPool(Effects eftEffects, GameObject prefab, Func<Effects, GameObject, Blast> builder, int copyCount, float lifetime)
+    public BlastPool(Effects eftEffects, GameObject prefab, Func<Effects, GameObject, T> builder, int copyCount, float lifetime)
     {
         _lifetime = lifetime;
         
@@ -63,7 +68,7 @@ public class BlastPool
 
     public void Emit(Vector3 position, Vector3 normal)
     {
-        Blast effect;
+        T effect;
     
         if (_pool.Count > 0)
         {
@@ -85,9 +90,9 @@ public class BlastPool
         _active.Enqueue(new Emission(effect, Time.time));
     }
 
-    private struct Emission(Blast effect, float timestamp)
+    private struct Emission(T effect, float timestamp)
     {
-        public readonly Blast Effect = effect;
+        public readonly T Effect = effect;
         public readonly float Timestamp = timestamp;
     }
 }

@@ -4,33 +4,39 @@ using UnityEngine;
 
 namespace HollywoodFX.Explosion;
 
+// Unity doesn't support generic typed components
+internal class DynamicBlastPoolScheduler : BlastPoolScheduler<ConfinedBlast>;
+internal class StaticBlastPoolScheduler : BlastPoolScheduler<Blast>;
+
 public class BlastController
 {
-    private readonly BlastPool _handGrenadeBlastPool;
-    private readonly BlastPool _smallGrenadeBlastPool;
-    private readonly BlastPool _flashbangBlastPool;
-
-    private readonly ConfinedBlast _testBlast;
-
+    private readonly BlastPool<ConfinedBlast> _dynamicBlastPool;
+    private readonly BlastPool<Blast> _premadeBlastPool;
+    private readonly BlastPool<Blast> _flashbangBlastPool;
+    
     public BlastController(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading Explosion Prefabs");
-        var expMidPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Mid");
-        var expSmallPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
-        var expFlashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
-        var expDynPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
+        var dynamicPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
+        var premadePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
+        var flashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
 
-        _handGrenadeBlastPool = new BlastPool(eftEffects, expMidPrefab, BuildExplosionMid, 15, 20f);
-        _smallGrenadeBlastPool = new BlastPool(eftEffects, expSmallPrefab, BuildExplosionSmall, 30, 10f);
-        _flashbangBlastPool = new BlastPool(eftEffects, expFlashbangPrefab, BuildExplosionFlashbang, 15, 10f);
+        Plugin.Log.LogInfo("Creating blast pools");
+        _dynamicBlastPool = new BlastPool<ConfinedBlast>(eftEffects, dynamicPrefab, BuildDynamicExplosion, 15, 20f);
+        _premadeBlastPool = new BlastPool<Blast>(eftEffects, premadePrefab, BuildPremadeExplosion, 30, 10f);
+        _flashbangBlastPool = new BlastPool<Blast>(eftEffects, flashbangPrefab, BuildFlashbang, 15, 10f);
 
-        _testBlast = BuildExplosionDynamic(eftEffects, expDynPrefab);
-
-        var scheduler = eftEffects.gameObject.AddComponent<BlastPoolScheduler>();
-        scheduler.Pools.Add(_handGrenadeBlastPool);
+        Plugin.Log.LogInfo("Creating dynamic blast scheduler");
+        var schedulerDynamic = eftEffects.gameObject.AddComponent<DynamicBlastPoolScheduler>();
+        schedulerDynamic.Add(_dynamicBlastPool);
+        
+        Plugin.Log.LogInfo("Creating static blast scheduler");
+        var schedulerStatic = eftEffects.gameObject.AddComponent<StaticBlastPoolScheduler>();
+        schedulerStatic.Add(_premadeBlastPool);
+        schedulerStatic.Add(_flashbangBlastPool);
     }
 
-    private static ConfinedBlast BuildExplosionDynamic(Effects eftEffects, GameObject prefab)
+    private static ConfinedBlast BuildDynamicExplosion(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
@@ -46,38 +52,40 @@ public class BlastController
 
         return new ConfinedBlast(
             eftEffects, 6f, Mathf.Sqrt(0.125f),
-            premade, mainEffects["Splash"], mainEffects["Dyn_Trail"], mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"],
-            mainEffects["Dyn_Sparks"], mainEffects["Dyn_Sparks_Bright"]
+            premade, mainEffects["Splash"],
+            // These are pre-baked effects and we apply the density scaling here
+            ScaleDensity(mainEffects["Dyn_Trail_Smoke"]), ScaleDensity(mainEffects["Dyn_Trail_Sparks"]),
+            mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"], mainEffects["Dyn_Sparks"],
+            mainEffects["Dyn_Sparks_Bright"]
         );
     }
 
+    // private static Blast BuildExplosionMid(Effects eftEffects, GameObject prefab)
+    // {
+    //     var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
+    //
+    //     EffectBundle[] explosionEffectsUp =
+    //     [
+    //         ScaleDensity(mainEffects["Fireball"]),
+    //         mainEffects["Glow"],
+    //         mainEffects["Splash"],
+    //         mainEffects["Shockwave"],
+    //         ScaleDensity(mainEffects["Debris_Burning"]),
+    //         ScaleDensity(mainEffects["Dust_Linger"]),
+    //     ];
+    //
+    //     EffectBundle[] explosionEffectsAngled =
+    //     [
+    //         ScaleDensity(mainEffects["Debris_Glow"]),
+    //         ScaleDensity(mainEffects["Debris_Generic"]),
+    //         ScaleDensity(mainEffects["Sparks"]),
+    //         ScaleDensity(mainEffects["Dust_Ring"]),
+    //     ];
+    //
+    //     return new Blast(explosionEffectsUp, explosionEffectsAngled);
+    // }
 
-    private static Blast BuildExplosionMid(Effects eftEffects, GameObject prefab)
-    {
-        var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-
-        EffectBundle[] explosionEffectsUp =
-        [
-            ScaleDensity(mainEffects["Fireball"]),
-            mainEffects["Glow"],
-            mainEffects["Splash"],
-            mainEffects["Shockwave"],
-            ScaleDensity(mainEffects["Debris_Burning"]),
-            ScaleDensity(mainEffects["Dust_Linger"]),
-        ];
-
-        EffectBundle[] explosionEffectsAngled =
-        [
-            ScaleDensity(mainEffects["Debris_Glow"]),
-            ScaleDensity(mainEffects["Debris_Generic"]),
-            ScaleDensity(mainEffects["Sparks"]),
-            ScaleDensity(mainEffects["Dust_Ring"]),
-        ];
-
-        return new Blast(explosionEffectsUp, explosionEffectsAngled);
-    }
-
-    private static Blast BuildExplosionSmall(Effects eftEffects, GameObject prefab)
+    private static Blast BuildPremadeExplosion(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
@@ -100,7 +108,7 @@ public class BlastController
         return new Blast(explosionEffectsUp, explosionEffectsAngled);
     }
 
-    private static Blast BuildExplosionFlashbang(Effects eftEffects, GameObject prefab)
+    private static Blast BuildFlashbang(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
 
@@ -175,6 +183,6 @@ public class BlastController
         //     _handGrenadeBlastPool.Emit(position, normal);
         // }
 
-        _testBlast.Emit(position);
+        _dynamicBlastPool.Emit(position, normal);
     }
 }
