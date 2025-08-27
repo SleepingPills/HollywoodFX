@@ -59,6 +59,7 @@ public class BloomController : MonoBehaviour
         
         Plugin.GraphicsConfig.Bloom.ApplyConfig(ultimateBloom);
         Plugin.GraphicsConfig.Bloom.ConfigChanged += UpdateSettings;
+        Plugin.GraphicsConfig.Bloom.LensDirtChanged += UpdateLensDirt;
         Plugin.Log.LogInfo($"UltimateBloomController: Ultimate Bloom effect applied to camera {targetCamera.name}");
 
         var weather = GameObject.Find("Weather");
@@ -109,6 +110,7 @@ public class BloomController : MonoBehaviour
     private void OnDestroy()
     {
         Plugin.GraphicsConfig.Bloom.ConfigChanged -= UpdateSettings;
+        Plugin.GraphicsConfig.Bloom.LensDirtChanged -= UpdateLensDirt;
     }
 
     private void UpdateSettings(object sender, EventArgs e)
@@ -117,5 +119,10 @@ public class BloomController : MonoBehaviour
 
         // Force the recalculation of the sunlight factor
         _sunLightFactor = 10000f;
+    }
+
+    private void UpdateLensDirt(object sender, EventArgs e)
+    {
+        Plugin.GraphicsConfig.Bloom.ApplyLensDirt(ultimateBloom);
     }
 }

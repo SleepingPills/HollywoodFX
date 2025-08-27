@@ -267,19 +267,19 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 4 }
         ));
 
-        ExplosionDensitySmoke = Config.Bind(explosions, "Smoke Density", 1f, new ConfigDescription(
+        ExplosionDensitySmoke = Config.Bind(explosions, "Smoke Density (CPU HEAVY)", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
 
-        ExplosionDensitySparks = Config.Bind(explosions, "Sparks Density", 1f, new ConfigDescription(
+        ExplosionDensitySparks = Config.Bind(explosions, "Sparks Density (CPU HEAVY)", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 2 }
         ));
 
-        ExplosionDensityDust = Config.Bind(explosions, "Dust Density", 1f, new ConfigDescription(
+        ExplosionDensityDust = Config.Bind(explosions, "Dust Density (CPU HEAVY)", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 1 }

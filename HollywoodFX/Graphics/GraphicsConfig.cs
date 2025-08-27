@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using BepInEx.Configuration;
 using Comfort.Common;
 using HollywoodFX.Lighting;
@@ -24,6 +25,7 @@ public class LodOverrides(
 public sealed class BloomConfig
 {
     public event EventHandler ConfigChanged;
+    public event EventHandler LensDirtChanged;
 
     private readonly ConfigEntry<float> _bloomIntensity;
 
@@ -45,6 +47,7 @@ public sealed class BloomConfig
     private readonly ConfigEntry<float> _starFlareIntensity;
     private readonly ConfigEntry<float> _starScale;
     private readonly ConfigEntry<int> _starBlurPass;
+    private readonly ConfigEntry<string> _lensDust;
 
     public BloomConfig(ConfigFile config, string section)
     {
@@ -92,17 +95,24 @@ public sealed class BloomConfig
         ));
         _useLensDust.SettingChanged += OnConfigChanged;
 
-        _dustIntensity = config.Bind(bloomSection, "Dust Intensity", 0.2f, new ConfigDescription(
+        _dustIntensity = config.Bind(bloomSection, "Lens Dust Amount", 0.4f, new ConfigDescription(
             "Controls the intensity of the lens dust effect.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 95 }
         ));
         _dustIntensity.SettingChanged += OnConfigChanged;
+        
+        _lensDust = config.Bind(bloomSection, "Lens Dust Texture", "LensDust4.png", new ConfigDescription(
+            "Texture to use for the lens dust effect.",
+            null,
+            new ConfigurationManagerAttributes { Order = 94 }
+        ));
+        _lensDust.SettingChanged += OnLensDustChanged;
 
         DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 1.75f, new ConfigDescription(
             "Controls the intensity of lens bloom.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 94, IsAdvanced = true }
+            new ConfigurationManagerAttributes { Order = 93, IsAdvanced = true }
         ));
         DirtLightIntensity.SettingChanged += OnConfigChanged;
 
@@ -183,9 +193,30 @@ public sealed class BloomConfig
         ultimateBloom.m_StarBlurPass = _starBlurPass.Value;
     }
 
+    public void ApplyLensDirt(UltimateBloom ultimateBloom)
+    {
+        if (_lensDust.Value == null)
+            return;
+
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _lensDust.Value);
+
+        if (!File.Exists(path)) return;
+
+        var data = File.ReadAllBytes(path);
+        var tex2D = new Texture2D(1920, 1080, TextureFormat.RGBA32, true);
+
+        tex2D.LoadImage(data);
+        ultimateBloom.m_DustTexture = tex2D;
+    }
+
     private void OnConfigChanged(object o, EventArgs e)
     {
         ConfigChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnLensDustChanged(object o, EventArgs e)
+    {
+        LensDirtChanged?.Invoke(this, EventArgs.Empty);
     }
 }
 
