@@ -4,7 +4,6 @@ using System.IO;
 using System.Reflection;
 using BepInEx.Configuration;
 using Comfort.Common;
-using EFT.UI;
 using HollywoodFX.Lighting;
 using UnityEngine;
 
@@ -207,8 +206,6 @@ public sealed class BloomConfig
         
         var path = Path.Combine(assemblyDirectory, "bloom", _lensDust.Value);
         
-        ConsoleScreen.Log(path);
-
         if (!File.Exists(path))
             return;
 

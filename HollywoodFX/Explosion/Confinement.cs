@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using EFT.UI;
-using HollywoodFX.Helpers;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -179,8 +177,8 @@ public class Confinement(LayerMask layerMask, float radius, float spacing)
             Normal.Normalize();
         }
         
-        ConsoleScreen.Log($"Norm calc ray count: {_proximityBatch.RayCount} offset mag: {Proximity}");
-        DebugGizmos.Line(origin, origin + Normal, expiretime: 30f, color: new Color(0f, 1f, 0f));
+        // ConsoleScreen.Log($"Norm calc ray count: {_proximityBatch.RayCount} offset mag: {Proximity}");
+        // DebugGizmos.Line(origin, origin + Normal, expiretime: 30f, color: new Color(0f, 1f, 0f));
     }
     
     public void ScheduleMain(Vector3 origin)

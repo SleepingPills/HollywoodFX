@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using EFT.UI;
 using HollywoodFX.Helpers;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -63,9 +62,9 @@ public class ConfinedBlast(
             RingEffects(origin);
             EmitSplash(origin, _confinement.Normal);
 
-            ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
-            ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
-            ConsoleScreen.Log($"Confined Grid cells: {_confinement.Confined.Entries.Count} cells");
+            // ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
+            // ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
+            // ConsoleScreen.Log($"Confined Grid cells: {_confinement.Confined.Entries.Count} cells");
 
             _confinement.Clear();
         }
