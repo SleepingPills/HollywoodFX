@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using BepInEx.Configuration;
 using Comfort.Common;
+using EFT.UI;
 using HollywoodFX.Lighting;
 using UnityEngine;
 
@@ -193,14 +195,22 @@ public sealed class BloomConfig
         ultimateBloom.m_StarBlurPass = _starBlurPass.Value;
     }
 
-    public void ApplyLensDirt(UltimateBloom ultimateBloom)
+    public void ApplyLensDust(UltimateBloom ultimateBloom)
     {
         if (_lensDust.Value == null)
             return;
 
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _lensDust.Value);
+        var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        
+        if (assemblyDirectory == null)
+            return;
+        
+        var path = Path.Combine(assemblyDirectory, "bloom", _lensDust.Value);
+        
+        ConsoleScreen.Log(path);
 
-        if (!File.Exists(path)) return;
+        if (!File.Exists(path))
+            return;
 
         var data = File.ReadAllBytes(path);
         var tex2D = new Texture2D(1920, 1080, TextureFormat.RGBA32, true);

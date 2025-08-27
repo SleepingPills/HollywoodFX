@@ -58,6 +58,8 @@ public class BloomController : MonoBehaviour
         }
         
         Plugin.GraphicsConfig.Bloom.ApplyConfig(ultimateBloom);
+        Plugin.GraphicsConfig.Bloom.ApplyLensDust(ultimateBloom);
+        
         Plugin.GraphicsConfig.Bloom.ConfigChanged += UpdateSettings;
         Plugin.GraphicsConfig.Bloom.LensDirtChanged += UpdateLensDirt;
         Plugin.Log.LogInfo($"UltimateBloomController: Ultimate Bloom effect applied to camera {targetCamera.name}");
@@ -123,6 +125,6 @@ public class BloomController : MonoBehaviour
 
     private void UpdateLensDirt(object sender, EventArgs e)
     {
-        Plugin.GraphicsConfig.Bloom.ApplyLensDirt(ultimateBloom);
+        Plugin.GraphicsConfig.Bloom.ApplyLensDust(ultimateBloom);
     }
 }
