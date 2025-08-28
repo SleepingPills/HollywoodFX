@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using EFT.UI;
 using HollywoodFX.Helpers;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -44,13 +45,13 @@ public class ConfinedBlast(
     private IEnumerator Detonate(Vector3 origin)
     {
         _emitting = true;
-        
+
         try
         {
             _confinement.ScheduleProximity(origin);
             yield return null;
             _confinement.CompleteProximity();
-            
+
             _confinement.ScheduleMain(origin);
             MiscEffects(origin, _confinement.Normal);
             yield return _waitEmit;
@@ -73,17 +74,22 @@ public class ConfinedBlast(
             _emitting = false;
         }
     }
+    /*
+     [Log] : Confined Grid cells: 74 cells
+     [Log] : Ring Grid cells: 36 cells
+     [Log] : Long Range cells: 29 cells
+     */
 
     private void UpEffects(Vector3 origin)
     {
         var count = Random.Range(10, 15);
         var samples = _confinement.Up.Pick(count);
         var sparksEmitter = new BigSparkEmitter(sparksBig);
-        
+
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
-            
+
             sparksEmitter.Emit(sample, origin, i);
         }
 
@@ -94,19 +100,23 @@ public class ConfinedBlast(
         trailEmitter.Emit(samples, origin);
     }
 
-    
     private void ConfinedEffects(Vector3 origin)
     {
         var samples = _confinement.Confined.Pick(Random.Range(15, 25));
-        var dustEmitter = new DustEmitter(dust, 1.5f, 0.75f, 50f, 60f);
-        var sparksEmitter = new BigSparkEmitter(sparksBig);
         
+        var confinementScaling = 0.25f + 0.75f * Mathf.InverseLerp(0, _confinement.ConfinedNorm, _confinement.Confined.Entries.Count);
+        
+        ConsoleScreen.Log($"Confined density scaling: {confinementScaling}");
+        
+        var dustEmitter = new DustEmitter(dust, 1.5f * confinementScaling, 0.75f, 50f, 60f);
+        var sparksEmitter = new BigSparkEmitter(sparksBig);
+
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
-            
+
             var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
-            
+
             dustEmitter.Emit(sample, origin, lengthScale);
             sparksEmitter.Emit(sample, origin, i);
         }
@@ -121,15 +131,21 @@ public class ConfinedBlast(
     private void RingEffects(Vector3 origin)
     {
         var samples = _confinement.Ring.Pick();
-        var dustEmitter = new DustEmitter(dustRing, 2f, 0.5f, 30f, 45f);
-        var sparksEmitter = new SmallSparkEmitter(sparks);
         
+        var confinementScaling = 0.25f + 0.75f * Mathf.InverseLerp(0, _confinement.RingNorm, _confinement.Ring.Entries.Count);
+        
+        ConsoleScreen.Log($"Ring density scaling: {confinementScaling}");
+        
+        // TODO: Emit more dust if we are confined (reduce puffPerDistance)
+        var dustEmitter = new DustEmitter(dustRing, 2f * confinementScaling, 0.5f, 30f, 45f);
+        var sparksEmitter = new SmallSparkEmitter(sparks);
+
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
-            
+
             var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
-            
+
             dustEmitter.Emit(sample, origin, lengthScale);
             sparksEmitter.Emit(sample, origin, lengthScale, i);
         }
@@ -141,13 +157,14 @@ public class ConfinedBlast(
 
         if (camDir.IsSet(CamDir.Front))
             splashFront.Emit(origin, _confinement.Normal, 1f);
-        
-        // Don't emit the vertical splash in very confined spaces
-        if (!(_confinement.Proximity >= 0.4f)) return;
-        
+
+        // Don't emit the vertical splash in very confined spaces or directly head on
+        if (!(_confinement.Proximity >= 0.4f) || !camDir.IsSet(CamDir.Angled)) return;
+
         var adjNormal = Orientation.GetNormOffset(normal, camDir);
         var worldDir = Orientation.GetWorldDir(adjNormal);
 
+        
         if (worldDir.IsSet(WorldDir.Up) && Random.Range(0f, 1f) <= 0.5f)
         {
             // Emit the up facing splash
@@ -200,11 +217,11 @@ public readonly struct BigSparkEmitter(EffectBundle effect)
     public void Emit(Sample sample, Vector3 origin, int pickSeed)
     {
         var count = (int)(Random.Range(1, 3) * Plugin.ExplosionDensitySparks.Value);
-        
+
         for (var j = 0; j < count; j++)
         {
             var pick = effect.ParticleSystems[(pickSeed + j) % effect.ParticleSystems.Length];
-            
+
             // Add a bit of randomness to the direction
             var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
 
@@ -231,7 +248,7 @@ public readonly struct SmallSparkEmitter(EffectBundle effect)
     public void Emit(Sample sample, Vector3 origin, float lengthScale, int pickSeed)
     {
         var count = (int)(Random.Range(3, 7) * Plugin.ExplosionDensitySparks.Value);
-        
+
         for (var j = 0; j < count; j++)
         {
             var pick = effect.ParticleSystems[(pickSeed + j) % effect.ParticleSystems.Length];
@@ -246,7 +263,7 @@ public readonly struct SmallSparkEmitter(EffectBundle effect)
                 position = origin,
                 velocity = directionRandom * (baseSpeed * lengthScale),
             };
-            
+
             pick.Emit(emitParams, 1);
         }
     }

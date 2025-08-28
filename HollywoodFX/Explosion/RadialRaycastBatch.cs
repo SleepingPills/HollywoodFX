@@ -54,7 +54,7 @@ public class RadialRaycastBatch : IDisposable
         _jobHandle.Complete();
     }
 
-    private void GenerateSphereRays()
+    public void GenerateSphereRays()
     {
         var query = new QueryParameters(_layerMask);
         
@@ -65,7 +65,7 @@ public class RadialRaycastBatch : IDisposable
         }
     }
     
-    private void GenerateHemisphereRays(Vector3 normal)
+    public void GenerateHemisphereRays(Vector3 normal)
     {
         var query = new QueryParameters(_layerMask);
         

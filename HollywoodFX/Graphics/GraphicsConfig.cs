@@ -110,7 +110,7 @@ public sealed class BloomConfig
         ));
         _lensDust.SettingChanged += OnLensDustChanged;
 
-        DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 1.75f, new ConfigDescription(
+        DirtLightIntensity = config.Bind(bloomSection, "Lens Bloom Intensity", 1.5f, new ConfigDescription(
             "Controls the intensity of lens bloom.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 93, IsAdvanced = true }

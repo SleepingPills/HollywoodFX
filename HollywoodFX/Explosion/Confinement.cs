@@ -128,17 +128,47 @@ public class Grid
     }
 }
 
-public class Confinement(LayerMask layerMask, float radius, float spacing)
+public class Confinement
 {
-    public readonly Grid Up = new(radius, 3);
-    public readonly Grid Ring = new(radius, 2);
-    public readonly Grid Confined = new(radius, 1.5f);
+    public readonly Grid Up;
+    public readonly Grid Ring;
+    public readonly Grid Confined;
 
     public Vector3 Normal = Vector3.up;
     public float Proximity = 1f;
+
+    public readonly int UpNorm;
+    public readonly int RingNorm;
+    public readonly int ConfinedNorm;
     
-    private readonly RadialRaycastBatch _proximityBatch = new(CalculateRayCountForSphere(2f, 0.7f), layerMask, radius);
-    private readonly RadialRaycastBatch _raycastBatch = new(CalculateRayCountForHemisphere(radius, spacing), layerMask, radius);
+    private readonly RadialRaycastBatch _proximityBatch;
+    private readonly RadialRaycastBatch _raycastBatch;
+    
+    private readonly float _thresholdNear;
+    private readonly float _thresholdFar;
+
+    public Confinement(LayerMask layerMask, float radius, float spacing)
+    {
+        Up = new Grid(radius, 3);
+        Ring = new Grid(radius, 2);
+        Confined = new Grid(radius, 1.5f);
+
+        _proximityBatch = new RadialRaycastBatch(CalculateRayCountForSphere(2f, 0.7f), layerMask, radius);
+        _raycastBatch = new RadialRaycastBatch(CalculateRayCountForHemisphere(radius, spacing), layerMask, radius);
+        
+        _thresholdNear = radius * 0.75f;
+        _thresholdFar = radius * 0.9f;
+        
+        Simulate();
+        
+        UpNorm = Up.Entries.Count;
+        RingNorm = Ring.Entries.Count;
+        ConfinedNorm = Confined.Entries.Count;
+        
+        Plugin.Log.LogInfo($"Confinement sim Up: {UpNorm} Ring: {RingNorm} Confined: {ConfinedNorm}");
+        
+        Clear();
+    }
 
     public void ScheduleProximity(Vector3 origin)
     {
@@ -191,8 +221,7 @@ public class Confinement(LayerMask layerMask, float radius, float spacing)
         _raycastBatch.Complete();
 
         var origin = _raycastBatch.Origin;
-        var threshold = radius * 0.75f;
-        
+
         Confined.Origin = Ring.Origin = Up.Origin = origin;
 
         for (var i = 0; i < _raycastBatch.RayCount; i++)
@@ -205,18 +234,14 @@ public class Confinement(LayerMask layerMask, float radius, float spacing)
             var distance = Vector3.Distance(origin, coords);
             var angle = Vector3.Angle(Normal, coords - origin);
 
-            if (distance >= threshold)
+            if (distance >= _thresholdFar && angle <= 60)
             {
-                if (angle <= 60)
-                {
-                    Up.Add(coords);
-                }
-                if (angle is >= 60 and <= 80)
-                {
-                    Confined.Add(coords);
-                }
+                Up.Add(coords);
             }
-            
+            if (distance >= _thresholdNear && angle is >= 60 and <= 80)
+            {
+                Confined.Add(coords);
+            }
             if (angle > 80)
             {
                 Ring.Add(coords);
@@ -229,6 +254,33 @@ public class Confinement(LayerMask layerMask, float radius, float spacing)
         Up.Clear();
         Ring.Clear();
         Confined.Clear();
+    }
+
+    private void Simulate()
+    {
+        _raycastBatch.GenerateHemisphereRays(Vector3.up);
+        
+        for (var i = 0; i < _raycastBatch.RayCount; i++)
+        {
+            var command = _raycastBatch.Commands[i];
+            var coords = command.distance * command.direction;
+
+            var angle = Vector3.Angle(Vector3.up, command.direction);
+
+            if (angle <= 60)
+            {
+                Up.Add(coords);
+            }
+            switch (angle)
+            {
+                case >= 60 and <= 80:
+                    Confined.Add(coords);
+                    break;
+                case > 80:
+                    Ring.Add(coords);
+                    break;
+            }
+        }
     }
 
     private static int CalculateRayCountForHemisphere(float radius, float spacing)
