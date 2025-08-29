@@ -33,6 +33,10 @@ public static class ConfigurationTemplates
         
         // Override the important bits
         Plugin.BattleAmbienceEnabled.Value = false;
+
+        Plugin.ExplosionDensityDust.Value = 0.5f;
+        Plugin.ExplosionDensitySmoke.Value = 0.5f;
+        Plugin.ExplosionDensitySparks.Value = 0.5f;
         
         Plugin.BloodBleedEmission.Value = 0.3f;
         Plugin.BloodSquirtEmission.Value = 0.3f;
