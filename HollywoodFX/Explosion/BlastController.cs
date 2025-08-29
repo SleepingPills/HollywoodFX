@@ -11,19 +11,16 @@ internal class StaticBlastPoolScheduler : BlastPoolScheduler<Blast>;
 public class BlastController
 {
     private readonly BlastPool<ConfinedBlast> _dynamicBlastPool;
-    private readonly BlastPool<Blast> _premadeBlastPool;
     private readonly BlastPool<Blast> _flashbangBlastPool;
     
     public BlastController(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading Explosion Prefabs");
         var dynamicPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
-        var premadePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Small");
         var flashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
 
         Plugin.Log.LogInfo("Creating blast pools");
         _dynamicBlastPool = new BlastPool<ConfinedBlast>(eftEffects, dynamicPrefab, BuildDynamicExplosion, 15, 20f);
-        _premadeBlastPool = new BlastPool<Blast>(eftEffects, premadePrefab, BuildPremadeExplosion, 30, 10f);
         _flashbangBlastPool = new BlastPool<Blast>(eftEffects, flashbangPrefab, BuildFlashbang, 15, 10f);
 
         Plugin.Log.LogInfo("Creating dynamic blast scheduler");
@@ -32,7 +29,6 @@ public class BlastController
         
         Plugin.Log.LogInfo("Creating static blast scheduler");
         var schedulerStatic = eftEffects.gameObject.AddComponent<StaticBlastPoolScheduler>();
-        schedulerStatic.Add(_premadeBlastPool);
         schedulerStatic.Add(_flashbangBlastPool);
     }
 
@@ -56,7 +52,7 @@ public class BlastController
             // These are pre-baked effects and we apply the density scaling here
             ScaleDensity(mainEffects["Dyn_Trail_Smoke"]), ScaleDensity(mainEffects["Dyn_Trail_Sparks"]),
             mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"], mainEffects["Dyn_Sparks"],
-            mainEffects["Dyn_Sparks_Bright"]
+            mainEffects["Dyn_Debris_Rock"], mainEffects["Dyn_Debris_Generic"]
         );
     }
 
@@ -85,28 +81,28 @@ public class BlastController
     //     return new Blast(explosionEffectsUp, explosionEffectsAngled);
     // }
 
-    private static Blast BuildPremadeExplosion(Effects eftEffects, GameObject prefab)
-    {
-        var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-
-        EffectBundle[] explosionEffectsUp =
-        [
-            ScaleDensity(mainEffects["Fireball"]),
-            mainEffects["Splash"],
-            mainEffects["Shockwave"],
-        ];
-
-        EffectBundle[] explosionEffectsAngled =
-        [
-            ScaleDensity(mainEffects["Debris_Glow"]),
-            ScaleDensity(mainEffects["Debris_Generic"]),
-            ScaleDensity(mainEffects["Dust"]),
-            ScaleDensity(mainEffects["Dust_Linger"]),
-            ScaleDensity(mainEffects["Sparks"]),
-        ];
-
-        return new Blast(explosionEffectsUp, explosionEffectsAngled);
-    }
+    // private static Blast BuildPremadeExplosion(Effects eftEffects, GameObject prefab)
+    // {
+    //     var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
+    //
+    //     EffectBundle[] explosionEffectsUp =
+    //     [
+    //         ScaleDensity(mainEffects["Fireball"]),
+    //         mainEffects["Splash"],
+    //         mainEffects["Shockwave"],
+    //     ];
+    //
+    //     EffectBundle[] explosionEffectsAngled =
+    //     [
+    //         ScaleDensity(mainEffects["Debris_Glow"]),
+    //         ScaleDensity(mainEffects["Debris_Generic"]),
+    //         ScaleDensity(mainEffects["Dust"]),
+    //         ScaleDensity(mainEffects["Dust_Linger"]),
+    //         ScaleDensity(mainEffects["Sparks"]),
+    //     ];
+    //
+    //     return new Blast(explosionEffectsUp, explosionEffectsAngled);
+    // }
 
     private static Blast BuildFlashbang(Effects eftEffects, GameObject prefab)
     {
@@ -174,10 +170,10 @@ public class BlastController
         {
             _flashbangBlastPool.Emit(position, normal);
         }
-        else if (name.StartsWith("small") || name.StartsWith("Small"))
-        {
-            _dynamicBlastPool.Emit(position, normal);
-        }
+        // else if (name.StartsWith("small") || name.StartsWith("Small"))
+        // {
+        //     _dynamicBlastPool.Emit(position, normal);
+        // }
         else
         {
             _dynamicBlastPool.Emit(position, normal);

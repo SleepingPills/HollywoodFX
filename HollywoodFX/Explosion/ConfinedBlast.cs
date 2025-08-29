@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using EFT.UI;
 using HollywoodFX.Helpers;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -23,7 +22,8 @@ public class ConfinedBlast(
     EffectBundle dust,
     EffectBundle dustRing,
     EffectBundle sparks,
-    EffectBundle sparksBig
+    EffectBundle debrisRock,
+    EffectBundle debrisGeneric
 ) : IBlast
 {
     private bool _emitting;
@@ -57,7 +57,6 @@ public class ConfinedBlast(
             yield return _waitEmit;
             _confinement.CompleteMain();
 
-            // Has to be a ref otherwise the struct gets copied (since it's a value type).
             UpEffects(origin);
             ConfinedEffects(origin);
             RingEffects(origin);
@@ -67,6 +66,14 @@ public class ConfinedBlast(
             // ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
             // ConsoleScreen.Log($"Confined Grid cells: {_confinement.Confined.Entries.Count} cells");
 
+            // DebugGizmos.Line(origin, origin + 5f * _confinement.Normal, expiretime: 30f, color: new Color(0f, 1f, 0f));
+            //
+            // for (var i = 0; i < 20; i++)
+            // {
+            //     var adj = VectorMath.AddRandomRotation(_confinement.Normal, 2.5f);
+            //     DebugGizmos.Line(origin, origin + 5f * adj, expiretime: 30f, color: new Color(0f, 0f, 1f));
+            // }
+
             _confinement.Clear();
         }
         finally
@@ -74,23 +81,21 @@ public class ConfinedBlast(
             _emitting = false;
         }
     }
-    /*
-     [Log] : Confined Grid cells: 74 cells
-     [Log] : Ring Grid cells: 36 cells
-     [Log] : Long Range cells: 29 cells
-     */
 
     private void UpEffects(Vector3 origin)
     {
         var count = Random.Range(10, 15);
         var samples = _confinement.Up.Pick(count);
-        var sparksEmitter = new BigSparkEmitter(sparksBig);
+
+        var debris = new DebrisEmitter(debrisGeneric);
+        var rocks = new DebrisEmitter(debrisRock, 20f, 40f, maxCount: 1);
 
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
 
-            sparksEmitter.Emit(sample, origin, i);
+            debris.Emit(sample, origin, i);
+            rocks.Emit(sample, origin, i);
         }
 
         // Note: ensure that the max trail count is <= effect count
@@ -103,22 +108,26 @@ public class ConfinedBlast(
     private void ConfinedEffects(Vector3 origin)
     {
         var samples = _confinement.Confined.Pick(Random.Range(15, 25));
-        
-        var confinementScaling = 0.25f + 0.75f * Mathf.InverseLerp(0, _confinement.ConfinedNorm, _confinement.Confined.Entries.Count);
-        
-        ConsoleScreen.Log($"Confined density scaling: {confinementScaling}");
-        
+
+        var confinementScaling = 0.35f + 0.65f * Mathf.InverseLerp(0, _confinement.ConfinedNorm, _confinement.Confined.Entries.Count);
+
         var dustEmitter = new DustEmitter(dust, 1.5f * confinementScaling, 0.75f, 50f, 60f);
-        var sparksEmitter = new BigSparkEmitter(sparksBig);
+
+        var minCount = (int)Mathf.InverseLerp(2, 1, confinementScaling);
+        var maxCount = 2 * minCount;
+        
+        var debris = new DebrisEmitter(debrisGeneric, minCount: minCount, maxCount: maxCount);
+        var rocks = new DebrisEmitter(debrisRock, 20f, 40f, minCount: minCount, maxCount: maxCount);
 
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
-
             var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
 
             dustEmitter.Emit(sample, origin, lengthScale);
-            sparksEmitter.Emit(sample, origin, i);
+            
+            debris.Emit(sample, origin, i);
+            rocks.Emit(sample, origin, i);
         }
 
         // Note: ensure that the max trail count is <= effect count
@@ -131,14 +140,11 @@ public class ConfinedBlast(
     private void RingEffects(Vector3 origin)
     {
         var samples = _confinement.Ring.Pick();
-        
-        var confinementScaling = 0.25f + 0.75f * Mathf.InverseLerp(0, _confinement.RingNorm, _confinement.Ring.Entries.Count);
-        
-        ConsoleScreen.Log($"Ring density scaling: {confinementScaling}");
-        
-        // TODO: Emit more dust if we are confined (reduce puffPerDistance)
+
+        var confinementScaling = 0.35f + 0.65f * Mathf.InverseLerp(0, _confinement.RingNorm, _confinement.Ring.Entries.Count);
+
         var dustEmitter = new DustEmitter(dustRing, 2f * confinementScaling, 0.5f, 30f, 45f);
-        var sparksEmitter = new SmallSparkEmitter(sparks);
+        var sparksEmitter = new SparksEmitter(sparks);
 
         for (var i = 0; i < samples.Count; i++)
         {
@@ -164,7 +170,7 @@ public class ConfinedBlast(
         var adjNormal = Orientation.GetNormOffset(normal, camDir);
         var worldDir = Orientation.GetWorldDir(adjNormal);
 
-        
+
         if (worldDir.IsSet(WorldDir.Up) && Random.Range(0f, 1f) <= 0.5f)
         {
             // Emit the up facing splash
@@ -207,16 +213,15 @@ public readonly struct TrailEmitter(EffectBundle effect, int count)
     }
 }
 
-public readonly struct BigSparkEmitter(EffectBundle effect)
+public readonly struct DebrisEmitter(EffectBundle effect, float minSpeed = 50f, float maxSpeed = 80f, int minCount = 1, int maxCount = 3)
 {
     private const float RandomDegrees = 2.5f;
-    private const float MinSpeed = 50f;
-    private const float MaxSpeed = 80f;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Emit(Sample sample, Vector3 origin, int pickSeed)
     {
-        var count = (int)(Random.Range(1, 3) * Plugin.ExplosionDensitySparks.Value);
+        var count = minCount == maxCount ? minCount : Random.Range(minCount, maxCount);
+        count = (int)(count * Plugin.ExplosionDensityDebris.Value);
 
         for (var j = 0; j < count; j++)
         {
@@ -225,7 +230,7 @@ public readonly struct BigSparkEmitter(EffectBundle effect)
             // Add a bit of randomness to the direction
             var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
 
-            var baseSpeed = Random.Range(MinSpeed, MaxSpeed);
+            var baseSpeed = Random.Range(minSpeed, maxSpeed);
 
             var emitParams = new ParticleSystem.EmitParams
             {
@@ -238,7 +243,7 @@ public readonly struct BigSparkEmitter(EffectBundle effect)
     }
 }
 
-public readonly struct SmallSparkEmitter(EffectBundle effect)
+public readonly struct SparksEmitter(EffectBundle effect)
 {
     private const float RandomDegrees = 2.5f;
     private const float MinSpeed = 50f;
