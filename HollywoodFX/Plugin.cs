@@ -8,9 +8,7 @@ using Comfort.Common;
 using EFT.Communications;
 using EFT.UI;
 using HollywoodFX.Explosion;
-using HollywoodFX.Graphics;
 using HollywoodFX.Lighting;
-using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
 using UnityEngine;
@@ -81,16 +79,12 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> MiscDecalsEnabled;
     public static ConfigEntry<int> MiscMaxDecalCount;
     public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
-    public static ConfigEntry<bool> LightFlareEnabled;
-    public static ConfigEntry<float> LightFlareIntensity;
-    public static ConfigEntry<float> LightFlareSize;
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
     public static ConfigEntry<float> MiscShellVelocity;
     public static ConfigEntry<bool> MiscShellPhysicsEnabled;
 
     public static ConfigEntry<float> MipBias;
-    public static GraphicsConfig GraphicsConfig;
 
     public static ConfigEntry<float> KineticsScaling;
     private static ConfigEntry<bool> _michelinManEnabled;
@@ -138,9 +132,6 @@ public class Plugin : BaseUnityPlugin
         new TextureDecalsPainterVisCheckPatch().Enable();
         new AmmoPoolObjectAutoDestroyPostfixPatch().Enable();
 
-        if (LightFlareEnabled.Value)
-            new LampControllerAwakePostfixPatch().Enable();
-
         if (MiscShellPhysicsEnabled.Value && !visceralCombatDetected)
             new ShellOnBouncePrefixPatch().Enable();
 
@@ -177,10 +168,6 @@ public class Plugin : BaseUnityPlugin
         {
             new PlayerOnDeadPostfixPatch().Enable();
         }
-
-        new GraphicsRaidInitPatch().Enable();
-        new GraphicsLodOverridePatch().Enable();
-        new GraphicsTerrainDetailOverridePatch().Enable();
 
         Log.LogInfo("Initialization finished");
 
@@ -547,24 +534,6 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
-
-        LightFlareEnabled = Config.Bind(misc, "Env. Light Flares Changes (RESTART)", true, new ConfigDescription(
-            "Makes the environmental light flares more prominent and appropriate. Bright lights have bright flares, dim lights have dim flares.",
-            null,
-            new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }
-        ));
-
-        LightFlareIntensity = Config.Bind(misc, "Env. Light Flare Intensity (RESTART)", 1f, new ConfigDescription(
-            "Adjusts the intensity of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
-            new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 3, IsAdvanced = true }
-        ));
-
-        LightFlareSize = Config.Bind(misc, "Env. Light Flare Size (RESTART)", 1f, new ConfigDescription(
-            "Adjusts the size of environment light lens flares. Yes, I identify as a Hasselblad H6D-400C camera, thank you.",
-            new AcceptableValueRange<float>(0f, 10f),
-            new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
-        ));
         
         MipBias = Config.Bind(gfx, "Effect Quality Bias", 0f, new ConfigDescription(
             "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can have *heavy*" +
@@ -573,11 +542,6 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 1 }
         ));
         MipBias.SettingChanged += (_, _) => { Singleton<MaterialRegistry>.Instance?.SetMipBias(MipBias.Value); };
-
-        /*
-         * Graphics
-         */
-        GraphicsConfig = new GraphicsConfig(Config, gfx);
 
         /*
          * Whimsy

@@ -16,14 +16,6 @@ public static class ConfigurationTemplates
         Plugin.BloodFinisherEmission.Value = 1f;
 
         Plugin.MipBias.Value = 10f;
-        
-        Plugin.GraphicsConfig.SetDetailOverrides("Customs", true, 4f, 2.5f, 2f);
-        Plugin.GraphicsConfig.SetDetailOverrides("Interchange", true, 4f, 2.5f, 2f);
-        Plugin.GraphicsConfig.SetDetailOverrides("Lighthouse", true, 8f, 2.5f, 2f);
-        Plugin.GraphicsConfig.SetDetailOverrides("Reserve", true, 4f, 2.5f, 2f);
-        Plugin.GraphicsConfig.SetDetailOverrides("GroundZero", true, 4f, 2.5f, 2f);
-        Plugin.GraphicsConfig.SetDetailOverrides("Shoreline", true, 8f, 2.5f, 2f);
-        Plugin.GraphicsConfig.SetDetailOverrides("Woods", true, 8f, 2.5f, 2f);
     }
 
     public static void SetPotato(ConfigFile mainConfig)

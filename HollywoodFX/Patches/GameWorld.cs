@@ -61,6 +61,9 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         {
             __instance.gameObject.AddComponent<AmbientLightingController>();
         }
+        
+        Singleton<MaterialRegistry>.Instance?.SetMipBias(Plugin.MipBias.Value);
+        Plugin.Log.LogInfo($"Updated mipmap bias to {Plugin.MipBias.Value}");
     }
 }
 
