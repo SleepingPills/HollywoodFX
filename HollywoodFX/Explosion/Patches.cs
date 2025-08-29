@@ -80,7 +80,6 @@ public class EffectsEmitGrenadePatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        ConsoleScreen.Log($"Grenade: {ename}");
         Singleton<BlastController>.Instance.Emit(ename, position, normal);
     }
 }

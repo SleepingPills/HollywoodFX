@@ -23,10 +23,7 @@ public class GraphicsRaidInitPatch : ModulePatch
         Plugin.GraphicsConfig.SetCurrentMap(mapName);
         
         var overrides = Plugin.GraphicsConfig.Current;
-        var message = $"Graphics overrides map: {mapName} - {overrides.Name} enabled: {overrides.Enabled.Value} lod bias: {overrides.LodBias.Value}" +
-                      $" detail culling: {overrides.DetailDistance.Value} detail density: {overrides.DetailDensity.Value}";
-        Plugin.Log.LogInfo(message);
-        ConsoleScreen.Log("HollywoodFX " + message);
+        Plugin.Log.LogInfo($"Graphics overrides map: {mapName} - {overrides.Name} enabled: {overrides.Enabled.Value}");
     }
 }
 
