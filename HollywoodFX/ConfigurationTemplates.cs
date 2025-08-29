@@ -15,7 +15,7 @@ public static class ConfigurationTemplates
         Plugin.BloodSquirtEmission.Value = 1f;
         Plugin.BloodFinisherEmission.Value = 1f;
 
-        Plugin.GraphicsConfig.MipBias.Value = 10f;
+        Plugin.MipBias.Value = 10f;
         
         Plugin.GraphicsConfig.SetDetailOverrides("Customs", true, 4f, 2.5f, 2f);
         Plugin.GraphicsConfig.SetDetailOverrides("Interchange", true, 4f, 2.5f, 2f);

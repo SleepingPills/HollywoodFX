@@ -1,7 +1,8 @@
 ﻿using System.Reflection;
+using Comfort.Common;
 using EFT;
-using EFT.UI;
 using GPUInstancer;
+using HollywoodFX.Lighting;
 using HollywoodFX.Patches;
 using HollywoodFX.Postprocessing;
 using SPT.Reflection.Patching;
@@ -41,8 +42,8 @@ public class GraphicsLodOverridePatch : ModulePatch
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
 
-        Plugin.GraphicsConfig.UpdateMipBias();
-        Plugin.Log.LogInfo($"Updated mipmap bias to {Plugin.GraphicsConfig.MipBias.Value}");
+        Singleton<MaterialRegistry>.Instance?.SetMipBias(Plugin.MipBias.Value);
+        Plugin.Log.LogInfo($"Updated mipmap bias to {Plugin.MipBias.Value}");
 
         Plugin.GraphicsConfig.UpdateLodBias();
         Plugin.Log.LogInfo($"Updated lod bias to {Plugin.GraphicsConfig.Current.LodBias.Value}");

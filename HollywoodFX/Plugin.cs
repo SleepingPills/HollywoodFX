@@ -9,6 +9,7 @@ using EFT.Communications;
 using EFT.UI;
 using HollywoodFX.Explosion;
 using HollywoodFX.Graphics;
+using HollywoodFX.Lighting;
 using HollywoodFX.Lighting.Patches;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
@@ -88,10 +89,10 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> MiscShellVelocity;
     public static ConfigEntry<bool> MiscShellPhysicsEnabled;
 
-    public static ConfigEntry<float> KineticsScaling;
-
+    public static ConfigEntry<float> MipBias;
     public static GraphicsConfig GraphicsConfig;
 
+    public static ConfigEntry<float> KineticsScaling;
     private static ConfigEntry<bool> _michelinManEnabled;
     private static ConfigEntry<bool> _peenEnabled;
 
@@ -564,6 +565,14 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 2, IsAdvanced = true }
         ));
+        
+        MipBias = Config.Bind(gfx, "Effect Quality Bias", 0f, new ConfigDescription(
+            "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can have *heavy*" +
+            "VRAM impact and cause stuttering.",
+            new AcceptableValueRange<float>(-5f, 10f),
+            new ConfigurationManagerAttributes { Order = 1 }
+        ));
+        MipBias.SettingChanged += (_, _) => { Singleton<MaterialRegistry>.Instance?.SetMipBias(MipBias.Value); };
 
         /*
          * Graphics

@@ -4,7 +4,6 @@ using System.IO;
 using System.Reflection;
 using BepInEx.Configuration;
 using Comfort.Common;
-using HollywoodFX.Lighting;
 using UnityEngine;
 
 namespace HollywoodFX.Graphics;
@@ -231,8 +230,6 @@ public class GraphicsConfig
 {
     public LodOverrides Current;
 
-    public readonly ConfigEntry<float> MipBias;
-
     public readonly BloomConfig Bloom;
     private readonly Dictionary<string, LodOverrides> _overrides = new();
 
@@ -253,14 +250,6 @@ public class GraphicsConfig
 
     public GraphicsConfig(ConfigFile config, string section)
     {
-        MipBias = config.Bind(section, "Effect Quality Bias", 0f, new ConfigDescription(
-            "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can have *heavy*" +
-            "VRAM impact and cause stuttering.",
-            new AcceptableValueRange<float>(-5f, 10f),
-            new ConfigurationManagerAttributes { Order = 2 }
-        ));
-        MipBias.SettingChanged += (_, _) => { UpdateMipBias(); };
-
         Bloom = new BloomConfig(config, section);
 
         AddDetailOverrides(config, section, "Default", browsable: false);
@@ -289,11 +278,6 @@ public class GraphicsConfig
         }
 
         Current.LodBias.SettingChanged += OnLodBiasChanged;
-    }
-
-    public void UpdateMipBias()
-    {
-        Singleton<MaterialRegistry>.Instance?.SetMipBias(MipBias.Value);
     }
 
     public void UpdateLodBias()
