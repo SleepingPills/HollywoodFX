@@ -52,12 +52,12 @@ namespace HollywoodFX
                 var impactSystem = currentSystems[i];
                 impactSystem.Emit(kinetics, Plugin.EffectSize.Value);
             }
-            
+
             if (Plugin.SuppressionEnabled.Value)
             {
                 var duration = 1f * Plugin.SuppressionDuration.Value;
                 var distanceNorm = 3f * kinetics.Bullet.SizeScale * Plugin.SuppressionRange.Value;
-                Singleton<ConcussionController>.Instance.Apply(kinetics.DistanceToImpact, duration, distanceNorm, duration);                
+                Singleton<ConcussionController>.Instance.Apply(kinetics.DistanceToImpact, duration, distanceNorm, 2f * duration);
             }
 
             if (Plugin.TracerImpactsEnabled.Value && kinetics.Bullet.Info.Ammo is AmmoItemClass { Tracer: true } ammo)

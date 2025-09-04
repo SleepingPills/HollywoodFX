@@ -78,7 +78,7 @@ public class ConcussionController : MonoBehaviour
         _prism.dofFocusDistance = Mathf.Lerp(0f, 5f, dofScale);
         _prism.dofRadius = dofScale * Plugin.BattleBlurIntensity.Value;
         
-        _bloom.m_DustIntensity = Mathf.Lerp(0.3f, 2f, dofScale);
+        _bloom.m_DustIntensity = Mathf.Lerp(0.3f, 4f, dofScale);
 
         _time -= Time.deltaTime;
     }

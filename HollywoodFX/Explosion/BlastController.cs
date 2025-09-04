@@ -181,6 +181,6 @@ public class BlastController : MonoBehaviour
             return;
 
         var duration = 4f * Plugin.ConcussionDuration.Value;
-        Singleton<ConcussionController>.Instance.Apply(position, duration, 8f * Plugin.ConcussionRange.Value, duration);
+        Singleton<ConcussionController>.Instance.Apply(position, duration, 12f * Plugin.ConcussionRange.Value, duration);
     }
 }
