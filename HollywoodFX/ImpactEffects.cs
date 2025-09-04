@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Comfort.Common;
 using EFT.Ballistics;
+using HollywoodFX.Concussion;
+using HollywoodFX.Explosion;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -49,16 +52,23 @@ namespace HollywoodFX
                 var impactSystem = currentSystems[i];
                 impactSystem.Emit(kinetics, Plugin.EffectSize.Value);
             }
+            
+            if (Plugin.SuppressionEnabled.Value)
+            {
+                var duration = 1f * Plugin.SuppressionDuration.Value;
+                var distanceNorm = 3f * kinetics.Bullet.SizeScale * Plugin.SuppressionRange.Value;
+                Singleton<ConcussionController>.Instance.Apply(kinetics.DistanceToImpact, duration, distanceNorm, duration);                
+            }
 
             if (Plugin.TracerImpactsEnabled.Value && kinetics.Bullet.Info.Ammo is AmmoItemClass { Tracer: true } ammo)
                 _tracerImpacts.Emit(kinetics, ammo);
             else
             {
                 var chance = _extraFlashChances[(int)kinetics.Material];
-                
+
                 if (!(Random.Range(0f, 1f) < chance * kinetics.Bullet.ChanceScale))
                     return;
-                
+
                 _extraFlashes.Emit(kinetics, Plugin.EffectSize.Value);
             }
         }

@@ -169,8 +169,7 @@ public class ConfinedBlast(
 
         var adjNormal = Orientation.GetNormOffset(normal, camDir);
         var worldDir = Orientation.GetWorldDir(adjNormal);
-
-
+        
         if (worldDir.IsSet(WorldDir.Up) && Random.Range(0f, 1f) <= 0.5f)
         {
             // Emit the up facing splash

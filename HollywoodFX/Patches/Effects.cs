@@ -213,9 +213,7 @@ public class EffectsAwakePostfixPatch : ModulePatch
             Singleton<EmissionController>.Create(emissionController);
             Singleton<ImpactController>.Create(new ImpactController(__instance));
             Singleton<DecalPainter>.Create(new DecalPainter(__instance.DeferredDecals));
-
-            Singleton<BlastController>.Create(new BlastController(__instance));
-
+            
             if (Plugin.MuzzleEffectsEnabled.Value)
             {
                 Singleton<FirearmsEffectsCache>.Create(new FirearmsEffectsCache());

@@ -1,28 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Systems.Effects;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace HollywoodFX.Explosion;
-
-public class BlastPoolScheduler<T> : MonoBehaviour where T : IBlast
-{
-    private readonly List<BlastPool<T>> _pools = [];
-
-    public void Add(BlastPool<T> pool)
-    {
-        _pools.Add(pool);
-    }
-    
-    public void Update()
-    {
-        for (var i = 0; i < _pools.Count; i++)
-        {
-            _pools[i].Update();
-        }
-    }
-}
 
 public class BlastPool<T> where T : IBlast
 {
@@ -40,13 +23,14 @@ public class BlastPool<T> where T : IBlast
         
         for (var i = 0; i < copyCount; i++)
         {
-            Plugin.Log.LogInfo($"Instantiating Explosion Effects Prefab {prefab.name} installment {i + 1}");
+            Plugin.Log.LogInfo($"Instantiating explosion effects prefab {prefab.name} installment {i + 1}");
             var rootInstance = Object.Instantiate(prefab);
             var explosion = builder(eftEffects, rootInstance);
             _pool.Add(explosion);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Update()
     {
         while (_active.Count > 0)

@@ -1,35 +1,33 @@
-﻿using HollywoodFX.Particles;
+﻿using Comfort.Common;
+using HollywoodFX.Concussion;
+using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX.Explosion;
 
-// Unity doesn't support generic typed components
-internal class DynamicBlastPoolScheduler : BlastPoolScheduler<ConfinedBlast>;
-internal class StaticBlastPoolScheduler : BlastPoolScheduler<Blast>;
-
-public class BlastController
+public class BlastController : MonoBehaviour
 {
-    private readonly BlastPool<ConfinedBlast> _dynamicBlastPool;
-    private readonly BlastPool<Blast> _flashbangBlastPool;
+    private BlastPool<ConfinedBlast> _dynamicBlastPool;
+    private BlastPool<Blast> _flashbangBlastPool;
     
-    public BlastController(Effects eftEffects)
+    public void Init(Effects eftEffects)
     {
-        Plugin.Log.LogInfo("Loading Explosion Prefabs");
+        Plugin.Log.LogInfo("Loading explosion prefabs");
         var dynamicPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
         var flashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
 
         Plugin.Log.LogInfo("Creating blast pools");
         _dynamicBlastPool = new BlastPool<ConfinedBlast>(eftEffects, dynamicPrefab, BuildDynamicExplosion, 15, 20f);
         _flashbangBlastPool = new BlastPool<Blast>(eftEffects, flashbangPrefab, BuildFlashbang, 15, 10f);
-
-        Plugin.Log.LogInfo("Creating dynamic blast scheduler");
-        var schedulerDynamic = eftEffects.gameObject.AddComponent<DynamicBlastPoolScheduler>();
-        schedulerDynamic.Add(_dynamicBlastPool);
         
-        Plugin.Log.LogInfo("Creating static blast scheduler");
-        var schedulerStatic = eftEffects.gameObject.AddComponent<StaticBlastPoolScheduler>();
-        schedulerStatic.Add(_flashbangBlastPool);
+        Plugin.Log.LogInfo("Creating concussion handling");
+    }
+
+    private void Update()
+    {
+        _dynamicBlastPool.Update();
+        _flashbangBlastPool.Update();
     }
 
     private static ConfinedBlast BuildDynamicExplosion(Effects eftEffects, GameObject prefab)
@@ -161,16 +159,16 @@ public class BlastController
         return effects;
     }
 
-    public void Emit(string name, Vector3 position, Vector3 normal)
+    public void Emit(string id, Vector3 position, Vector3 normal)
     {
-        if (name.StartsWith("big_round"))
+        if (id.StartsWith("big_round"))
             return;
 
-        if (name.StartsWith("Flashbang"))
+        if (id.StartsWith("Flashbang"))
         {
             _flashbangBlastPool.Emit(position, normal);
         }
-        // else if (name.StartsWith("small") || name.StartsWith("Small"))
+        // else if (id.StartsWith("small") || name.StartsWith("Small"))
         // {
         //     _dynamicBlastPool.Emit(position, normal);
         // }
@@ -178,5 +176,11 @@ public class BlastController
         {
             _dynamicBlastPool.Emit(position, normal);
         }
+        
+        if (!Plugin.ConcussionEnabled.Value || Singleton<ConcussionController>.Instance == null)
+            return;
+
+        var duration = 4f * Plugin.ConcussionDuration.Value;
+        Singleton<ConcussionController>.Instance.Apply(position, duration, 8f * Plugin.ConcussionRange.Value, duration);
     }
 }

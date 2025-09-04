@@ -7,6 +7,7 @@ using BepInEx.Logging;
 using Comfort.Common;
 using EFT.Communications;
 using EFT.UI;
+using HollywoodFX.Concussion;
 using HollywoodFX.Explosion;
 using HollywoodFX.Lighting;
 using HollywoodFX.Muzzle.Patches;
@@ -32,7 +33,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> ExplosionDensitySparks;
     public static ConfigEntry<float> ExplosionDensitySmoke;
     public static ConfigEntry<float> ExplosionDensityDust;
-
+    
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
     public static ConfigEntry<float> MuzzleEffectJetsSize;
     public static ConfigEntry<float> MuzzleEffectSparksSize;
@@ -41,6 +42,15 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> MuzzleEffectSmokeEmission;
     public static ConfigEntry<bool> MuzzleLightShadowEnabled;
 
+    public static ConfigEntry<float> BattleBlurIntensity;
+    public static ConfigEntry<bool> ConcussionEnabled;
+    public static ConfigEntry<float> ConcussionDuration;
+    public static ConfigEntry<float> ConcussionRange;
+    
+    public static ConfigEntry<bool> SuppressionEnabled;
+    public static ConfigEntry<float> SuppressionDuration;
+    public static ConfigEntry<float> SuppressionRange;
+    
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
     public static ConfigEntry<float> AmbientEffectDensity;
@@ -142,8 +152,11 @@ public class Plugin : BaseUnityPlugin
             new WeaponPrefabInitHotObjectsPostfixPatch().Enable();
         }
 
+        new EffectsInitBlastControllerPatch().Enable();
         new EffectsWipeDefaultExplosionSystemsPatch().Enable();
         new EffectsEmitGrenadePatch().Enable();
+        
+        new GameWorldInitConcussionPatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
         {
@@ -204,7 +217,7 @@ public class Plugin : BaseUnityPlugin
     {
         const string general = "00. General";
         const string impacts = "01. Impact Effects";
-        const string explosions = "02. Explosion Effects";
+        const string explosions = "02. Explosion FX";
         const string muzzleEffects = "03. Muzzle Blast Effects";
         const string battleAmbience = "04. Ambient Battle Effects (RESTART)";
         const string goreEmission = "05. Gore Emission (RESTART)";
@@ -248,7 +261,6 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 5 }
         ));
-
         ExplosionDensityDebris = Config.Bind(explosions, "Debris Density", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
@@ -272,7 +284,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-
+        
         /*
          * Muzzle Effects
          */
@@ -321,6 +333,42 @@ public class Plugin : BaseUnityPlugin
         /*
          * Battle Ambience
          */
+        BattleBlurIntensity = Config.Bind(battleAmbience, "Battle Blur Intensity", 1f, new ConfigDescription(
+            "Scales the intensity of battle blur from concussion and suppression effects.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 16 }
+        ));
+        ConcussionEnabled = Config.Bind(battleAmbience, "Enable Concussion FX", true, new ConfigDescription(
+            "Toggles concussion screen effects.",
+            null,
+            new ConfigurationManagerAttributes { Order = 15 }
+        ));
+        ConcussionDuration = Config.Bind(battleAmbience, "Concussion Duration", 1f, new ConfigDescription(
+            "Scales the duration of concussion effects. Larger numbers will result in longer lasting concussion.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 14 }
+        ));
+        ConcussionRange = Config.Bind(battleAmbience, "Concussion Range", 1f, new ConfigDescription(
+            "Scales the range of concussion effects. Larger numbers will cause concussion from further away.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 13 }
+        ));
+        SuppressionEnabled = Config.Bind(battleAmbience, "Enable Suppression FX", true, new ConfigDescription(
+            "Toggles suppression screen effects.",
+            null,
+            new ConfigurationManagerAttributes { Order = 12 }
+        ));
+        SuppressionDuration = Config.Bind(battleAmbience, "Suppression Duration", 1f, new ConfigDescription(
+            "Scales the duration of concussion effects. Larger numbers will result in longer lasting concussion.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 11 }
+        ));
+        SuppressionRange = Config.Bind(battleAmbience, "Suppression Range", 1f, new ConfigDescription(
+            "Scales the range of concussion effects. Larger numbers will cause concussion from further away.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 10 }
+        ));
+        
         BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects", true, new ConfigDescription(
             "Toggles battle ambience effects like lingering smoke, dust and debris.",
             null,
@@ -535,6 +583,9 @@ public class Plugin : BaseUnityPlugin
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
         
+        /*
+         * Graphics
+         */
         MipBias = Config.Bind(gfx, "Effect Quality Bias", 0f, new ConfigDescription(
             "Positive values force higher quality effect textures at a distance, lower values force lower quality. Numbers above 4 can have *heavy*" +
             "VRAM impact and cause stuttering.",

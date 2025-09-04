@@ -2,13 +2,36 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Comfort.Common;
+using EFT;
 using EFT.UI;
+using HollywoodFX.Lighting;
 using HollywoodFX.Patches;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX.Explosion;
+
+public class EffectsInitBlastControllerPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return typeof(Effects).GetMethod(nameof(Effects.Awake));
+    }
+
+    [PatchPostfix]
+    // ReSharper disable once InconsistentNaming
+    public static void Postfix(Effects __instance)
+    {
+        if (GameWorldAwakePrefixPatch.IsHideout)
+            return;
+        
+        var blastController = __instance.gameObject.AddComponent<BlastController>();
+        blastController.Init(__instance);
+        Singleton<BlastController>.Create(blastController);
+    }
+}
+
 
 public class EffectsWipeDefaultExplosionSystemsPatch : ModulePatch
 {
