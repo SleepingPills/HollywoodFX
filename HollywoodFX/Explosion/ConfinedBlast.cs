@@ -62,10 +62,10 @@ public class ConfinedBlast(
             
             var camDir = Orientation.GetCamDir(_confinement.Normal);
             EmitSplash(origin, _confinement.Normal, camDir);
-            RingEffects(origin);
+            RingEffects(origin, camDir);
             yield return null;
-            UpEffects(origin);
-            ConfinedEffects(origin);
+            UpEffects(origin, camDir);
+            ConfinedEffects(origin, camDir);
 
             // ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
             // ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
@@ -87,7 +87,7 @@ public class ConfinedBlast(
         }
     }
 
-    private void UpEffects(Vector3 origin)
+    private void UpEffects(Vector3 origin, CamDir camDir)
     {
         var count = Random.Range(10, 15);
         var samples = _confinement.Up.Pick(count);
@@ -111,10 +111,10 @@ public class ConfinedBlast(
         
         samples = _confinement.Up.Pick(Random.Range(2, 4));
         var splashEmitter = new SplashEmitter(splashDust, 1.25f);
-        splashEmitter.Emit(samples, origin);
+        splashEmitter.Emit(samples, origin, camDir);
     }
 
-    private void ConfinedEffects(Vector3 origin)
+    private void ConfinedEffects(Vector3 origin, CamDir camDir)
     {
         var samples = _confinement.Confined.Pick(Random.Range(15, 25));
 
@@ -147,10 +147,10 @@ public class ConfinedBlast(
         
         samples = _confinement.Confined.Pick(Random.Range(4, 7));
         var splashEmitter = new SplashEmitter(splashDust, 1f);
-        splashEmitter.Emit(samples, origin);
+        splashEmitter.Emit(samples, origin, camDir);
     }
 
-    private void RingEffects(Vector3 origin)
+    private void RingEffects(Vector3 origin, CamDir camDir)
     {
         var samples = _confinement.Ring.Pick();
 
@@ -171,7 +171,7 @@ public class ConfinedBlast(
         
         samples = _confinement.Ring.Pick(Random.Range(6, 9));
         var splashEmitter = new SplashEmitter(splashDust, 1.25f);
-        splashEmitter.Emit(samples, origin);
+        splashEmitter.Emit(samples, origin, camDir);
     }
 
     private void EmitSplash(Vector3 origin, Vector3 normal, CamDir camDir)
@@ -212,12 +212,13 @@ public readonly struct SplashEmitter(EffectBundle effect, float size)
     private const float RandomDegrees = 2.5f;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(List<Sample> samples, Vector3 origin)
+    public void Emit(List<Sample> samples, Vector3 origin, CamDir camDir)
     {
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
-            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
+            var direction = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
+            var adjDirection = Orientation.GetNormOffset(direction, camDir);
             
             var pick = effect.ParticleSystems[i % effect.ParticleSystems.Length];
 
@@ -226,7 +227,7 @@ public readonly struct SplashEmitter(EffectBundle effect, float size)
             var emitParams = new ParticleSystem.EmitParams
             {
                 position = origin,
-                velocity = directionRandom * 0.01f,
+                velocity = adjDirection * 0.01f,
                 startSize3D = size * Random.Range(0.5f, 1.5f) * baseSize,
             };
 
