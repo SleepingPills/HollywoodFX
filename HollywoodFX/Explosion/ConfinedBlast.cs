@@ -17,6 +17,7 @@ public class ConfinedBlast(
     EffectBundle splashUp,
     EffectBundle splashGeneric,
     EffectBundle splashFront,
+    EffectBundle splashDust,
     EffectBundle trailMain,
     EffectBundle trailSparks,
     EffectBundle dust,
@@ -35,8 +36,10 @@ public class ConfinedBlast(
         // If we are currently emitting, do the static effects only and bail out
         if (_emitting)
         {
+            var camDir = Orientation.GetCamDir(Vector3.up);
+            
             MiscEffects(origin, Vector3.up);
-            EmitSplash(origin, Vector3.up);
+            EmitSplash(origin, Vector3.up, camDir);
         }
 
         eftEffects.StartCoroutine(Detonate(origin));
@@ -56,11 +59,13 @@ public class ConfinedBlast(
             MiscEffects(origin, _confinement.Normal);
             yield return _waitEmit;
             _confinement.CompleteMain();
-
+            
+            var camDir = Orientation.GetCamDir(_confinement.Normal);
+            EmitSplash(origin, _confinement.Normal, camDir);
+            RingEffects(origin);
+            yield return null;
             UpEffects(origin);
             ConfinedEffects(origin);
-            RingEffects(origin);
-            EmitSplash(origin, _confinement.Normal);
 
             // ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
             // ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
@@ -103,6 +108,10 @@ public class ConfinedBlast(
         trailMain.Shuffle(trailCount);
         var trailEmitter = new TrailEmitter(trailMain, trailCount);
         trailEmitter.Emit(samples, origin);
+        
+        samples = _confinement.Up.Pick(Random.Range(2, 4));
+        var splashEmitter = new SplashEmitter(splashDust, 1.25f);
+        splashEmitter.Emit(samples, origin);
     }
 
     private void ConfinedEffects(Vector3 origin)
@@ -135,6 +144,10 @@ public class ConfinedBlast(
         trailSparks.Shuffle(trailCount);
         var trailEmitter = new TrailEmitter(trailSparks, trailCount);
         trailEmitter.Emit(samples, origin);
+        
+        samples = _confinement.Confined.Pick(Random.Range(4, 7));
+        var splashEmitter = new SplashEmitter(splashDust, 1f);
+        splashEmitter.Emit(samples, origin);
     }
 
     private void RingEffects(Vector3 origin)
@@ -155,12 +168,14 @@ public class ConfinedBlast(
             dustEmitter.Emit(sample, origin, lengthScale);
             sparksEmitter.Emit(sample, origin, lengthScale, i);
         }
+        
+        samples = _confinement.Ring.Pick(Random.Range(6, 9));
+        var splashEmitter = new SplashEmitter(splashDust, 1.25f);
+        splashEmitter.Emit(samples, origin);
     }
 
-    private void EmitSplash(Vector3 origin, Vector3 normal)
+    private void EmitSplash(Vector3 origin, Vector3 normal, CamDir camDir)
     {
-        var camDir = Orientation.GetCamDir(normal);
-
         if (camDir.IsSet(CamDir.Front))
             splashFront.Emit(origin, _confinement.Normal, 1f);
 
@@ -180,6 +195,8 @@ public class ConfinedBlast(
             // Emit a generic splash
             splashGeneric.Emit(origin, adjNormal, 1f);
         }
+        
+        splashDust.Emit(origin, normal, 1f);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -187,6 +204,34 @@ public class ConfinedBlast(
     {
         for (var i = 0; i < misc.Length; i++)
             misc[i].Emit(origin, normal, 1f);
+    }
+}
+
+public readonly struct SplashEmitter(EffectBundle effect, float size)
+{
+    private const float RandomDegrees = 2.5f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Emit(List<Sample> samples, Vector3 origin)
+    {
+        for (var i = 0; i < samples.Count; i++)
+        {
+            var sample = samples[i];
+            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
+            
+            var pick = effect.ParticleSystems[i % effect.ParticleSystems.Length];
+
+            var baseSize = new Vector3(1.5f, 4.5f);
+
+            var emitParams = new ParticleSystem.EmitParams
+            {
+                position = origin,
+                velocity = directionRandom * 0.01f,
+                startSize3D = size * Random.Range(0.5f, 1.5f) * baseSize,
+            };
+
+            pick.Emit(emitParams, 1);
+        }
     }
 }
 

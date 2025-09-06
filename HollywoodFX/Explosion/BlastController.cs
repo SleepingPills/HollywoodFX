@@ -46,7 +46,7 @@ public class BlastController : MonoBehaviour
 
         return new ConfinedBlast(
             eftEffects, 6f, Mathf.Sqrt(0.125f),
-            premade, mainEffects["Splash_Up"], mainEffects["Splash_Generic"], mainEffects["Splash_Front"],
+            premade, mainEffects["Splash_Up"], mainEffects["Splash_Generic"], mainEffects["Splash_Front"], mainEffects["Splash_Dust"],
             // These are pre-baked effects and we apply the density scaling here
             ScaleDensity(mainEffects["Dyn_Trail_Smoke"]), ScaleDensity(mainEffects["Dyn_Trail_Sparks"]),
             mainEffects["Dyn_Dust"], mainEffects["Dyn_Dust_Ring"], mainEffects["Dyn_Sparks"],
