@@ -49,8 +49,6 @@ public class ConcussionController : MonoBehaviour
         if (_prism == null || cameraDistance >= distanceNorm)
             return;
         
-        ConsoleScreen.Log("Test");
-        
         var normalizedDistance = cameraDistance / distanceNorm;
         
         // Reach maximum effect at half the normalized distance

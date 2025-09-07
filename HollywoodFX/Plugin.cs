@@ -34,6 +34,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> ExplosionDensitySparks;
     public static ConfigEntry<float> ExplosionDensitySmoke;
     public static ConfigEntry<float> ExplosionDensityDust;
+    public static ConfigEntry<float> ComputeFidelity;
     
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
     public static ConfigEntry<float> MuzzleEffectJetsSize;
@@ -282,29 +283,35 @@ public class Plugin : BaseUnityPlugin
         ExplosionDensityFireball = Config.Bind(explosions, "Fireball Density", 1f, new ConfigDescription(
             "Adjusts the density of fireballs. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 6 }
         ));
         ExplosionDensityDebris = Config.Bind(explosions, "Debris Density", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 4 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
 
         ExplosionDensitySmoke = Config.Bind(explosions, "Smoke Density (CPU HEAVY)", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 3 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         ExplosionDensitySparks = Config.Bind(explosions, "Sparks Density (CPU HEAVY)", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
-            new ConfigurationManagerAttributes { Order = 2 }
+            new ConfigurationManagerAttributes { Order = 3 }
         ));
 
         ExplosionDensityDust = Config.Bind(explosions, "Dust Density (CPU HEAVY)", 1f, new ConfigDescription(
             "Adjusts the density of debris and sparks. Large values may have a performance impact",
             new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 2 }
+        ));
+        
+        ComputeFidelity = Config.Bind(explosions, "Compute Fidelity (RESTART)", 1f, new ConfigDescription(
+            "Adjusts the resolution and fidelity of confinement detection and other aspects of explosions. Lower values are less CPU intensive.",
+            new AcceptableValueRange<float>(0.1f, 1f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
         

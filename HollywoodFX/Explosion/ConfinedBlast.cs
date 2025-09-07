@@ -1,8 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using EFT.UI;
 using HollywoodFX.Helpers;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -14,7 +12,7 @@ namespace HollywoodFX.Explosion;
 public class ConfinedBlast(
     Effects eftEffects,
     float radius,
-    float granularity,
+    float spacing,
     EffectBundle[] misc,
     EffectBundle splashUp,
     EffectBundle splashGeneric,
@@ -31,7 +29,7 @@ public class ConfinedBlast(
 {
     private bool _emitting;
     private readonly WaitForSeconds _waitEmit = new(0.115f);
-    private readonly Confinement _confinement = new(GClass3449.HitMask, radius, granularity);
+    private readonly Confinement _confinement = new(GClass3449.HitMask, radius, spacing);
 
     public void Emit(Vector3 origin, Vector3 _)
     {

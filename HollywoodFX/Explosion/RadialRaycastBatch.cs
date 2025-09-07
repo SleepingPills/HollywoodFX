@@ -26,7 +26,7 @@ public class RadialRaycastBatch : IDisposable
         _layerMask = layerMask;
         _minCommandsPerJob = minCommandsPerJob;
 
-        RayCount = Mathf.Max(3, rayCount);
+        RayCount = Mathf.Max(30, rayCount);
         Commands = new NativeArray<RaycastCommand>(RayCount, Allocator.Persistent);
         Results = new NativeArray<RaycastHit>(RayCount, Allocator.Persistent);
     }
