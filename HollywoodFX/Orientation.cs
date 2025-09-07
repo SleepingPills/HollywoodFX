@@ -47,7 +47,7 @@ public static class Orientation
 
     private const float AngledAngle = 170.0f;
 
-    private const float AdjustmentAngle = 40f;
+    private const float AdjustmentAngle = FrontAngleInv;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 GetNormOffset(Vector3 normal, CamDir camDir)

@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using EFT.UI;
 using HollywoodFX.Helpers;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -39,7 +41,7 @@ public class ConfinedBlast(
             var camDir = Orientation.GetCamDir(Vector3.up);
             
             MiscEffects(origin, Vector3.up);
-            EmitSplash(origin, Vector3.up, camDir);
+            EmitSplash(origin, Vector3.up);
         }
 
         eftEffects.StartCoroutine(Detonate(origin));
@@ -60,12 +62,13 @@ public class ConfinedBlast(
             yield return _waitEmit;
             _confinement.CompleteMain();
             
-            var camDir = Orientation.GetCamDir(_confinement.Normal);
-            EmitSplash(origin, _confinement.Normal, camDir);
-            RingEffects(origin, camDir);
-            yield return null;
-            UpEffects(origin, camDir);
-            ConfinedEffects(origin, camDir);
+            var camera = CameraClass.Instance.Camera;
+            var backward = -camera.transform.forward;
+
+            EmitSplash(origin, _confinement.Normal);
+            UpEffects(origin, backward);
+            ConfinedEffects(origin, backward);
+            RingEffects(origin, backward);
 
             // ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
             // ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
@@ -87,7 +90,7 @@ public class ConfinedBlast(
         }
     }
 
-    private void UpEffects(Vector3 origin, CamDir camDir)
+    private void UpEffects(Vector3 origin, Vector3 backward)
     {
         var count = Random.Range(10, 15);
         var samples = _confinement.Up.Pick(count);
@@ -108,16 +111,10 @@ public class ConfinedBlast(
         trailMain.Shuffle(trailCount);
         var trailEmitter = new TrailEmitter(trailMain, trailCount);
         trailEmitter.Emit(samples, origin);
-        
-        samples = _confinement.Up.Pick(Random.Range(2, 4));
-        var splashEmitter = new SplashEmitter(splashDust, 1.25f);
-        splashEmitter.Emit(samples, origin, camDir);
     }
 
-    private void ConfinedEffects(Vector3 origin, CamDir camDir)
+    private void ConfinedEffects(Vector3 origin, Vector3 backward)
     {
-        var samples = _confinement.Confined.Pick(Random.Range(15, 25));
-
         var confinementScaling = 0.35f + 0.65f * Mathf.InverseLerp(0, _confinement.ConfinedNorm, _confinement.Confined.Entries.Count);
 
         var dustEmitter = new DustEmitter(dust, 1.5f * confinementScaling, 0.75f, 50f, 60f);
@@ -128,6 +125,8 @@ public class ConfinedBlast(
         var debris = new DebrisEmitter(debrisGeneric, minCount: minCount, maxCount: maxCount);
         var rocks = new DebrisEmitter(debrisRock, 20f, 40f, minCount: minCount, maxCount: maxCount);
 
+        var samples = _confinement.Confined.Pick(Random.Range(15, 25));
+        
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
@@ -145,12 +144,12 @@ public class ConfinedBlast(
         var trailEmitter = new TrailEmitter(trailSparks, trailCount);
         trailEmitter.Emit(samples, origin);
         
-        samples = _confinement.Confined.Pick(Random.Range(4, 7));
+        samples = _confinement.Confined.Pick(Random.Range(5, 9));
         var splashEmitter = new SplashEmitter(splashDust, 1f);
-        splashEmitter.Emit(samples, origin, camDir);
+        splashEmitter.Emit(samples, origin, backward);
     }
 
-    private void RingEffects(Vector3 origin, CamDir camDir)
+    private void RingEffects(Vector3 origin, Vector3 backward)
     {
         var samples = _confinement.Ring.Pick();
 
@@ -169,13 +168,15 @@ public class ConfinedBlast(
             sparksEmitter.Emit(sample, origin, lengthScale, i);
         }
         
-        samples = _confinement.Ring.Pick(Random.Range(6, 9));
-        var splashEmitter = new SplashEmitter(splashDust, 1.25f);
-        splashEmitter.Emit(samples, origin, camDir);
+        samples = _confinement.Ring.Pick(Random.Range(4, 7));
+        var splashEmitter = new SplashEmitter(splashDust, 1.35f);
+        splashEmitter.Emit(samples, origin, backward);
     }
 
-    private void EmitSplash(Vector3 origin, Vector3 normal, CamDir camDir)
+    private void EmitSplash(Vector3 origin, Vector3 normal)
     {
+        var camDir = Orientation.GetCamDir(_confinement.Normal);
+        
         if (camDir.IsSet(CamDir.Front))
             splashFront.Emit(origin, _confinement.Normal, 1f);
 
@@ -212,13 +213,16 @@ public readonly struct SplashEmitter(EffectBundle effect, float size)
     private const float RandomDegrees = 2.5f;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(List<Sample> samples, Vector3 origin, CamDir camDir)
+    public void Emit(List<Sample> samples, Vector3 origin, Vector3 backward)
     {
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
+            
+            if (Vector3.Angle(sample.Direction, -1 * backward) < 45f)
+                continue;
+            
             var direction = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
-            var adjDirection = Orientation.GetNormOffset(direction, camDir);
             
             var pick = effect.ParticleSystems[i % effect.ParticleSystems.Length];
 
@@ -227,8 +231,8 @@ public readonly struct SplashEmitter(EffectBundle effect, float size)
             var emitParams = new ParticleSystem.EmitParams
             {
                 position = origin,
-                velocity = adjDirection * 0.01f,
-                startSize3D = size * Random.Range(0.5f, 1.5f) * baseSize,
+                velocity = direction * 0.01f,
+                startSize3D = size * Random.Range(0.5f, 1.25f) * baseSize,
             };
 
             pick.Emit(emitParams, 1);

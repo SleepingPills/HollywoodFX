@@ -10,6 +10,10 @@ public class ConcussionController : MonoBehaviour
     
     private PrismEffects _prism;
     private UltimateBloom _bloom;
+
+    private float _minLensDust = 0.3f;
+    private float _maxLensDust = 4.3f;
+    
     private const float Eps = 1e-2f;
 
     public void Init()
@@ -78,8 +82,14 @@ public class ConcussionController : MonoBehaviour
         _prism.dofFocusDistance = Mathf.Lerp(0f, 5f, dofScale);
         _prism.dofRadius = dofScale * Plugin.BattleBlurIntensity.Value;
         
-        _bloom.m_DustIntensity = Mathf.Lerp(0.3f, 4f, dofScale);
+        _bloom.m_DustIntensity = Mathf.Lerp(_minLensDust, _maxLensDust, dofScale);
 
         _time -= Time.deltaTime;
+    }
+
+    public void UpdateLensDustSettings(float minValue)
+    {
+        _minLensDust = minValue;
+        _maxLensDust = minValue + 4f * Plugin.BattleBlurIntensity.Value;
     }
 }
