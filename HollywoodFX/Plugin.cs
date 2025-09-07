@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
@@ -52,8 +51,6 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> SuppressionEnabled;
     public static ConfigEntry<float> SuppressionDuration;
     public static ConfigEntry<float> SuppressionRange;
-    
-    public static ConfigEntry<float> LensDustIntensity;
     
     public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
@@ -184,26 +181,6 @@ public class Plugin : BaseUnityPlugin
         if (GoreEnabled.Value && !visceralCombatDetected)
         {
             new PlayerOnDeadPostfixPatch().Enable();
-        }
-        
-        if (Chainloader.PluginInfos.ContainsKey("com.janky.hollywoodgraphics"))
-        {
-            Log.LogInfo("HollywoodGraphics detected, hooking Bloom config entries");
-            
-            var assembly = Assembly.Load("HollywoodGraphics");
-            var type = assembly.GetType("HollywoodGraphics.Plugin");
-            var getter = type.GetProperty("lensDustIntensity")?.GetGetMethod();
-            LensDustIntensity = (ConfigEntry<float>)getter?.Invoke(type, null);
-
-            if (LensDustIntensity != null)
-            {
-                LensDustIntensity.SettingChanged += (_, _) =>
-                {
-                    Singleton<ConcussionController>.Instance?.UpdateLensDustSettings(LensDustIntensity.Value);
-                };
-                
-                Log.LogInfo("HollywoodGraphics lens dust config hooked");
-            }
         }
 
         Log.LogInfo("Initialization finished");

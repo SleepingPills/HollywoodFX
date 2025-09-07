@@ -1,5 +1,8 @@
-﻿using System.Runtime.CompilerServices;
-using EFT.UI;
+﻿using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using BepInEx.Bootstrap;
+using BepInEx.Configuration;
 using UnityEngine;
 
 namespace HollywoodFX.Concussion;
@@ -16,6 +19,8 @@ public class ConcussionController : MonoBehaviour
     
     private const float Eps = 1e-2f;
 
+    private ConfigEntry<float> _lensDustIntensity;
+
     public void Init()
     {
         var camera = CameraClass.Instance?.Camera;
@@ -31,8 +36,10 @@ public class ConcussionController : MonoBehaviour
         _prism.useNearDofBlur = false;
         
         _bloom = camera.GetComponent<UltimateBloom>();
-    }
 
+        HollywoodGraphicsIntegration();
+    }
+    
     public void Apply(Vector3 position, float t, float distanceNorm, float maxTime)
     {
         var camera = CameraClass.Instance.Camera;
@@ -85,9 +92,38 @@ public class ConcussionController : MonoBehaviour
         _time -= Time.deltaTime;
     }
 
-    public void UpdateLensDustSettings(float minValue)
+    private void HollywoodGraphicsIntegration()
     {
-        _minLensDust = minValue;
-        _maxLensDust = minValue + 4f * Plugin.BattleBlurIntensity.Value;
+        if (!Chainloader.PluginInfos.ContainsKey("com.janky.hollywoodgraphics")) return;
+        
+        Plugin.Log.LogInfo("HollywoodGraphics detected, hooking Bloom config entries");
+            
+        var assembly = Assembly.Load("HollywoodGraphics");
+        var type = assembly.GetType("HollywoodGraphics.Plugin");
+        var getter = type.GetProperty("lensDustIntensity")?.GetGetMethod();
+        _lensDustIntensity = (ConfigEntry<float>)getter?.Invoke(type, null);
+
+        if (_lensDustIntensity == null) return;
+        
+        _lensDustIntensity.SettingChanged += UpdateLensDustSettings;
+        UpdateLensDustSettings(null, null);
+        Plugin.Log.LogInfo($"HollywoodGraphics lens dust config hooked with current value of {_lensDustIntensity.Value}");
+    }
+    
+    private void UpdateLensDustSettings(object o, EventArgs e)
+    {
+        if (_lensDustIntensity == null)
+            return;
+        
+        _minLensDust = _lensDustIntensity.Value;
+        _maxLensDust = _lensDustIntensity.Value + 4f * Plugin.BattleBlurIntensity.Value;
+    }
+
+    private void OnDestroy()
+    {
+        if (_lensDustIntensity == null)
+            return;
+        
+        _lensDustIntensity.SettingChanged -= UpdateLensDustSettings;       
     }
 }
