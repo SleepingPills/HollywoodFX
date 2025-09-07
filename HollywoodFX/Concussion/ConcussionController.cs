@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using EFT.UI;
 using UnityEngine;
 
 namespace HollywoodFX.Concussion;
@@ -41,16 +42,15 @@ public class ConcussionController : MonoBehaviour
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Apply(float cameraDistance, float t, float distanceNorm, float maxTime)
     {
-        if (_prism == null)
+        if (_prism == null || cameraDistance >= distanceNorm)
             return;
+        
+        ConsoleScreen.Log("Test");
         
         var normalizedDistance = cameraDistance / distanceNorm;
         
         // Reach maximum effect at half the normalized distance
         var distanceScale = 1f - Mathf.InverseLerp(0.5f, 1f, normalizedDistance);
-        
-        if (distanceScale <= Eps)
-            return;
         
         _time += t * distanceScale;
         _time = Mathf.Clamp(_time, 0f, maxTime);
