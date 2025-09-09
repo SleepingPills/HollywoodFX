@@ -162,13 +162,15 @@ public class EffectsAwakePrefixPatch : ModulePatch
         foreach (var effect in effects.EffectsArray)
         {
             // Skip effects which have no material attached
-            if (effect.MaterialTypes.Length == 0)
+            var name = effect.Name.ToLower();
+            
+            if (effect.MaterialTypes.Length == 0 || name.Contains("water") || name.Contains("swamp"))
             {
                 Plugin.Log.LogInfo($"Skipping {effect.Name}");
                 continue;
             }
 
-            if (effect.Name.ToLower().Contains("metal"))
+            if (name.Contains("metal"))
             {
                 Plugin.Log.LogInfo("Enhancing lighting");
                 effect.FlashMaxDist *= 2f;

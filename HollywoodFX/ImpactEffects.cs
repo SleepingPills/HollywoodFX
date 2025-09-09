@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Comfort.Common;
 using EFT.Ballistics;
 using HollywoodFX.Concussion;
-using HollywoodFX.Explosion;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -433,6 +432,7 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.Cardboard] = softGenericImpact;
             impactSystems[(int)MaterialType.Chainfence] = metalImpact;
             impactSystems[(int)MaterialType.Concrete] = hardRockImpact;
+            impactSystems[(int)MaterialType.None] = hardRockImpact;
             impactSystems[(int)MaterialType.Fabric] = softGenericImpact;
             impactSystems[(int)MaterialType.GarbageMetal] = metalImpact;
             impactSystems[(int)MaterialType.GarbagePaper] = softGenericImpact;
