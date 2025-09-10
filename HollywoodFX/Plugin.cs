@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Reflection;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
@@ -21,7 +23,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.7.2";
+    public const string HollywoodFXVersion = "1.7.3";
 
     public static ManualLogSource Log;
 
@@ -120,12 +122,23 @@ public class Plugin : BaseUnityPlugin
         // We wait for 5 seconds to allow all the 500 shonky mods (incl. this one) an average user installs to load 
         yield return new WaitForSeconds(5);
 
-        var visceralCombatDetected = false;
+        var visceralCombatDetected = Chainloader.PluginInfos.ContainsKey("com.servph.VisceralCombat");
+        
+        var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-        if (Chainloader.PluginInfos.ContainsKey("com.servph.VisceralCombat"))
+        if (assemblyDirectory != null)
+        {
+            var path = Path.Combine(assemblyDirectory, "bypass_compat_check");
+
+            if (File.Exists(path))
+            {
+                visceralCombatDetected = false;
+            }
+        }
+        
+        if (visceralCombatDetected)
         {
             Log.LogInfo("Visceral Combat detected, disabling ragdolls");
-            visceralCombatDetected = true;
         }
 
         SetupConfig(visceralCombatDetected);
