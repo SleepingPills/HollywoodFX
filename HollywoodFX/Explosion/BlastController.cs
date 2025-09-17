@@ -1,5 +1,4 @@
 ﻿using Comfort.Common;
-using EFT.UI;
 using HollywoodFX.Concussion;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -160,8 +159,6 @@ public class BlastController : MonoBehaviour
 
     public void Emit(string id, Vector3 position, Vector3 normal)
     {
-        ConsoleScreen.Log(id);
-        
         if (id.StartsWith("big_round") || id.StartsWith("grenade_smoke"))
             return;
 

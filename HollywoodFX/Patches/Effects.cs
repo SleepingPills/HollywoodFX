@@ -249,7 +249,7 @@ public class EffectsEmitPatch : ModulePatch
     public static void Prefix(Effects __instance, MaterialType material, BallisticCollider hitCollider,
         Vector3 position, Vector3 normal, float volume, bool isKnife, bool isHitPointVisible, EPointOfView pov)
     {
-        if (GameWorldAwakePrefixPatch.IsHideout)
+        if (GameWorldAwakePrefixPatch.IsHideout || isKnife)
             return;
 
         ImpactStatic.Kinetics.Update(material, position, normal, isHitPointVisible);
