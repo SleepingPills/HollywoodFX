@@ -193,8 +193,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontRock),
-                        new DirectionalEffect(puffLinger, chance: 0.2f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.3f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffRing, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.2f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisRock, chance: 0.25f, isChanceScaledByKinetics: true),
@@ -223,8 +223,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontRock),
-                        new DirectionalEffect(puffLinger, chance: 0.2f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(puffRing, chance: 0.45f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.3f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffRing, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(spraySparksLight, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisRock, chance: 0.35f, isChanceScaledByKinetics: true),
@@ -253,7 +253,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontDusty),
-                        new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.4f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 1f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.25f, isChanceScaledByKinetics: true),
@@ -280,7 +280,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontDusty),
-                        new DirectionalEffect(puffLinger, chance: 0.35f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.5f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(puffRing, chance: 0.4f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(effectMap["Debris_Grass"], chance: 0.4f, isChanceScaledByKinetics: true),
@@ -306,8 +306,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFront),
-                        new DirectionalEffect(puffLinger, chance: 0.15f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(puffRing, chance: 0.35f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffRing, chance: 0.65f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(debrisGeneric, chance: 0.3f, isChanceScaledByKinetics: true),
                     ]
@@ -331,7 +331,7 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFront),
-                        new DirectionalEffect(puffRing, chance: 0.35f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffRing, chance: 0.4f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(spraySparksLight, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(bulletHoleSmoke, chance: 0.05f, isChanceScaledByKinetics: true)
                     ]
@@ -355,8 +355,8 @@ namespace HollywoodFX
                     directional:
                     [
                         new DirectionalEffect(puffFrontDusty),
-                        new DirectionalEffect(puffLinger, chance: 0.25f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(puffRing, chance: 0.4f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.3f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffRing, chance: 0.8f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(sprayDust, chance: 0.75f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(effectMap["Debris_Wood"], chance: 0.45f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(fallingDust, worldDir: WorldDir.Vertical | WorldDir.Down, chance: 0.15f,
@@ -379,8 +379,8 @@ namespace HollywoodFX
                     [
                         new DirectionalEffect(puffFront),
                         new DirectionalEffect(flashSparks),
-                        new DirectionalEffect(puffLinger, chance: 0.1f, isChanceScaledByKinetics: true),
-                        new DirectionalEffect(puffRing, chance: 0.35f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffLinger, chance: 0.15f, isChanceScaledByKinetics: true),
+                        new DirectionalEffect(puffRing, chance: 0.65f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(spraySparksMetal, chance: 0.8f, isChanceScaledByKinetics: true),
                         new DirectionalEffect(bulletHoleSmoke, chance: 0.05f, isChanceScaledByKinetics: true)
                     ]
