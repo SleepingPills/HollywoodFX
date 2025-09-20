@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using JetBrains.Annotations;
 using UnityEngine;
 
 namespace HollywoodFX.Particles;
@@ -33,7 +32,7 @@ internal class EffectSystem(
         Emit(kinetics, kinetics.CamDir, kinetics.WorldDir, kinetics.Position, normal, sizeScale, chanceScale);
     }
 
-    public void Emit(ImpactKinetics kinetics, CamDir camDir, WorldDir worldDir, Vector3 position, Vector3 normal, float sizeScale, float chanceScale)
+    private void Emit(ImpactKinetics kinetics, CamDir camDir, WorldDir worldDir, Vector3 position, Vector3 normal, float sizeScale, float chanceScale)
     {
         var bullet = kinetics.Bullet;
         var sizeScaleFull = bullet.SizeScale * sizeScale;
@@ -46,7 +45,7 @@ internal class EffectSystem(
 
             if (Random.Range(0f, 1f) < forceGeneric)
             {
-                genericImpact.Emit(position, normal, sizeScaleFull);
+                genericImpact.EmitDirect(position, normal, sizeScaleFull);
                 return;
             }
         }
@@ -62,12 +61,12 @@ internal class EffectSystem(
             var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * bullet.ChanceScale : impact.Chance);
             if (!(Random.Range(0f, 1f) < impactChance)) continue;
 
-            impact.Effect.Emit(position, normal, sizeScaleFull);
+            impact.Effect.EmitDirect(position, normal, sizeScaleFull);
             hasEmitted = true;
         }
 
         if (hasEmitted || genericImpact == null) return;
 
-        genericImpact.Emit(position, normal, sizeScaleFull);
+        genericImpact.EmitDirect(position, normal, sizeScaleFull);
     }
 }

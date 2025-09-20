@@ -126,9 +126,9 @@ public class BlastController : MonoBehaviour
 
     private static EffectBundle ScaleDensity(EffectBundle effects, float scale = 1f)
     {
-        foreach (var system in effects.ParticleSystems)
+        foreach (var emitter in effects.Emitters)
         {
-            foreach (var subSystem in system.GetComponentsInChildren<ParticleSystem>())
+            foreach (var subSystem in emitter.Main.GetComponentsInChildren<ParticleSystem>())
             {
                 var densityScaling = 1f;
 

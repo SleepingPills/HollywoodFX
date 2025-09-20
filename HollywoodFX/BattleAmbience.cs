@@ -47,8 +47,6 @@ internal class BattleAmbience
         // ReSharper disable once MergeSequentialChecks
         if (kinetics.Bullet.Info == null || kinetics.Bullet.Info.Player == null) return;
         
-        var emission = Singleton<EmissionController>.Instance;
-
         var emissionChance = 0.4 * (kinetics.Bullet.Energy / 2500f);
 
         var playerId = kinetics.Bullet.Info.Player.iPlayer.Id;
@@ -67,7 +65,7 @@ internal class BattleAmbience
         if (Random.Range(0f, 1f) < emissionChance && dustEmissionDeltaTime > 0.25f)
         {
             var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
-            emission.Emit(smokeEffect, kinetics.Position, kinetics.Normal);
+            Emit(smokeEffect, kinetics.Position, kinetics.Normal);
             emissionTime.Dust = Time.unscaledTime;
         }
 
@@ -77,8 +75,17 @@ internal class BattleAmbience
         if (!(smokeEmissionRoll && smokeEmissionDeltaTime > 0.25f)) return;
         
         var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
-        emission.Emit(dustEffect, kinetics.Position, kinetics.Normal);
+        Emit(dustEffect, kinetics.Position, kinetics.Normal);
         emissionTime.Smoke = Time.unscaledTime;
+    }
+    
+    private static void Emit(ParticleSystem particleSystem, Vector3 position, Vector3 normal, float scale = 1f)
+    {
+        var rotation = Quaternion.LookRotation(normal);
+        particleSystem.transform.position = position;
+        particleSystem.transform.localScale = new Vector3(scale, scale, scale);
+        particleSystem.transform.rotation = rotation;
+        particleSystem.Play(true);
     }
 
     private static void ScaleEffect(ParticleSystem particleSystem, float lifetimeScaling, float limitScaling, float emissionScaling)

@@ -10,7 +10,7 @@ namespace HollywoodFX.Particles;
 
 public static class ParticleHelpers
 {
-    public static IEnumerable<(string, ParticleSystem[])> LoadParticleSystemBundles(Effects eftEffects, GameObject prefab, bool dynamicAlpha)
+    public static IEnumerable<(string, Emitter[])> LoadEmitterBundles(Effects eftEffects, GameObject prefab, bool dynamicAlpha)
     {
         Plugin.Log.LogInfo($"Instantiating Effects Prefab {prefab.name}");
         var rootInstance = Object.Instantiate(prefab);
@@ -18,14 +18,14 @@ public static class ParticleHelpers
         foreach (var group in rootInstance.transform.GetChildren())
         {
             var groupName = group.name;
-            var effects = new List<ParticleSystem>();
+            var effects = new List<Emitter>();
 
             foreach (var child in group.GetChildren())
             {
                 if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
                 
                 child.parent = eftEffects.transform;
-                effects.Add(particleSystem);
+                effects.Add(new Emitter(particleSystem));
                 
                 Singleton<MaterialRegistry>.Instance.Register(particleSystem, dynamicAlpha);
             }

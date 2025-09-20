@@ -209,7 +209,7 @@ internal class TracerImpactEffects
         
         if (!(Random.Range(0f, 1f) < impactDef.RicochetChance * kinetics.Bullet.ChanceScale))
         {
-            tracer.Emit(kinetics.Position, kinetics.Normal, kinetics.Bullet.SizeScale * Plugin.EffectSize.Value);
+            tracer.EmitDirect(kinetics.Position, kinetics.Normal, kinetics.Bullet.SizeScale * Plugin.EffectSize.Value);
         }
 
         if (kinetics.DistanceToImpact <= 50f)

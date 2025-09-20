@@ -91,7 +91,7 @@ public class BloodEffects
         {
             // Emit a mist or a puff at a 25/75 chance
             if (Random.Range(0f, 1f) < 0.25f)
-                _mists.Emit(kinetics.Position, kinetics.Normal, mistSizeScale);
+                _mists.EmitDirect(kinetics.Position, kinetics.Normal, mistSizeScale);
             else
             {
                 for (var i = 0; i < _puffs.Length; i++)

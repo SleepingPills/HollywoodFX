@@ -36,8 +36,6 @@ public class ConfinedBlast(
         // If we are currently emitting, do the static effects only and bail out
         if (_emitting)
         {
-            var camDir = Orientation.GetCamDir(Vector3.up);
-            
             MiscEffects(origin, Vector3.up);
             EmitSplash(origin, Vector3.up);
         }
@@ -64,7 +62,7 @@ public class ConfinedBlast(
             var backward = -camera.transform.forward;
 
             EmitSplash(origin, _confinement.Normal);
-            UpEffects(origin, backward);
+            UpEffects(origin);
             ConfinedEffects(origin, backward);
             RingEffects(origin, backward);
 
@@ -88,7 +86,7 @@ public class ConfinedBlast(
         }
     }
 
-    private void UpEffects(Vector3 origin, Vector3 backward)
+    private void UpEffects(Vector3 origin)
     {
         var count = Random.Range(10, 15);
         var samples = _confinement.Up.Pick(count);
@@ -222,7 +220,7 @@ public readonly struct SplashEmitter(EffectBundle effect, float size)
             
             var direction = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
             
-            var pick = effect.ParticleSystems[i % effect.ParticleSystems.Length];
+            var pick = effect.Emitters[i % effect.Emitters.Length].Main;
 
             var baseSize = new Vector3(1.5f, 4.5f);
 
@@ -240,7 +238,7 @@ public readonly struct SplashEmitter(EffectBundle effect, float size)
 
 public readonly struct TrailEmitter(EffectBundle effect, int count)
 {
-    private readonly ParticleSystem[] _particles = effect.ParticleSystems;
+    private readonly Particles.Emitter[] _particles = effect.Emitters;
     private const float RandomDegrees = 2.5f;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -252,7 +250,7 @@ public readonly struct TrailEmitter(EffectBundle effect, int count)
             var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
             var rotation = Quaternion.LookRotation(directionRandom);
 
-            var pick = _particles[i];
+            var pick = _particles[i].Main;
             pick.transform.position = origin;
             pick.transform.rotation = rotation;
             pick.Play(true);
@@ -272,7 +270,7 @@ public readonly struct DebrisEmitter(EffectBundle effect, float minSpeed = 50f, 
 
         for (var j = 0; j < count; j++)
         {
-            var pick = effect.ParticleSystems[(pickSeed + j) % effect.ParticleSystems.Length];
+            var pick = effect.Emitters[(pickSeed + j) % effect.Emitters.Length].Main;
 
             // Add a bit of randomness to the direction
             var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
@@ -303,7 +301,7 @@ public readonly struct SparksEmitter(EffectBundle effect)
 
         for (var j = 0; j < count; j++)
         {
-            var pick = effect.ParticleSystems[(pickSeed + j) % effect.ParticleSystems.Length];
+            var pick = effect.Emitters[(pickSeed + j) % effect.Emitters.Length].Main;
 
             // Add a bit of randomness to the direction
             var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
@@ -336,7 +334,7 @@ public readonly struct DustEmitter(EffectBundle effect, float puffPerDistance, f
         // Emit N puffs, scaling the speed up with each to cover the distance
         for (var j = 0; j < count; j++)
         {
-            var pick = effect.ParticleSystems[Random.Range(0, effect.ParticleSystems.Length)];
+            var pick = effect.Emitters[Random.Range(0, effect.Emitters.Length)].Main;
             // Scaler as a function of the puff sequence. We start with the slowest puff travelling the shortest distance and end with the fastest.
             // NB: apply an sqrt to account for the nonlinear damping effect. 50% speed travels less than 50% of the distance of 100% speed.
             var seqScale = Mathf.Sqrt(_puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j));

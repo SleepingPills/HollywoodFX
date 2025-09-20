@@ -58,7 +58,7 @@ internal class MuzzleBlast(
         {
             // Add a bit of randomness to the spark size
             var scaleSparks = scaleBase * Plugin.MuzzleEffectSparksSize.Value * Random.Range(0.75f, 1.25f);
-            sparks.EmitDirect(state.Fireport.position, fireportDir, scaleSparks);
+            sparks.Emit(state.Fireport.position, fireportDir, scaleSparks);
         }
 
         EmitSmoke(state, scaleBase, frontFacingFactor, fireportDir, jetEmitted);
@@ -96,12 +96,12 @@ internal class MuzzleBlast(
 
         // Only emit this in 3rd pov as it generates too much bloom in fpv
         if (isThirdPerson)
-            coreJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustCoreJet);
+            coreJet.Emit(state.Fireport.position, fireportDir, scaleJet * adjustCoreJet);
 
-        mainJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
+        mainJet.Emit(state.Fireport.position, fireportDir, scaleJet * adjustMainJet);
 
         if (adjustForwardJet > 0.01f)
-            forwardJet.EmitDirect(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
+            forwardJet.Emit(state.Fireport.position, fireportDir, scaleJet * adjustForwardJet);
 
         // Some chance to emit brighter port jets
         var portJetMain = Random.Range(0f, 1f) < 0.5f && portJetRandomization > 0.8 && portJetBright != null ? portJetBright : portJet;
@@ -114,7 +114,7 @@ internal class MuzzleBlast(
         }
 
         // Lights
-        lights.EmitDirect(state.Fireport.position, fireportDir, kineticsFactor * portJetRandomization);
+        lights.Emit(state.Fireport.position, fireportDir, kineticsFactor * portJetRandomization);
 
         return true;
     }
@@ -202,14 +202,14 @@ internal class MuzzleEffects
 
         foreach (var bundle in effectMap.Values)
         {
-            foreach (var particleSystem in bundle.ParticleSystems)
+            foreach (var emitter in bundle.Emitters)
             {
                 // We only add the top level particle systems as modifying the sub-system parent-child hierarchy breaks things
-                ParticleSystems.Add(particleSystem);
+                ParticleSystems.Add(emitter.Main);
 
                 if (!forceWorldSim) continue;
 
-                foreach (var subSystem in particleSystem.GetComponentsInChildren<ParticleSystem>())
+                foreach (var subSystem in emitter.Main.GetComponentsInChildren<ParticleSystem>())
                 {
                     Plugin.Log.LogInfo($"Forcing {subSystem.name} to world space simulation");
                     var main = subSystem.main;

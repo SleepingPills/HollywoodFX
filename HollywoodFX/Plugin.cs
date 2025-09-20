@@ -255,7 +255,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Impacts
          */
-        EffectSize = Config.Bind(impacts, "Impact Effect Size", 1.0f, new ConfigDescription(
+        EffectSize = Config.Bind(impacts, "Impact Effect Size", 0.7f, new ConfigDescription(
             "Scales the size of impact effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 2 }
