@@ -144,7 +144,7 @@ namespace HollywoodFX
             var puffRing = EffectBundle.Merge(
                 effectMap["Puff_Smoke_Ring"], effectMap["Puff_Smoke_Ring"],
                 effectMap["Puff_Smoke_Ring"], effectMap["Puff_Smoke_Ring"],
-                effectMap["Puff_Smoke_Billow"]
+                effectMap["Puff_Smoke_Ring_Strong"]
                 );
             var puffBody = effectMap["Puff_Smoke_Body"];
 
