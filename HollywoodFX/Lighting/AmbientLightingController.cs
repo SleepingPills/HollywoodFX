@@ -27,7 +27,7 @@ public class AmbientLightingController : MonoBehaviour
     private const float MaxTintColorFactor = 1f;
 
     private const float MinTintAlphaFactor = 0f;
-    private const float MaxTintAlphaFactor = 0.15f;
+    private const float MaxTintAlphaFactor = 0.25f;
 
     private const float FactorChangeThreshold = 0.1f;
     private float _lightingFactor;
@@ -35,6 +35,8 @@ public class AmbientLightingController : MonoBehaviour
 
     private const float RepeatRate = 5f;
     private float _timer;
+    private float _cloudFactor;
+    private float _dayLightFactor;
 
     public void Awake()
     {
@@ -66,7 +68,7 @@ public class AmbientLightingController : MonoBehaviour
 
         _weatherController = GameObject.Find("Weather").GetComponent<WeatherController>();
         _lightingFactor = CalculateLightingFactor();
-        UpdateMaterials(_lightingFactor);
+        UpdateMaterials();
         Plugin.Log.LogInfo($"Initialized lighting factor to {_lightingFactor}");
     }
 
@@ -79,7 +81,7 @@ public class AmbientLightingController : MonoBehaviour
             if (Mathf.Abs(currentLightingFactor - _lightingFactor) > FactorChangeThreshold)
             {
                 _lightingFactor = currentLightingFactor;
-                UpdateMaterials(_lightingFactor);
+                UpdateMaterials();
             }
             
             _timer = RepeatRate;
@@ -92,19 +94,19 @@ public class AmbientLightingController : MonoBehaviour
     {
         var dayLight = Mathf.Min(Mathf.Sqrt(Mathf.Max(_weatherController.SunHeight, 0f)) / 0.75f, 1f);
         // Clouds will really only factor into the equation during daytime. At night, the cloud factor is 0.
-        var cloudFactor = dayLight * Mathf.Max(_weatherController.WeatherCurve.Cloudiness, 0f);
+        _cloudFactor = dayLight * Mathf.InverseLerp(0f, 0.5f, _weatherController.WeatherCurve.Cloudiness);
         // Full night will add a half-strength factor at most, to avoid full bright effects when it's pitch black. 
-        var dayLightFactor = 0.5f * (1 - dayLight);
+        _dayLightFactor = 0.5f * (1 - dayLight);
 
-        return Mathf.Min(cloudFactor + dayLightFactor, 1f);
+        return Mathf.Min(_cloudFactor + _dayLightFactor, 1f);
     }
 
-    private void UpdateMaterials(float lightingFactor)
+    private void UpdateMaterials()
     {
-        var tintColorFactor = Mathf.Lerp(MinTintColorFactor, MaxTintColorFactor, lightingFactor);
-        var tintAlphaFactorBase = Mathf.Lerp(MinTintAlphaFactor, MaxTintAlphaFactor, lightingFactor);
+        var tintColorFactor = Mathf.Lerp(MinTintColorFactor, MaxTintColorFactor, _lightingFactor);
+        var tintAlphaFactorBase = Mathf.Lerp(MinTintAlphaFactor, MaxTintAlphaFactor, _lightingFactor);
 
-        var lightingBoost = MaxLightingBoost * lightingFactor;
+        var lightingBoost = MaxLightingBoost * (_lightingFactor + 0.35f * _cloudFactor);
         var lightingBoostVec = new Vector4(lightingBoost, lightingBoost, lightingBoost, 1f);
 
         for (var i = 0; i < _materials.Count; i++)
