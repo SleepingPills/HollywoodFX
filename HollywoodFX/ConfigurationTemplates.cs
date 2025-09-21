@@ -24,8 +24,6 @@ public static class ConfigurationTemplates
         SetDefaults(mainConfig);
         
         // Override the important bits
-        Plugin.BattleAmbienceEnabled.Value = false;
-
         Plugin.ExplosionDensityDust.Value = 0.5f;
         Plugin.ExplosionDensitySmoke.Value = 0.5f;
         Plugin.ExplosionDensitySparks.Value = 0.5f;

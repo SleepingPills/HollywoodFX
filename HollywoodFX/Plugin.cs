@@ -54,7 +54,6 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> SuppressionDuration;
     public static ConfigEntry<float> SuppressionRange;
     
-    public static ConfigEntry<bool> BattleAmbienceEnabled;
     public static ConfigEntry<float> AmbientSimulationRange;
     public static ConfigEntry<float> AmbientEffectDensity;
     public static ConfigEntry<float> AmbientParticleLimit;
@@ -389,12 +388,6 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 10 }
         ));
         
-        BattleAmbienceEnabled = Config.Bind(battleAmbience, "Enable Battle Ambience Effects", true, new ConfigDescription(
-            "Toggles battle ambience effects like lingering smoke, dust and debris.",
-            null,
-            new ConfigurationManagerAttributes { Order = 5 }
-        ));
-
         AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 25f, new ConfigDescription(
             "Ambient battle effects are simulated in this range around the player, even if not immediately visible. Helps create ambience from bot fights.",
             new AcceptableValueRange<float>(0, 250f),

@@ -1,45 +1,52 @@
 ﻿using System.Collections.Generic;
-using Comfort.Common;
-using EFT.UI;
-using HollywoodFX.Lighting;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX;
 
-internal class BattleAmbienceEmissionTime
+internal class BattleAmbienceEmission
 {
-    public float Smoke;
-    public float Dust;
+    public float LingerTime;
+    public float PuffTime;
+    public int PuffCounter;
+    public int FrameCount;
 }
 
 internal class BattleAmbience
 {
-    private readonly ParticleSystem[] _cloudSmoke;
-    private readonly ParticleSystem[] _suspendedDust;
-    private readonly Dictionary<int, BattleAmbienceEmissionTime> _emissionTimes = new();
+    private readonly EffectBundle _smoke;
+    private readonly EffectBundle _debris;
+    
+    private readonly EffectBundle _puffRingLight;
+    private readonly EffectBundle _puffRingHeavy;
+    
+    private readonly EffectBundle _puffUpLight;
+    private readonly EffectBundle _puffUpHeavy;
+    
+    private readonly Dictionary<int, BattleAmbienceEmission> _emissions = new();
 
-    public BattleAmbience(Effects eftEffects, GameObject prefab)
+    public BattleAmbience(Effects eftEffects, GameObject lingerPrefab, GameObject puffPrefab)
     {
         Plugin.Log.LogInfo("Building Battle Ambience Effects");
+        var linger = EffectBundle.LoadPrefab(eftEffects, lingerPrefab, false);
+        var puff = EffectBundle.LoadPrefab(eftEffects, puffPrefab, true);
 
-        var rootInstance = Object.Instantiate(prefab);
-
-        var effectMap = new Dictionary<string, ParticleSystem>();
-        foreach (var child in rootInstance.transform.GetChildren())
+        foreach (var bundle in linger.Values)
         {
-            if (!child.gameObject.TryGetComponent<ParticleSystem>(out var particleSystem)) continue;
-
-            child.parent = eftEffects.transform;
-            ScaleEffect(particleSystem, Plugin.AmbientParticleLifetime.Value, Plugin.AmbientParticleLimit.Value, Plugin.AmbientEffectDensity.Value);
-            Singleton<MaterialRegistry>.Instance.Register(particleSystem, false);
-            effectMap.Add(child.name, particleSystem);
-            Plugin.Log.LogInfo($"Added battle ambience effect {particleSystem.name} {particleSystem.transform} {particleSystem.transform.parent}");
+            bundle.ScaleDensity(Plugin.AmbientEffectDensity.Value);
+            bundle.ScaleLifetime(Plugin.AmbientParticleLifetime.Value);
+            bundle.ScaleLimit(Plugin.AmbientParticleLimit.Value);
         }
-
-        _cloudSmoke = [effectMap["Smoke_1"]];
-        _suspendedDust = [effectMap["Dust_1"], effectMap["Glitter_1"]];
+        
+        _smoke = linger["Smoke"];
+        _debris = linger["Debris"];
+        
+        _puffRingLight = puff["Puff_Smoke_Ring_Light"];
+        _puffRingHeavy = puff["Puff_Smoke_Ring_Heavy"];
+        
+        _puffUpLight = puff["Puff_Smoke_Up_Light"];
+        _puffUpHeavy = puff["Puff_Smoke_Up_Heavy"];
     }
 
     public void Emit(ImpactKinetics kinetics)
@@ -47,87 +54,68 @@ internal class BattleAmbience
         // ReSharper disable once MergeSequentialChecks
         if (kinetics.Bullet.Info == null || kinetics.Bullet.Info.Player == null) return;
         
-        var emissionChance = 0.4 * (kinetics.Bullet.Energy / 2500f);
-
         var playerId = kinetics.Bullet.Info.Player.iPlayer.Id;
         
-        if (!_emissionTimes.TryGetValue(playerId, out var emissionTime))
+        if (!_emissions.TryGetValue(playerId, out var emission))
         {
-            _emissionTimes[playerId] = emissionTime = new BattleAmbienceEmissionTime
+            _emissions[playerId] = emission = new BattleAmbienceEmission();
+        }
+
+        if (emission.LingerTime <= Time.unscaledTime)
+        {
+            var lingerChance = 0.4 * (kinetics.Bullet.Energy / 2500f);
+
+            var emitted = false;
+            
+            if (Random.Range(0f, 1f) < lingerChance)
             {
-                Smoke = 0f,
-                Dust = 0f
-            };
+                _smoke.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
+                emitted = true;
+            }
+
+            if (Random.Range(0f, 1f) < lingerChance)
+            {
+                _debris.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
+                emitted = true;
+            }
+            
+            if (emitted)
+            {
+                emission.LingerTime = Time.unscaledTime + Random.Range(0.2f, 0.3f);
+            }
         }
 
-        var dustEmissionDeltaTime = Time.unscaledTime - emissionTime.Dust;
+        var sizeScale = kinetics.Bullet.SizeScale * Plugin.EffectSize.Value * 0.85f;
         
-        if (Random.Range(0f, 1f) < emissionChance && dustEmissionDeltaTime > 0.25f)
+        if (emission.PuffTime <= Time.unscaledTime)
         {
-            var smokeEffect = _cloudSmoke[Random.Range(0, _cloudSmoke.Length)];
-            Emit(smokeEffect, kinetics.Position, kinetics.Normal);
-            emissionTime.Dust = Time.unscaledTime;
+            // Emit a heavy puff
+            // if (kinetics.CamDir.IsSet(CamDir.Front))
+                _puffRingHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+            // else
+            //     _puffUpHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+            
+            emission.PuffTime = Time.unscaledTime + Random.Range(0.45f, 0.75f);
+            emission.PuffCounter = 0;
         }
-
-        var smokeEmissionRoll = Random.Range(0f, 1f) < emissionChance;
-        var smokeEmissionDeltaTime = Time.unscaledTime - emissionTime.Smoke;
-
-        if (!(smokeEmissionRoll && smokeEmissionDeltaTime > 0.25f)) return;
-        
-        var dustEffect = _suspendedDust[Random.Range(0, _suspendedDust.Length)];
-        Emit(dustEffect, kinetics.Position, kinetics.Normal);
-        emissionTime.Smoke = Time.unscaledTime;
-    }
-    
-    private static void Emit(ParticleSystem particleSystem, Vector3 position, Vector3 normal, float scale = 1f)
-    {
-        var rotation = Quaternion.LookRotation(normal);
-        particleSystem.transform.position = position;
-        particleSystem.transform.localScale = new Vector3(scale, scale, scale);
-        particleSystem.transform.rotation = rotation;
-        particleSystem.Play(true);
-    }
-
-    private static void ScaleEffect(ParticleSystem particleSystem, float lifetimeScaling, float limitScaling, float emissionScaling)
-    {
-        var main = particleSystem.main;
-
-        if (!Mathf.Approximately(limitScaling, 1))
+        else
         {
-            main.maxParticles = (int)(main.maxParticles * limitScaling);
+            if (emission.FrameCount != Time.frameCount)
+            {
+                // Reset the per-frame counter since we are not in the last recorded frame
+                emission.FrameCount = Time.frameCount;
+                emission.PuffCounter = 0;
+            }
+
+            if (emission.PuffCounter >= 2) return;
+            
+            // Emit a light puff and increment counter
+            // if (kinetics.CamDir.IsSet(CamDir.Front))
+            //     _puffRingLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+            // else
+            //     _puffUpLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+                
+            emission.PuffCounter++;
         }
-
-        if (!Mathf.Approximately(lifetimeScaling, 1))
-        {
-            var lifetime = main.startLifetime;
-            lifetime.constant *= lifetimeScaling;
-            lifetime.constantMin *= lifetimeScaling;
-            lifetime.constantMax *= lifetimeScaling;
-            lifetime.curveMultiplier = lifetimeScaling;
-        }
-
-        if (Mathf.Approximately(emissionScaling, 1)) return;
-
-        var emission = particleSystem.emission;
-
-        for (var i = 0; i < emission.burstCount; i++)
-        {
-            var burst = emission.GetBurst(i);
-            burst.minCount = CalcBurstCount(burst.minCount, emissionScaling);
-            burst.maxCount = CalcBurstCount(burst.maxCount, emissionScaling);
-            emission.SetBurst(i, burst);
-        }
-    }
-
-    private static short CalcBurstCount(short count, float scaling)
-    {
-        // Don't try to scale single particle emissions
-        if (count < 2)
-        {
-            return count;
-        }
-
-        // Clip the lower value to 1
-        return (short)Mathf.Max(count * scaling, 1f);
     }
 }

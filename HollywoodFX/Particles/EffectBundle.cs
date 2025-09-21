@@ -9,31 +9,17 @@ namespace HollywoodFX.Particles;
 
 public class Emitter
 {
-    public ParticleSystem Main;
-    private List<SubEmitter> _emitters;
+    public readonly ParticleSystem Main;
+    private readonly List<SubEmitter> _emitters;
 
     public Emitter(ParticleSystem main)
     {
         Main = main;
-
         _emitters = [];
-        foreach (var subSystem in main.GetComponentsInChildren<ParticleSystem>())
-        {
-            var emission = subSystem.emission;
 
-            if (!emission.enabled)
-                continue;
-
-            for (var i = 0; i < emission.burstCount; i++)
-            {
-                var burst = emission.GetBurst(i);
-                _emitters.Add(
-                    new SubEmitter { ParticleSystem = subSystem, MinCount = burst.minCount, MaxCount = burst.maxCount, Chance = burst.probability }
-                );
-            }
-        }
+        BuildEmitters();
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Emit(Vector3 position, Vector3 normal, float scale)
     {
@@ -45,7 +31,7 @@ public class Emitter
 
         Main.Play(true);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale)
     {
@@ -54,22 +40,22 @@ public class Emitter
         Main.transform.position = position;
         Main.transform.localScale = new Vector3(scale, scale, scale);
         Main.transform.rotation = rotation;
-        
+
         for (var i = 0; i < _emitters.Count; i++)
         {
             var emitter = _emitters[i];
-            
+
             if (emitter.Chance < 0.99f && Random.Range(0f, 1f) > emitter.Chance)
                 continue;
-            
+
             var system = emitter.ParticleSystem;
-            
+
             var count = Random.Range(emitter.MinCount, emitter.MaxCount);
-            
+
             system.Emit(count);
         }
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale, int count)
     {
@@ -84,11 +70,55 @@ public class Emitter
 
     public void ScaleDensity(float density)
     {
-        if (Mathf.Approximately(density, 1f)) return;
-
         foreach (var subSystem in Main.GetComponentsInChildren<ParticleSystem>())
         {
             ParticleHelpers.ScaleEmissionRate(subSystem, density);
+        }
+
+        BuildEmitters();
+    }
+
+    public void ScaleLimit(float scaling)
+    {
+        foreach (var system in Main.GetComponentsInChildren<ParticleSystem>())
+        {
+            var main = system.main;
+            main.maxParticles = (int)(main.maxParticles * scaling);
+        }
+    }
+
+    public void ScaleLifetime(float scaling)
+    {
+        foreach (var system in Main.GetComponentsInChildren<ParticleSystem>())
+        {
+            var main = system.main;
+            var lifetime = main.startLifetime;
+            lifetime.constant *= scaling;
+            lifetime.constantMin *= scaling;
+            lifetime.constantMax *= scaling;
+            lifetime.curveMultiplier = scaling;
+        }
+    }
+
+    private void BuildEmitters()
+    {
+        _emitters.Clear();
+
+        foreach (var subSystem in Main.GetComponentsInChildren<ParticleSystem>())
+        {
+            var emission = subSystem.emission;
+
+            if (!emission.enabled)
+                continue;
+
+            for (var i = 0; i < emission.burstCount; i++)
+            {
+                var burst = emission.GetBurst(i);
+
+                _emitters.Add(
+                    new SubEmitter { ParticleSystem = subSystem, MinCount = burst.minCount, MaxCount = burst.maxCount, Chance = burst.probability }
+                );
+            }
         }
     }
 }
@@ -104,7 +134,7 @@ public struct SubEmitter
 public class EffectBundle(Emitter[] emitters)
 {
     public readonly Emitter[] Emitters = emitters;
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Emit(Vector3 position, Vector3 normal, float scale)
     {
@@ -119,7 +149,7 @@ public class EffectBundle(Emitter[] emitters)
         pick.EmitDirect(position, normal, scale);
     }
 
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitDirect(Vector3 position, Vector3 normal, float scale, int count)
     {
@@ -167,6 +197,26 @@ public class EffectBundle(Emitter[] emitters)
         foreach (var emitter in Emitters)
         {
             emitter.ScaleDensity(density);
+        }
+    }
+    
+    public void ScaleLifetime(float scaling)
+    {
+        if (Mathf.Approximately(scaling, 1f)) return;
+
+        foreach (var emitter in Emitters)
+        {
+            emitter.ScaleLifetime(scaling);
+        }
+    }
+
+    public void ScaleLimit(float scaling)
+    {
+        if (Mathf.Approximately(scaling, 1f)) return;
+
+        foreach (var emitter in Emitters)
+        {
+            emitter.ScaleLimit(scaling);
         }
     }
 }

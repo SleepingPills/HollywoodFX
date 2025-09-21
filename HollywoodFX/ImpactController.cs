@@ -16,11 +16,9 @@ internal class ImpactController
     {
         Plugin.Log.LogInfo("Loading Impacts Prefabs");
 
-        if (Plugin.BattleAmbienceEnabled.Value)
-        {
-            var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
-            _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab);
-        }
+        var ambiencePrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience");
+        var ambiencePuffsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Ambience Puffs");
+        _battleAmbience = new BattleAmbience(eftEffects, ambiencePrefab, ambiencePuffsPrefab);
 
         var impactsMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
         var impactsTracerPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts Tracer");
@@ -55,9 +53,7 @@ internal class ImpactController
                 _goreEffects.Apply(kinetics);
         }
 
-        if (Plugin.BattleAmbienceEnabled.Value
-            && !isBodyShot
-            && (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value))
+        if (!isBodyShot && (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value))
             _battleAmbience.Emit(kinetics);
     }
 }
