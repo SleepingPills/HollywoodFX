@@ -36,7 +36,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> ExplosionDensitySmoke;
     public static ConfigEntry<float> ExplosionDensityDust;
     public static ConfigEntry<float> ComputeFidelity;
-    
+
     public static ConfigEntry<bool> MuzzleEffectsEnabled;
     public static ConfigEntry<float> MuzzleEffectJetsSize;
     public static ConfigEntry<float> MuzzleEffectSparksSize;
@@ -49,11 +49,11 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<bool> ConcussionEnabled;
     public static ConfigEntry<float> ConcussionDuration;
     public static ConfigEntry<float> ConcussionRange;
-    
+
     public static ConfigEntry<bool> SuppressionEnabled;
     public static ConfigEntry<float> SuppressionDuration;
     public static ConfigEntry<float> SuppressionRange;
-    
+
     public static ConfigEntry<float> AmbientSimulationRange;
     public static ConfigEntry<float> AmbientEffectDensity;
     public static ConfigEntry<float> AmbientParticleLimit;
@@ -122,7 +122,7 @@ public class Plugin : BaseUnityPlugin
         yield return new WaitForSeconds(5);
 
         var visceralCombatDetected = Chainloader.PluginInfos.ContainsKey("com.servph.VisceralCombat");
-        
+
         var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         if (assemblyDirectory != null)
@@ -134,7 +134,7 @@ public class Plugin : BaseUnityPlugin
                 visceralCombatDetected = false;
             }
         }
-        
+
         if (visceralCombatDetected)
         {
             Log.LogInfo("Visceral Combat detected, disabling ragdolls");
@@ -168,7 +168,7 @@ public class Plugin : BaseUnityPlugin
         new EffectsInitBlastControllerPatch().Enable();
         new EffectsWipeDefaultExplosionSystemsPatch().Enable();
         new EffectsEmitGrenadePatch().Enable();
-        
+
         new GameWorldInitConcussionPatch().Enable();
 
         if (RagdollEnabled.Value && !visceralCombatDetected)
@@ -254,7 +254,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Impacts
          */
-        EffectSize = Config.Bind(impacts, "Impact Effect Size", 0.7f, new ConfigDescription(
+        EffectSize = Config.Bind(impacts, "Impact Effect Size v1", 0.75f, new ConfigDescription(
             "Scales the size of impact effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 2 }
@@ -297,13 +297,13 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 2 }
         ));
-        
+
         ComputeFidelity = Config.Bind(explosions, "Compute Fidelity (RESTART)", 1f, new ConfigDescription(
             "Adjusts the resolution and fidelity of confinement detection and other aspects of explosions. Lower values are less CPU intensive.",
             new AcceptableValueRange<float>(0.1f, 1f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
-        
+
         /*
          * Muzzle Effects
          */
@@ -387,7 +387,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 10 }
         ));
-        
+
         AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 25f, new ConfigDescription(
             "Ambient battle effects are simulated in this range around the player, even if not immediately visible. Helps create ambience from bot fights.",
             new AcceptableValueRange<float>(0, 250f),
@@ -542,7 +542,7 @@ public class Plugin : BaseUnityPlugin
         RagdollForceMultiplier = Config.Bind(ragdoll, "Ragdoll Force Multiplier", 1f, new ConfigDescription(
             "Multiplies the force that is applied to ragdolls when enemies die.",
             new AcceptableValueRange<float>(0f, 100f),
-            new ConfigurationManagerAttributes { Order = 1, ReadOnly = visceralCombatDetected, IsAdvanced = true }
+            new ConfigurationManagerAttributes { Order = 1, ReadOnly = visceralCombatDetected }
         ));
 
         /*
@@ -595,7 +595,7 @@ public class Plugin : BaseUnityPlugin
         ));
         MiscShellPhysicsEnabled.SettingChanged += (_, _) => UpdateShellPhysics();
         UpdateShellPhysics();
-        
+
         /*
          * Graphics
          */
@@ -615,7 +615,7 @@ public class Plugin : BaseUnityPlugin
             new AcceptableValueRange<float>(0f, 10f),
             new ConfigurationManagerAttributes { Order = 3, IsAdvanced = true }
         ));
-        
+
         _michelinManEnabled = Config.Bind(whimsy, "AcidPhantasm Michelin Man Mode", false, new ConfigDescription(
             "Nunc est Bibendum.",
             null,
