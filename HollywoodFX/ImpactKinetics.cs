@@ -60,6 +60,7 @@ public class ImpactKinetics
 
     public float DistanceToImpact;
 
+    public float CamAngle;
     public CamDir CamDir;
     public WorldDir WorldDir;
     
@@ -89,7 +90,7 @@ public class ImpactKinetics
         // Add a small amount of randomization to simulate hitting rough surfaces and reduce the jarring uniformity
         RandNormal = (0.85f * Normal + 0.15f * Random.onUnitSphere).normalized;
 
-        CamDir = Orientation.GetCamDir(RandNormal);
+        (CamDir, CamAngle) = Orientation.GetCamDir(RandNormal);
         WorldDir = Orientation.GetWorldDir(RandNormal);
         
         RandNormalOffset = Orientation.GetNormOffset(RandNormal, CamDir);

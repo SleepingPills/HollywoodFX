@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using EFT.UI;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -22,7 +23,7 @@ internal class BattleAmbience
     private readonly EffectBundle _puffRingHeavy;
     
     private readonly EffectBundle _puffUpLight;
-    private readonly EffectBundle _puffUpHeavy;
+    private readonly EffectBundle _puffSideHeavy;
     
     private readonly Dictionary<int, BattleAmbienceEmission> _emissions = new();
 
@@ -46,7 +47,7 @@ internal class BattleAmbience
         _puffRingHeavy = puff["Puff_Smoke_Ring_Heavy"];
         
         _puffUpLight = puff["Puff_Smoke_Up_Light"];
-        _puffUpHeavy = puff["Puff_Smoke_Up_Heavy"];
+        _puffSideHeavy = puff["Puff_Smoke_Up_Heavy"];
     }
 
     public void Emit(ImpactKinetics kinetics)
@@ -81,7 +82,7 @@ internal class BattleAmbience
             
             if (emitted)
             {
-                emission.LingerTime = Time.unscaledTime + Random.Range(0.2f, 0.3f);
+                emission.LingerTime = Time.unscaledTime + Random.Range(0.2f, 0.4f);
             }
         }
 
@@ -90,10 +91,14 @@ internal class BattleAmbience
         if (emission.PuffTime <= Time.unscaledTime)
         {
             // Emit a heavy puff
-            // if (kinetics.CamDir.IsSet(CamDir.Front))
+            if (kinetics.CamAngle < 160)
+            {
+                _puffSideHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+            }
+            else
+            {
                 _puffRingHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-            // else
-            //     _puffUpHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+            }
             
             emission.PuffTime = Time.unscaledTime + Random.Range(0.45f, 0.75f);
             emission.PuffCounter = 0;

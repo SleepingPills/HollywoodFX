@@ -173,13 +173,13 @@ public class ConfinedBlast(
     {
         var camDir = Orientation.GetCamDir(_confinement.Normal);
         
-        if (camDir.IsSet(CamDir.Front))
+        if (camDir.Item1.IsSet(CamDir.Front))
             splashFront.Emit(origin, _confinement.Normal, 1f);
 
         // Don't emit the vertical splash in very confined spaces or directly head on
-        if (!(_confinement.Proximity >= 0.4f) || !camDir.IsSet(CamDir.Angled)) return;
+        if (!(_confinement.Proximity >= 0.4f) || !camDir.Item1.IsSet(CamDir.Angled)) return;
 
-        var adjNormal = Orientation.GetNormOffset(normal, camDir);
+        var adjNormal = Orientation.GetNormOffset(normal, camDir.Item1);
         var worldDir = Orientation.GetWorldDir(adjNormal);
         
         if (worldDir.IsSet(WorldDir.Up) && Random.Range(0f, 1f) <= 0.5f)

@@ -64,7 +64,7 @@ public static class Orientation
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static CamDir GetCamDir(Vector3 normal)
+    public static ValueTuple<CamDir, float> GetCamDir(Vector3 normal)
     {
         var camera = CameraClass.Instance.Camera;
         var camAngle = Vector3.Angle(camera.transform.forward, normal);
@@ -91,7 +91,7 @@ public static class Orientation
                 break;
         }
 
-        return camDir;
+        return new ValueTuple<CamDir, float>(camDir, camAngle);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
