@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using EFT.UI;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -11,7 +10,6 @@ internal class BattleAmbienceEmission
     public float LingerTime;
     public float PuffTime;
     public int PuffCounter;
-    public int FrameCount;
 }
 
 internal class BattleAmbience
@@ -19,10 +17,10 @@ internal class BattleAmbience
     private readonly EffectBundle _smoke;
     private readonly EffectBundle _debris;
     
-    private readonly EffectBundle _puffRingLight;
-    private readonly EffectBundle _puffRingHeavy;
+    private readonly EffectBundle _puffFrontLight;
+    private readonly EffectBundle _puffFrontHeavy;
     
-    private readonly EffectBundle _puffUpLight;
+    private readonly EffectBundle _puffSideLight;
     private readonly EffectBundle _puffSideHeavy;
     
     private readonly Dictionary<int, BattleAmbienceEmission> _emissions = new();
@@ -43,11 +41,11 @@ internal class BattleAmbience
         _smoke = linger["Smoke"];
         _debris = linger["Debris"];
         
-        _puffRingLight = puff["Puff_Smoke_Ring_Light"];
-        _puffRingHeavy = puff["Puff_Smoke_Ring_Heavy"];
+        _puffFrontLight = puff["Puff_Smoke_Front_Light"];
+        _puffFrontHeavy = puff["Puff_Smoke_Front_Heavy"];
         
-        _puffUpLight = puff["Puff_Smoke_Up_Light"];
-        _puffSideHeavy = puff["Puff_Smoke_Up_Heavy"];
+        _puffSideLight = puff["Puff_Smoke_Side_Light"];
+        _puffSideHeavy = puff["Puff_Smoke_Side_Heavy"];
     }
 
     public void Emit(ImpactKinetics kinetics)
@@ -86,7 +84,7 @@ internal class BattleAmbience
             }
         }
 
-        var sizeScale = kinetics.Bullet.SizeScale * Plugin.EffectSize.Value * 0.85f;
+        var sizeScale = kinetics.Bullet.SizeScale * Plugin.EffectSize.Value * 0.75f;
         
         if (emission.PuffTime <= Time.unscaledTime)
         {
@@ -97,7 +95,7 @@ internal class BattleAmbience
             }
             else
             {
-                _puffRingHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+                _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
             }
             
             emission.PuffTime = Time.unscaledTime + Random.Range(0.45f, 0.75f);
@@ -105,20 +103,13 @@ internal class BattleAmbience
         }
         else
         {
-            if (emission.FrameCount != Time.frameCount)
-            {
-                // Reset the per-frame counter since we are not in the last recorded frame
-                emission.FrameCount = Time.frameCount;
-                emission.PuffCounter = 0;
-            }
-
             if (emission.PuffCounter >= 2) return;
             
             // Emit a light puff and increment counter
-            // if (kinetics.CamDir.IsSet(CamDir.Front))
-            //     _puffRingLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-            // else
-            //     _puffUpLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+            if (kinetics.CamAngle < 160)
+                _puffSideLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);            
+            else
+                _puffFrontLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
                 
             emission.PuffCounter++;
         }
