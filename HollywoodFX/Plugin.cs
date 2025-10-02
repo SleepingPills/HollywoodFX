@@ -90,7 +90,6 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<bool> MiscDecalsEnabled;
     public static ConfigEntry<int> MiscMaxDecalCount;
-    public static ConfigEntry<int> MiscMaxConcurrentParticleSys;
     public static ConfigEntry<float> MiscShellLifetime;
     public static ConfigEntry<float> MiscShellSize;
     public static ConfigEntry<float> MiscShellVelocity;
@@ -558,12 +557,6 @@ public class Plugin : BaseUnityPlugin
             "Adjusts the maximum number of decals that the game will render. The vanilla number is a puny 200.",
             new AcceptableValueRange<int>(1, 2048),
             new ConfigurationManagerAttributes { Order = 10 }
-        ));
-
-        MiscMaxConcurrentParticleSys = Config.Bind(misc, "Max New Particle Systems Per Frame (RESTART)", 100, new ConfigDescription(
-            "Adjusts how many new particle systems can be created per frame. The vanilla game sets it to 10. The performance impact is quite low, it's best to keep this number above 30 to allow HFX to work properly.",
-            new AcceptableValueRange<int>(10, 1000),
-            new ConfigurationManagerAttributes { Order = 9, IsAdvanced = true }
         ));
 
         MiscShellLifetime = Config.Bind(misc, "Spent Shells Lifetime (seconds)", 60f, new ConfigDescription(

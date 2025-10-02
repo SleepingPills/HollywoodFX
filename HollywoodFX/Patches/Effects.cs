@@ -144,15 +144,6 @@ public class EffectsAwakePrefixPatch : ModulePatch
             Plugin.Log.LogWarning($"Setting max dynamic decals to {newDecalLimit}");
             decalRendererTraverse.Field("_maxDynamicDecals").SetValue(newDecalLimit);
         }
-
-        var maxConcurrentParticlesField = Traverse.Create(typeof(Effects)).Field("int_0");
-        var maxConcurrentParticles = maxConcurrentParticlesField.GetValue<int>();
-
-        Plugin.Log.LogWarning($"Current concurrent particle system limit is: {maxConcurrentParticles}");
-        if (maxConcurrentParticles == Plugin.MiscMaxConcurrentParticleSys.Value) return;
-
-        Plugin.Log.LogWarning($"Setting max concurrent particle system limit to {Plugin.MiscMaxConcurrentParticleSys.Value}");
-        maxConcurrentParticlesField.SetValue(Plugin.MiscMaxConcurrentParticleSys.Value);
     }
 
     private static void WipeDefaultParticles(Effects effects)

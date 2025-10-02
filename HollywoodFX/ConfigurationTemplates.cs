@@ -36,8 +36,6 @@ public static class ConfigurationTemplates
         Plugin.BloodSplatterDecalsEnabled.Value = false;
         Plugin.MiscDecalsEnabled.Value = false;
         
-        Plugin.MiscMaxConcurrentParticleSys.Value = 10;
-        
         Plugin.MiscShellLifetime.Value = 5f;
         Plugin.MiscShellPhysicsEnabled.Value = false;
     }
