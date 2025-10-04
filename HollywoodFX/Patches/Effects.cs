@@ -6,10 +6,8 @@ using EFT;
 using EFT.Ballistics;
 using HarmonyLib;
 using HollywoodFX.Decal;
-using HollywoodFX.Explosion;
 using HollywoodFX.Muzzle;
 using HollywoodFX.Muzzle.Patches;
-using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
 using Systems.Effects;
 using UnityEngine;
@@ -72,8 +70,8 @@ public class EffectsAwakePrefixPatch : ModulePatch
             {
                 Plugin.Log.LogInfo("Overriding blood decal textures");
                 texDecalsOrigTraverse.Field("_bloodDecalTexture").SetValue(bloodDecalsHfx);
-                texDecalsOrigTraverse.Field("_vestDecalTexture").SetValue(bloodDecalsHfx);
-                texDecalsOrigTraverse.Field("_backDecalTexture").SetValue(bloodDecalsHfx);
+                // texDecalsOrigTraverse.Field("_vestDecalTexture").SetValue(bloodDecalsHfx);
+                // texDecalsOrigTraverse.Field("_backDecalTexture").SetValue(bloodDecalsHfx);
                 texDecalsOrigTraverse.Field("_decalSize").SetValue(new Vector2(0.075f, 0.15f) * Plugin.WoundDecalsSize.Value);
             }
         }
