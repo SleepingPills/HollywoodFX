@@ -86,7 +86,7 @@ public class BloodEffects
         var mistSizeScale = Mathf.Max(bullet.SizeScale, 1f) * Plugin.BloodMistSize.Value;
         var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
 
-        var mistChance = 0.5f * armorChanceScale * bullet.ChanceScale;
+        var mistChance = 0.5f * armorChanceScale * bullet.ChanceScale * Plugin.BloodMistChanceScale.Value;
         if (Random.Range(0f, 1f) < mistChance)
         {
             // Emit a mist or a puff at a 25/75 chance
@@ -101,7 +101,7 @@ public class BloodEffects
             }
         }
 
-        var miscChance = armorChanceScale * bullet.ChanceScale;
+        var miscChance = armorChanceScale * bullet.ChanceScale * Plugin.BloodMiscChanceScale.Value;
         _sprays.Emit(kinetics, spraySizeScale, miscChance);
         _squibs.Emit(kinetics, squibSizeScale, miscChance);
 
@@ -114,7 +114,7 @@ public class BloodEffects
         // Push the position along the flipped normal slightly
         var position = kinetics.Position + 0.1f * flippedNormal;
 
-        var squirtChance = 0.75f * armorChanceScale * bullet.ChanceScale;
+        var squirtChance = 0.75f * armorChanceScale * bullet.ChanceScale * Plugin.BloodSquirtChanceScale.Value;
 
         if (Random.Range(0f, 1f) < squirtChance)
         {
