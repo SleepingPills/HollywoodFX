@@ -74,10 +74,6 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> BloodSquirtSize;
     public static ConfigEntry<float> BloodSquirtEmission;
-    
-    public static ConfigEntry<float> BloodMistChanceScale;
-    public static ConfigEntry<float> BloodMiscChanceScale;
-    public static ConfigEntry<float> BloodSquirtChanceScale;
 
     public static ConfigEntry<float> BloodFinisherSize;
     public static ConfigEntry<float> BloodFinisherEmission;
@@ -421,27 +417,9 @@ public class Plugin : BaseUnityPlugin
         GoreEnabled = Config.Bind(goreEmission, "Enable Gore Effects", true, new ConfigDescription(
             "Toggles whether gore effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
             null,
-            new ConfigurationManagerAttributes { Order = 9 }
-        ));
-
-        BloodMistChanceScale = Config.Bind(goreEmission, "Blood Mist Chance Mult", 1f, new ConfigDescription(
-            "Adjusts the quantity of mists & puffs of blood.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 8 }
-        ));
-        
-        BloodMiscChanceScale = Config.Bind(goreEmission, "Blood Spray Chance Mult", 1f, new ConfigDescription(
-            "Adjusts the quantity of mists & puffs of blood.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 7 }
-        ));
-        
-        BloodSquirtChanceScale = Config.Bind(goreEmission, "Blood Squirt Chance Mult", 1f, new ConfigDescription(
-            "Adjusts the quantity of mists & puffs of blood.",
-            new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 6 }
         ));
-        
+
         BloodMistEmission = Config.Bind(goreEmission, "Blood Mist Emission Rate", 1f, new ConfigDescription(
             "Adjusts the quantity of mists & puffs of blood.",
             new AcceptableValueRange<float>(0f, 5f),
