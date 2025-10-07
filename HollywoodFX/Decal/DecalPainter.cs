@@ -10,15 +10,15 @@ public class DecalPainter
 {
     private readonly DeferredDecalRenderer _renderer;
 
-    private readonly Dictionary<Material, DeferredDecalRenderer.GClass1001> _dictionary0;
-    private readonly Dictionary<Camera, DeferredDecalRenderer.Class714> _dictionary2;
+    private readonly Dictionary<Material, DeferredDecalRenderer.DeferredDecalMeshDataClass> _dictionary0;
+    private readonly Dictionary<Camera, DeferredDecalRenderer.DeferredDecalBufferClass> _dictionary2;
     
     public DecalPainter(DeferredDecalRenderer renderer)
     {
         _renderer = renderer;
         var traverse = Traverse.Create(_renderer);
-        _dictionary0 = traverse.Field("dictionary_0").GetValue<Dictionary<Material, DeferredDecalRenderer.GClass1001>>();
-        _dictionary2 = traverse.Field("dictionary_2").GetValue<Dictionary<Camera, DeferredDecalRenderer.Class714>>();
+        _dictionary0 = traverse.Field("dictionary_0").GetValue<Dictionary<Material, DeferredDecalRenderer.DeferredDecalMeshDataClass>>();
+        _dictionary2 = traverse.Field("dictionary_2").GetValue<Dictionary<Camera, DeferredDecalRenderer.DeferredDecalBufferClass>>();
     }
 
     public void DrawDecal(

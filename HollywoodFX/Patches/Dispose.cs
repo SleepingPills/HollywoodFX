@@ -39,6 +39,8 @@ public class GameWorldDisposePostfixPatch : ModulePatch
         ImpactStatic.LocalPlayer = null;
         ImpactStatic.PlayerHitInfo = null;
         
+        ShotDelegateWrapperPatch.OriginalShotDelegate = null;
+        
         Plugin.Log.LogInfo("Disposing complete.");
     }
 }

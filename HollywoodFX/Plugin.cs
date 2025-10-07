@@ -23,7 +23,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.7.5";
+    public const string HollywoodFXVersion = "1.8.0";
 
     public static ManualLogSource Log;
 
@@ -145,7 +145,7 @@ public class Plugin : BaseUnityPlugin
 
         new GameWorldAwakePrefixPatch().Enable();
         new GameWorldStartedPostfixPatch().Enable();
-        new GameWorldShotDelegatePrefixPatch().Enable();
+        new ShotDelegateWrapperPatch().Enable();
 
         new EffectsAwakePrefixPatch().Enable();
         new EffectsAwakePostfixPatch().Enable();

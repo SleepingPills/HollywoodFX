@@ -98,9 +98,9 @@ internal class RagdollStartPrefixPatch : ModulePatch
 
     [PatchPrefix]
     // ReSharper disable InconsistentNaming
-    public static void Prefix(RagdollClass __instance, ref Func<bool, float, bool> ___func_0)
+    public static void Prefix(RagdollClass __instance)
     {
-        ___func_0 = CheckCorpseIsStill;
+        __instance.Func_0 = CheckCorpseIsStill;
     }
 
     private static bool CheckCorpseIsStill(bool sleeping, float timePassed)
@@ -153,9 +153,9 @@ internal class RagdollStartPostfixPatch : ModulePatch
 
     [PatchPostfix]
     // ReSharper disable InconsistentNaming
-    public static void Postfix(RagdollClass __instance, RigidbodySpawner[] ___rigidbodySpawner_0)
+    public static void Postfix(RagdollClass __instance)
     {
-        foreach (var spawner in ___rigidbodySpawner_0)
+        foreach (var spawner in __instance.RigidbodySpawner_0)
         {
             spawner.Rigidbody.maxDepenetrationVelocity = 1f;
         }

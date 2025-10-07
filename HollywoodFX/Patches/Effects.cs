@@ -217,28 +217,3 @@ public class EffectsAwakePostfixPatch : ModulePatch
         }
     }
 }
-
-public class EffectsEmitPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        // Need to disambiguate the correct emit method
-        return typeof(Effects).GetMethod(nameof(Effects.Emit),
-        [
-            typeof(MaterialType), typeof(BallisticCollider), typeof(Vector3), typeof(Vector3), typeof(float),
-            typeof(bool), typeof(bool), typeof(EPointOfView)
-        ]);
-    }
-
-    [PatchPrefix]
-    // ReSharper disable once InconsistentNaming
-    public static void Prefix(Effects __instance, MaterialType material, BallisticCollider hitCollider,
-        Vector3 position, Vector3 normal, float volume, bool isKnife, bool isHitPointVisible, EPointOfView pov)
-    {
-        if (GameWorldAwakePrefixPatch.IsHideout || isKnife)
-            return;
-
-        ImpactStatic.Kinetics.Update(material, position, normal, isHitPointVisible);
-        Singleton<ImpactController>.Instance.Emit(ImpactStatic.Kinetics);
-    }
-}

@@ -49,9 +49,9 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         Plugin.Log.LogInfo($"Found local player: {__instance.MainPlayer.ProfileId}");
 
         var locationId = __instance.LocationId.ToLower();
-        
+
         Plugin.Log.LogInfo($"Location: {locationId}");
-        
+
         if (locationId.Contains("factory") || locationId.Contains("laboratory"))
         {
             Plugin.Log.LogInfo("Static lighting location detected, applying static lighting");
@@ -61,34 +61,9 @@ public class GameWorldStartedPostfixPatch : ModulePatch
         {
             __instance.gameObject.AddComponent<AmbientLightingController>();
         }
-        
+
         Singleton<MaterialRegistry>.Instance?.SetMipBias(Plugin.MipBias.Value);
         Plugin.Log.LogInfo($"Updated mipmap bias to {Plugin.MipBias.Value}");
-    }
-}
-
-public class GameWorldShotDelegatePrefixPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        return typeof(ClientGameWorld).GetMethod(nameof(ClientGameWorld.ShotDelegate));
-    }
-
-    [PatchPrefix]
-    // ReSharper disable once InconsistentNaming
-    public static void Prefix(EftBulletClass shotResult)
-    {
-        var bullet = ImpactStatic.Kinetics.Bullet;
-
-        bullet.Update(shotResult);
-        var hitCollider = bullet.Info.HitCollider;
-        if (hitCollider == null)
-            return;
-
-        if (bullet.HitColliderRoot.gameObject.layer != LayerMaskClass.PlayerLayer)
-            return;
-
-        Singleton<PlayerDamageRegistry>.Instance.RegisterDamage(ImpactStatic.Kinetics.Bullet, hitCollider, bullet.HitColliderRoot);
     }
 }
 
@@ -104,17 +79,17 @@ public class MichelinManPatch : ModulePatch
     public static void Prefix(EftBulletClass shotResult)
     {
         var hitCollider = shotResult.HitCollider;
-        
+
         if (hitCollider == null)
             return;
-        
+
         var rigidbody = hitCollider.attachedRigidbody;
-        
+
         if (rigidbody == null)
             return;
 
         var hitColliderRoot = hitCollider.transform.root;
-        
+
         if (hitColliderRoot.gameObject.layer != LayerMaskClass.PlayerLayer)
             return;
 

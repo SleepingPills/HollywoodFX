@@ -71,7 +71,7 @@ public class GoreEffects
                 if (player != null || hitColliderRoot.TryGetComponent(out player))
                 {
                     var playerTraverse = Traverse.Create(player);
-                    var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<GStruct58>>();
+                    var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<BodyRendererDataStruct>>();
                     var playerBody = playerTraverse.Field("_playerBody").GetValue<PlayerBody>();
 
                     preAllocatedRenderersList.Clear();
