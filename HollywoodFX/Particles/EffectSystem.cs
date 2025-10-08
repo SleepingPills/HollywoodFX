@@ -1,14 +1,16 @@
 ﻿using System.Runtime.CompilerServices;
+using EFT.UI;
 using UnityEngine;
 
 namespace HollywoodFX.Particles;
 
-internal readonly struct DirectionalEffect(
+internal class DirectionalEffect(
     EffectBundle effect,
     float chance = 1f,
     bool isChanceScaledByKinetics = false,
     CamDir camDir = CamDir.None,
-    WorldDir worldDir = WorldDir.None
+    WorldDir worldDir = WorldDir.None,
+    float pacing = 0f
 )
 {
     public readonly EffectBundle Effect = effect;
@@ -16,6 +18,8 @@ internal readonly struct DirectionalEffect(
     public readonly CamDir CamDir = camDir;
     public readonly float Chance = chance;
     public readonly bool IsChanceScaledByKinetics = isChanceScaledByKinetics;
+    public readonly float Pacing = pacing;
+    public float Timestamp;
 }
 
 internal class EffectSystem(
@@ -58,6 +62,16 @@ internal class EffectSystem(
 
             if (!camDir.IsSet(impact.CamDir) || !worldDir.IsSet(impact.WorldDir)) continue;
 
+            if (impact.Pacing > 0.01f)
+            {
+                if (Time.unscaledTime < impact.Timestamp)
+                {
+                    continue;
+                }
+                
+                impact.Timestamp = Time.unscaledTime + impact.Pacing;
+            }
+            
             var impactChance = chanceScale * (impact.IsChanceScaledByKinetics ? impact.Chance * bullet.ChanceScale : impact.Chance);
             if (!(Random.Range(0f, 1f) < impactChance)) continue;
 
