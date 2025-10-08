@@ -38,7 +38,7 @@ public class BulletKinetics
         Impulse = mass * speed;
         Energy = Impulse * speed / 2;
         
-        SizeScale = Mathf.Clamp(Mathf.Sqrt(Energy / SizeNormFactor), 0.6f, 1.2f);
+        SizeScale = Mathf.Clamp(Mathf.Sqrt(Energy / SizeNormFactor), 0.75f, 1.25f);
         
         // Chance scaling has linear scaling below 1, quadratic above. This ensures visible difference for large calibers without suppressing
         // things too much for smaller ones.
