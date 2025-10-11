@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace HollywoodFX;
 
-[BepInPlugin("com.janky.hollywoodfx", "Janky's HollywoodFX", HollywoodFXVersion)]
+[BepInPlugin("com.janky.hollywoodfx", "Janky-HollywoodFX", HollywoodFXVersion)]
 [SuppressMessage("ReSharper", "HeapView.ObjectAllocation.Evident")]
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
