@@ -52,7 +52,7 @@ public class GameWorldStartedPostfixPatch : ModulePatch
 
         Plugin.Log.LogInfo($"Location: {locationId}");
 
-        if (locationId.Contains("factory") || locationId.Contains("laboratory"))
+        if (locationId.Contains("factory") || locationId.Contains("laboratory") || locationId.Contains("labyrinth"))
         {
             Plugin.Log.LogInfo("Static lighting location detected, applying static lighting");
             StaticMaterialAmbientLighting.AdjustLighting(locationId);
