@@ -1,4 +1,5 @@
 ﻿using Comfort.Common;
+using EFT.UI;
 using HollywoodFX.Concussion;
 using HollywoodFX.Particles;
 using Systems.Effects;
@@ -10,16 +11,19 @@ public class BlastController : MonoBehaviour
 {
     private BlastPool<ConfinedBlast> _dynamicBlastPool;
     private BlastPool<Blast> _flashbangBlastPool;
+    private BlastPool<Blast> _bulletBlastPool;
     
     public void Init(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading explosion prefabs");
         var dynamicPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
         var flashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
+        var bulletPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Bullet");
 
         Plugin.Log.LogInfo("Creating blast pools");
         _dynamicBlastPool = new BlastPool<ConfinedBlast>(eftEffects, dynamicPrefab, BuildDynamicExplosion, 15, 20f);
         _flashbangBlastPool = new BlastPool<Blast>(eftEffects, flashbangPrefab, BuildFlashbang, 15, 10f);
+        _bulletBlastPool = new BlastPool<Blast>(eftEffects, bulletPrefab, BuildBullet, 15, 2.5f);
         
         Plugin.Log.LogInfo("Creating concussion handling");
     }
@@ -28,6 +32,7 @@ public class BlastController : MonoBehaviour
     {
         _dynamicBlastPool.Update();
         _flashbangBlastPool.Update();
+        _bulletBlastPool.Update();
     }
 
     private static ConfinedBlast BuildDynamicExplosion(Effects eftEffects, GameObject prefab)
@@ -54,54 +59,6 @@ public class BlastController : MonoBehaviour
         );
     }
 
-    // private static Blast BuildExplosionMid(Effects eftEffects, GameObject prefab)
-    // {
-    //     var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-    //
-    //     EffectBundle[] explosionEffectsUp =
-    //     [
-    //         ScaleDensity(mainEffects["Fireball"]),
-    //         mainEffects["Glow"],
-    //         mainEffects["Splash"],
-    //         mainEffects["Shockwave"],
-    //         ScaleDensity(mainEffects["Debris_Burning"]),
-    //         ScaleDensity(mainEffects["Dust_Linger"]),
-    //     ];
-    //
-    //     EffectBundle[] explosionEffectsAngled =
-    //     [
-    //         ScaleDensity(mainEffects["Debris_Glow"]),
-    //         ScaleDensity(mainEffects["Debris_Generic"]),
-    //         ScaleDensity(mainEffects["Sparks"]),
-    //         ScaleDensity(mainEffects["Dust_Ring"]),
-    //     ];
-    //
-    //     return new Blast(explosionEffectsUp, explosionEffectsAngled);
-    // }
-
-    // private static Blast BuildPremadeExplosion(Effects eftEffects, GameObject prefab)
-    // {
-    //     var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
-    //
-    //     EffectBundle[] explosionEffectsUp =
-    //     [
-    //         ScaleDensity(mainEffects["Fireball"]),
-    //         mainEffects["Splash"],
-    //         mainEffects["Shockwave"],
-    //     ];
-    //
-    //     EffectBundle[] explosionEffectsAngled =
-    //     [
-    //         ScaleDensity(mainEffects["Debris_Glow"]),
-    //         ScaleDensity(mainEffects["Debris_Generic"]),
-    //         ScaleDensity(mainEffects["Dust"]),
-    //         ScaleDensity(mainEffects["Dust_Linger"]),
-    //         ScaleDensity(mainEffects["Sparks"]),
-    //     ];
-    //
-    //     return new Blast(explosionEffectsUp, explosionEffectsAngled);
-    // }
-
     private static Blast BuildFlashbang(Effects eftEffects, GameObject prefab)
     {
         var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
@@ -124,6 +81,23 @@ public class BlastController : MonoBehaviour
         return new Blast(explosionEffectsUp, explosionEffectsAngled);
     }
 
+    private static Blast BuildBullet(Effects eftEffects, GameObject prefab)
+    {
+        var mainEffects = EffectBundle.LoadPrefab(eftEffects, prefab, true);
+
+        EffectBundle[] explosionEffectsUp = [];
+
+        EffectBundle[] explosionEffectsAngled =
+        [
+            ScaleDensity(mainEffects["Fireball"]),
+            ScaleDensity(mainEffects["Debris_Glow"]),
+            ScaleDensity(mainEffects["Debris_Burning"]),
+            ScaleDensity(mainEffects["Debris_Generic"])
+        ];
+
+        return new Blast(explosionEffectsUp, explosionEffectsAngled);
+    }
+    
     private static EffectBundle ScaleDensity(EffectBundle effects, float scale = 1f)
     {
         foreach (var emitter in effects.Emitters)
@@ -157,28 +131,32 @@ public class BlastController : MonoBehaviour
         return effects;
     }
 
+    // TODO: Replace this with specialized methods. E.g. bullet based effects (big_round) will call a specialized function, as will grenade types.
+    // This allows us to use stuff like impact kinets and grenade IExplosiveItem.GetStrength or IExplosiveItem.MaxExplosionDistance
     public void Emit(string id, Vector3 position, Vector3 normal)
     {
-        if (id.StartsWith("big_round") || id.StartsWith("grenade_smoke"))
+        // ConsoleScreen.Log($"Grenade: {id}");
+        
+        if (id.StartsWith("grenade_smoke"))
             return;
 
         if (id.StartsWith("Flashbang"))
         {
             _flashbangBlastPool.Emit(position, normal);
         }
-        // else if (id.StartsWith("small") || name.StartsWith("Small"))
-        // {
-        //     _dynamicBlastPool.Emit(position, normal);
-        // }
+        else if (id.StartsWith("big_round"))
+        {
+            // _bulletBlastPool.Emit(position, normal);
+        }
         else
         {
             _dynamicBlastPool.Emit(position, normal);
-        }
-        
-        if (!Plugin.ConcussionEnabled.Value || Singleton<ConcussionController>.Instance == null)
-            return;
+            
+            if (!Plugin.ConcussionEnabled.Value || Singleton<ConcussionController>.Instance == null)
+                return;
 
-        var duration = 4f * Plugin.ConcussionDuration.Value;
-        Singleton<ConcussionController>.Instance.Apply(position, duration, 12f * Plugin.ConcussionRange.Value, duration);
+            var duration = 4f * Plugin.ConcussionDuration.Value;
+            Singleton<ConcussionController>.Instance.Apply(position, duration, 12f * Plugin.ConcussionRange.Value, duration);
+        }
     }
 }

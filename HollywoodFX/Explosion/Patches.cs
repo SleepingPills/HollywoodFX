@@ -76,7 +76,7 @@ public class EffectsWipeDefaultExplosionSystemsPatch : ModulePatch
             // Skip non-grenade effects
             var name = effect.Name.ToLower();
             
-            if (name.Contains("smoke") || (!name.Contains("grenade") && !name.Contains("explosion") && !name.Contains("mine")))
+            if (name.Contains("smoke") || (!name.Contains("grenade") && !name.Contains("explosion") && !name.Contains("mine") && !name.Contains("big_round")))
             {
                 Plugin.Log.LogInfo($"Skipping {effect.Name}");
                 continue;

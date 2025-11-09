@@ -168,7 +168,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
                 effect.LightMaxDist *= 2f;
             }
 
-            Plugin.Log.LogInfo($"Processing {effect.Name}");
+            Plugin.Log.LogInfo($"Wiping {effect.Name}");
             effect.Particles = [];
         }
     }

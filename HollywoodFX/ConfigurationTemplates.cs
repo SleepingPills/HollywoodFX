@@ -14,6 +14,7 @@ public static class ConfigurationTemplates
         Plugin.BloodBleedEmission.Value = 1f;
         Plugin.BloodSquirtEmission.Value = 1f;
         Plugin.BloodFinisherEmission.Value = 1f;
+        Plugin.BloodBleedoutEmission.Value = 2f;
 
         Plugin.MipBias.Value = 10f;
     }

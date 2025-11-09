@@ -39,7 +39,10 @@ internal class PlayerOnDeadPostfixPatch : ModulePatch
             var scaledImpulse = Mathf.Min(5f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.Penetration), 200f);
             
             rigidbody.AddForceAtPosition(damage.Direction * scaledImpulse, damage.HitPoint, ForceMode.Impulse);
-            bloodEffects.EmitFinisher(rigidbody, damage.HitPoint, damage.HitNormal, Mathf.Min(damage.SizeScale, 1.1f));
+            // Average the normal and the opposite of the hit direction (normal + (-1 * direction)) = normal - direction
+            var damageHitNormal = damage.HitNormal - damage.Direction;
+            damageHitNormal.Normalize();
+            bloodEffects.EmitFinisher(rigidbody, damage.HitPoint, damageHitNormal, Mathf.Min(damage.SizeScale, 1.1f));
         }
         else
         {

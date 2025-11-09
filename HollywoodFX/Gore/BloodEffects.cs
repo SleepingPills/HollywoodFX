@@ -58,13 +58,13 @@ public class BloodEffects
         _squirts.Setup(eftEffects, prefabSquirts, 10, 2f, Plugin.BloodSquirtEmission.Value);
 
         _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _bleeds.Setup(eftEffects, prefabBleeds, 30, 10f, Plugin.BloodBleedEmission.Value);
+        _bleeds.Setup(eftEffects, prefabBleeds, 20, 10f, Plugin.BloodBleedEmission.Value);
 
         _bleedouts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 3.5f, Plugin.BloodFinisherEmission.Value);
+        _bleedouts.Setup(eftEffects, prefabBleedouts, 20, 10f, Plugin.BloodBleedoutEmission.Value);
 
         _finishers = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _finishers.Setup(eftEffects, prefabFinishers, 10, 2f, Plugin.BloodFinisherEmission.Value);
+        _finishers.Setup(eftEffects, prefabFinishers, 10, 3.5f, Plugin.BloodFinisherEmission.Value);
     }
 
     public void Emit(ImpactKinetics kinetics, Rigidbody rigidbody)
@@ -133,11 +133,13 @@ public class BloodEffects
 
     public void EmitBleedout(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
-        _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
+        _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodBleedoutSize.Value);
     }
 
     public void EmitFinisher(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
         _finishers.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
+        // Emit a bleedout for finishers as well
+        _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodBleedoutSize.Value);
     }
 }
