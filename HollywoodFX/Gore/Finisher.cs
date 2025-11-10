@@ -6,7 +6,7 @@ namespace HollywoodFX.Gore;
 public struct PlayerDamage(BulletKinetics bullet, float frameTime, Collider hitCollider)
 {
     public readonly float Impulse = bullet.Impulse;
-    public readonly float Penetration = bullet.Info.PenetrationPower;
+    public readonly float PenetrationPower = bullet.Info.PenetrationPower;
     public readonly float SizeScale = bullet.SizeScale;
     public readonly float FrameTime = frameTime;
     

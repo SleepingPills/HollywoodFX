@@ -36,17 +36,25 @@ internal class PlayerOnDeadPostfixPatch : ModulePatch
         
         if (Time.fixedTime - damage.FrameTime <= 0.3f)
         {
-            var scaledImpulse = Mathf.Min(5f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.Penetration), 200f);
+            var scaledImpulse = Mathf.Min(5f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.PenetrationPower), 200f);
             
             rigidbody.AddForceAtPosition(damage.Direction * scaledImpulse, damage.HitPoint, ForceMode.Impulse);
             // Average the normal and the opposite of the hit direction (normal + (-1 * direction)) = normal - direction
             var damageHitNormal = damage.HitNormal - damage.Direction;
             damageHitNormal.Normalize();
-            bloodEffects.EmitFinisher(rigidbody, damage.HitPoint, damageHitNormal, Mathf.Min(damage.SizeScale, 1.1f));
+            
+            var sizeScale = Mathf.Min(damage.SizeScale, 1f);
+            bloodEffects.EmitFinisher(rigidbody, damage.HitPoint, damageHitNormal, sizeScale);
+
+            // TODO: Make this based on whether the bullet penetrated and whether it hit a neck/torso/head/groin
+            if (true)
+            {
+                bloodEffects.EmitBleedout(rigidbody, damage.HitPoint, damageHitNormal, sizeScale);                
+            }
         }
         else
         {
-            bloodEffects.EmitBleedout(rigidbody, rigidbody.transform.position, damage.HitNormal, Mathf.Min(damage.SizeScale, 1.1f));
+            bloodEffects.EmitBleedout(rigidbody, rigidbody.transform.position, damage.HitNormal, Mathf.Min(damage.SizeScale, 1f));
         }
         
         // Clean out the entry from the dictionary as we no longer need it if the enemy is dead

@@ -1,4 +1,5 @@
-﻿using EFT.Ballistics;
+﻿using System.Runtime.CompilerServices;
+using EFT.Ballistics;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -131,15 +132,15 @@ public class BloodEffects
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitBleedout(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
         _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodBleedoutSize.Value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void EmitFinisher(Rigidbody rigidbody, Vector3 position, Vector3 normal, float sizeScale)
     {
         _finishers.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodFinisherSize.Value);
-        // Emit a bleedout for finishers as well
-        _bleedouts.Emit(rigidbody, position, normal, sizeScale * Plugin.BloodBleedoutSize.Value);
     }
 }
