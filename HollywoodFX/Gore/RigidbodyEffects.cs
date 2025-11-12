@@ -14,7 +14,7 @@ internal class DetachOnDisable : MonoBehaviour
     {
         if (Singleton<Effects>.Instance is null)
             return;
-        
+
         transform.SetParent(Singleton<Effects>.Instance.transform);
         enabled = true;
     }
@@ -78,6 +78,24 @@ internal class RigidbodyEffects : MonoBehaviour
             }
         }
     }
+
+    // public void OnGUI()
+    // {
+    //     if (!Debug) return;
+    //     
+    //     var rect = new Rect(0f, 50f, 0f, 0f);
+    //
+    //     foreach (var effect in _active)
+    //     {
+    //         var streamEffect = effect.Effect.transform.Find("Stream")?.gameObject.GetComponent<ParticleSystem>();
+    //
+    //         if (streamEffect == null)
+    //             continue;
+    //
+    //         rect = DebugUI.Label(new Vector2(50, rect.y + rect.height),
+    //             $"{effect.Effect.name} stream count: {streamEffect.particleCount}", centered: false);
+    //     }
+    // }
 
     public void Update()
     {

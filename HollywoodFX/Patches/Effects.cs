@@ -66,13 +66,15 @@ public class EffectsAwakePrefixPatch : ModulePatch
             texDecalsOrigTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
 
             var bloodDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
+            var vestDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_vestDecalTexture").GetValue();
+            var backDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_backDecalTexture").GetValue();
             if (bloodDecalsHfx != null)
             {
                 Plugin.Log.LogInfo("Overriding blood decal textures");
                 texDecalsOrigTraverse.Field("_bloodDecalTexture").SetValue(bloodDecalsHfx);
-                // texDecalsOrigTraverse.Field("_vestDecalTexture").SetValue(bloodDecalsHfx);
-                // texDecalsOrigTraverse.Field("_backDecalTexture").SetValue(bloodDecalsHfx);
-                texDecalsOrigTraverse.Field("_decalSize").SetValue(new Vector2(0.075f, 0.15f) * Plugin.WoundDecalsSize.Value);
+                texDecalsOrigTraverse.Field("_vestDecalTexture").SetValue(vestDecalsHfx);
+                texDecalsOrigTraverse.Field("_backDecalTexture").SetValue(backDecalsHfx);
+                texDecalsOrigTraverse.Field("_decalSize").SetValue(new Vector2(0.1f, 0.115f) * Plugin.WoundDecalsSize.Value);
             }
         }
 
@@ -91,7 +93,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
             bleedingDecalOrig.DynamicDecalMaterial = bleedingDecalNew.DynamicDecalMaterial;
             bleedingDecalOrig.TileSheetRows = bleedingDecalNew.TileSheetRows;
             bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
-            bleedingDecalOrig.DecalSize = new Vector2(0.1f, 0.15f) * Plugin.BloodSplatterDecalsSize.Value;
+            bleedingDecalOrig.DecalSize = new Vector2(0.125f, 0.175f) * Plugin.BloodSplatterDecalsSize.Value;
 
             var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
             var splatterDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
