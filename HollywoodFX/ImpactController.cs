@@ -22,7 +22,7 @@ internal class ImpactController
 
         var impactsMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
         var impactsTracerPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts Tracer");
-        
+
         _impactEffects = new ImpactEffects(eftEffects, impactsMainPrefab, impactsTracerPrefab);
 
         var bloodMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Main");
@@ -42,9 +42,8 @@ internal class ImpactController
         var localPlayer = ImpactStatic.LocalPlayer;
         if (hitColliderRoot != null && hitColliderRoot == localPlayer.Transform.Original && localPlayer.PointOfView == EPointOfView.FirstPerson)
             return;
-        
-        var isBodyShot = (kinetics.Material is
-            MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet);
+
+        var isBodyShot = kinetics.Material is MaterialType.Body or MaterialType.BodyArmor or MaterialType.Helmet or MaterialType.HelmetRicochet;
 
         if (kinetics.IsHitPointVisible)
         {
@@ -53,7 +52,7 @@ internal class ImpactController
                 _goreEffects.Apply(kinetics);
         }
 
-        if (!isBodyShot && (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value))
-            _battleAmbience.Emit(kinetics);
+        if (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value)
+            _battleAmbience.Emit(kinetics, isBodyShot ? 0.375f : 0.75f);
     }
 }

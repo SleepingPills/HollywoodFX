@@ -58,20 +58,6 @@ public class ShotDelegateWrapperPatch : ModulePatch
     }
 }
 
-public class BulletImpactPatch : ModulePatch
-{
-    protected override MethodBase GetTargetMethod()
-    {
-        return typeof(EffectsCommutator).GetMethod(nameof(EffectsCommutator.PlayHitEffect));
-    }
-
-    [PatchPrefix]
-    public static void Prefix(EftBulletClass info, ShotInfoClass playerHitInfo)
-    {
-        ImpactStatic.PlayerHitInfo = playerHitInfo;
-    }
-}
-
 public class EffectsEmitPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()

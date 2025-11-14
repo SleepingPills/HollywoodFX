@@ -48,7 +48,7 @@ internal class BattleAmbience
         _puffSideHeavy = puff["Puff_Smoke_Side_Heavy"];
     }
 
-    public void Emit(ImpactKinetics kinetics)
+    public void Emit(ImpactKinetics kinetics, float baseSizeScale)
     {
         // ReSharper disable once MergeSequentialChecks
         if (kinetics.Bullet.Info == null || kinetics.Bullet.Info.Player == null) return;
@@ -84,7 +84,7 @@ internal class BattleAmbience
             }
         }
 
-        var sizeScale = kinetics.Bullet.SizeScale * Plugin.EffectSize.Value * 0.75f;
+        var sizeScale = baseSizeScale * kinetics.Bullet.SizeScale * Plugin.EffectSize.Value;
         
         if (emission.PuffTime <= Time.unscaledTime)
         {

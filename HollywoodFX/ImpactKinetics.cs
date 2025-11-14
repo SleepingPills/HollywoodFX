@@ -13,6 +13,7 @@ public class BulletKinetics
     public float Energy = 1620f;
     public float SizeScale = 1f;
     public float ChanceScale = 1f;
+    public bool Penetrated;
     public EftBulletClass Info;
     public Transform HitColliderRoot;
     
@@ -25,6 +26,9 @@ public class BulletKinetics
         if (bulletInfo == null) return;
         
         Info = bulletInfo;
+
+        // Taken from DamageInfoStruct.Penetrated but use `and` instead of `or`
+        Penetrated = !Info.BlockedBy.HasValue && !Info.DeflectedBy.HasValue;
         
         // KE = 1/2 * m * v^2, but EFT bullet weight is in g instead of kg so we need to divide by 1000 as well
         // NB: We floor the bullet weight for KE calculations as BSG specified that buckshot pellets weigh 0.1g for example. IRL it's 3.5g

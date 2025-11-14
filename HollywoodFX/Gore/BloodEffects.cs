@@ -1,8 +1,10 @@
 ﻿using System.Runtime.CompilerServices;
 using EFT.Ballistics;
+using EFT.UI;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
+using MemoryExtensions = System.MemoryExtensions;
 
 namespace HollywoodFX.Gore;
 
@@ -70,65 +72,74 @@ public class BloodEffects
 
     public void Emit(ImpactKinetics kinetics, Rigidbody rigidbody)
     {
-        var penetrated = ImpactStatic.PlayerHitInfo != null && ImpactStatic.PlayerHitInfo.Penetrated;
-        var armorHit = kinetics.Material != MaterialType.Body;
-
-        float armorChanceScale;
-
-        if (armorHit)
-            armorChanceScale = penetrated ? 0.25f : 0.15f;
-        else
-            armorChanceScale = 0.5f;
-
         var bullet = kinetics.Bullet;
-
-        // Don't scale the sprays as they look wonky when too big
-        var spraySizeScale = Plugin.BloodSpraySize.Value;
-        var mistSizeScale = Mathf.Max(bullet.SizeScale, 1f) * Plugin.BloodMistSize.Value;
-        var squibSizeScale = bullet.SizeScale * Plugin.BloodSquibSize.Value;
-
-        var mistChance = 0.5f * armorChanceScale * bullet.ChanceScale;
-        if (Random.Range(0f, 1f) < mistChance)
+        
+        if (!bullet.Penetrated)
         {
-            // Emit a mist or a puff at a 25/75 chance
-            if (Random.Range(0f, 1f) < 0.25f)
-                _mists.EmitDirect(kinetics.Position, kinetics.Normal, mistSizeScale);
-            else
+            return;
+        }
+        
+        var vitalScale = 0.5f;
+
+        if (rigidbody.name.Length >= 11)
+        {
+            var nameSubset = MemoryExtensions.AsSpan(rigidbody.name, 10);
+
+            if (MemoryExtensions.StartsWith(nameSubset, "Spine")
+                || MemoryExtensions.StartsWith(nameSubset, "Pelvis")
+                || MemoryExtensions.StartsWith(nameSubset, "Head")
+                || MemoryExtensions.StartsWith(nameSubset, "Neck"))
             {
-                for (var i = 0; i < _puffs.Length; i++)
-                {
-                    _puffs[i].Emit(kinetics, mistSizeScale);            
-                }
+                vitalScale = 1f;
             }
         }
+        
+        var armorScale = kinetics.Material != MaterialType.Body ? 0.5f : 1f;
+        var sizeScale = Mathf.Min(vitalScale * bullet.SizeScale, 1f);
 
-        var miscChance = armorChanceScale * bullet.ChanceScale;
-        _sprays.Emit(kinetics, spraySizeScale, miscChance);
-        _squibs.Emit(kinetics, squibSizeScale, miscChance);
+        var chance = vitalScale * armorScale * bullet.ChanceScale;
 
-        if (!penetrated) return;
-
-        // Flip the normal and add a bit of randomization
-        var flippedNormal = -(0.7f * kinetics.Normal + 0.3f * Random.onUnitSphere);
-        flippedNormal.Normalize();
-
-        // Push the position along the flipped normal slightly
-        var position = kinetics.Position + 0.1f * flippedNormal;
-
-        var squirtChance = 0.75f * armorChanceScale * bullet.ChanceScale;
-
-        if (Random.Range(0f, 1f) < squirtChance)
+        // Roll once whether we emit blood at all
+        if (!(Random.Range(0f, 1f) < chance)) return;
+        
+        var mistSize = sizeScale * Plugin.BloodMistSize.Value;
+            
+        // Emit a mist or a puff at a 25/75 chance
+        if (Random.Range(0f, 1f) < 0.25f)
+            _mists.EmitDirect(kinetics.Position, kinetics.Normal, mistSize);
+        else
         {
+            for (var i = 0; i < _puffs.Length; i++)
+            {
+                _puffs[i].Emit(kinetics, mistSize);            
+            }
+        }
+            
+        _sprays.Emit(kinetics, sizeScale * Plugin.BloodSpraySize.Value);
+
+        if (Random.Range(0f, 1f) < 0.5f * chance)
+        {
+            _squibs.Emit(kinetics, sizeScale * Plugin.BloodSquibSize.Value, chance);
+            
             // 50% chance that the squirt goes out the front, otherwise it goes out the exit wound
             if (Random.Range(0f, 1f) < 0.5f)
-                _squirts.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
+                _squirts.Emit(rigidbody, kinetics.Position, kinetics.Normal, sizeScale * Plugin.BloodSquirtSize.Value);
             else
-                _squirts.Emit(rigidbody, position, flippedNormal, bullet.SizeScale * Plugin.BloodSquirtSize.Value);
+            {
+                // Flip the normal and add a bit of randomization
+                var flippedNormal = -(0.7f * kinetics.Normal + 0.3f * Random.onUnitSphere);
+                flippedNormal.Normalize();
+
+                // Push the position along the flipped normal slightly
+                var position = kinetics.Position + 0.1f * flippedNormal;
+                
+                _squirts.Emit(rigidbody, position, flippedNormal, sizeScale * Plugin.BloodSquirtSize.Value);
+            }
         }
-        else if (Random.Range(0f, 1f) < squirtChance)
+        
+        if (Random.Range(0f, 1f) < 0.25f * chance)
         {
-            // Emit bleeding if a squirt was not generated
-            _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, bullet.SizeScale * Plugin.BloodBleedSize.Value);
+            _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, sizeScale * Plugin.BloodBleedSize.Value);
         }
     }
 

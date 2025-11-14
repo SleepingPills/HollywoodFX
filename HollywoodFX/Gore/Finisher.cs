@@ -14,8 +14,7 @@ public struct PlayerDamage(BulletKinetics bullet, float frameTime, Collider hitC
     public Vector3 HitPoint = bullet.Info.HitPoint;
     public Vector3 HitNormal = bullet.Info.HitNormal;
 
-    // Taken from DamageInfoStruct.Penetrated
-    public bool Penetrated = !bullet.Info.BlockedBy.HasValue || !bullet.Info.DeflectedBy.HasValue;
+    public readonly bool Penetrated = bullet.Penetrated;
     
     public readonly Collider HitCollider = hitCollider;
     
