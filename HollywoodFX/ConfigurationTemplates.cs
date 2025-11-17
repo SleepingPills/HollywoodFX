@@ -11,7 +11,6 @@ public static class ConfigurationTemplates
         
         // Override the important bits
         Plugin.BloodSprayEmission.Value = 2f;
-        Plugin.BloodBleedEmission.Value = 1f;
         Plugin.BloodSquirtEmission.Value = 1f;
         Plugin.BloodFinisherEmission.Value = 1f;
         Plugin.BloodBleedoutEmission.Value = 2f;
@@ -29,7 +28,6 @@ public static class ConfigurationTemplates
         Plugin.ExplosionDensitySmoke.Value = 0.5f;
         Plugin.ExplosionDensitySparks.Value = 0.5f;
         
-        Plugin.BloodBleedEmission.Value = 0.3f;
         Plugin.BloodSquirtEmission.Value = 0.3f;
         Plugin.BloodFinisherEmission.Value = 0.3f;
         

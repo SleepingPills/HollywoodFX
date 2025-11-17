@@ -23,7 +23,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.8.1";
+    public const string HollywoodFXVersion = "1.8.2";
 
     public static ManualLogSource Log;
 
@@ -63,14 +63,9 @@ public class Plugin : BaseUnityPlugin
 
     public static ConfigEntry<float> BloodMistSize;
     public static ConfigEntry<float> BloodMistEmission;
-
-    public static ConfigEntry<float> BloodSquibSize;
-
+    
     public static ConfigEntry<float> BloodSpraySize;
     public static ConfigEntry<float> BloodSprayEmission;
-
-    public static ConfigEntry<float> BloodBleedSize;
-    public static ConfigEntry<float> BloodBleedEmission;
 
     public static ConfigEntry<float> BloodSquirtSize;
     public static ConfigEntry<float> BloodSquirtEmission;
@@ -419,23 +414,17 @@ public class Plugin : BaseUnityPlugin
         GoreEnabled = Config.Bind(goreEmission, "Enable Gore Effects", true, new ConfigDescription(
             "Toggles whether gore effects are rendered at all. When toggled off, only the default BSG blood effects will show.",
             null,
-            new ConfigurationManagerAttributes { Order = 6 }
+            new ConfigurationManagerAttributes { Order = 5 }
         ));
 
         BloodMistEmission = Config.Bind(goreEmission, "Blood Mist Emission Rate", 1f, new ConfigDescription(
             "Adjusts the quantity of mists & puffs of blood.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 5 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         BloodSprayEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 4 }
-        ));
-
-        BloodBleedEmission = Config.Bind(goreEmission, "Bleed Emission Rate", 1f, new ConfigDescription(
-            "Adjusts the quantity of particles open wound bleeding effects on live targets. Above 2 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
@@ -464,23 +453,11 @@ public class Plugin : BaseUnityPlugin
         BloodMistSize = Config.Bind(goreSize, "Mist Size", 1f, new ConfigDescription(
             "Adjusts the size of blood mists/puffs.",
             new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 6 }
+            new ConfigurationManagerAttributes { Order = 4 }
         ));
 
         BloodSpraySize = Config.Bind(goreSize, "Spray Size", 1f, new ConfigDescription(
             "Adjusts the size of fine blood sprays.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 5 }
-        ));
-
-        BloodBleedSize = Config.Bind(goreSize, "Bleed Drop Size", 1f, new ConfigDescription(
-            "Adjusts the size of open wound bleeding on live targets.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 4 }
-        ));
-
-        BloodSquibSize = Config.Bind(goreSize, "Squib Size", 1f, new ConfigDescription(
-            "Adjusts the size of blood sqquibs.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 3 }
         ));
