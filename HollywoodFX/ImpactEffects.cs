@@ -27,9 +27,8 @@ namespace HollywoodFX
         private readonly EffectSystem _extraFlashes;
         private readonly float[] _extraFlashChances;
 
-        public ImpactEffects(Effects eftEffects, GameObject mainPrefab, GameObject tracerPrefab)
+        public ImpactEffects(Effects eftEffects, Dictionary<string, EffectBundle> mainEffects, GameObject tracerPrefab)
         {
-            var mainEffects = EffectBundle.LoadPrefab(eftEffects, mainPrefab, true);
             var tracerEffects = EffectBundle.LoadPrefab(eftEffects, tracerPrefab, false);
 
             _mainImpacts = DefineMainEffects(mainEffects);
@@ -124,7 +123,6 @@ namespace HollywoodFX
             Plugin.Log.LogInfo("Building frontal puffs");
             var puffFront = effectMap["Puff_Front"];
             var puffFrontDusty = effectMap["Puff_Dusty_Front"];
-            var puffFrontBody = EffectBundle.Merge(effectMap["Puff_Body_Front"], puffFrontDusty);
             var puffFrontRock = EffectBundle.Merge(puffFront, puffFrontDusty);
 
             Plugin.Log.LogInfo("Building flash sparks");
@@ -378,44 +376,6 @@ namespace HollywoodFX
                 )
             };
 
-            var bodyArmorImpact = new List<EffectSystem>
-            {
-                new(
-                    directional:
-                    [
-                        new DirectionalEffect(puffFrontBody, chance: 0.35f),
-                        // new DirectionalEffect(puffBody, chance: 0.75f, isChanceScaledByKinetics: true, pacing: 0.05f),
-                        new DirectionalEffect(sprayDust, chance: 0.5f, isChanceScaledByKinetics: true, pacing: 0.05f),
-                        new DirectionalEffect(EffectBundle.Merge(effectMap["Debris_Armor_Metal"], effectMap["Debris_Armor_Fabric"]),
-                            chance: 0.5f, isChanceScaledByKinetics: true, pacing: 0.2f)
-                    ]
-                )
-            };
-
-            var helmetImpact = new List<EffectSystem>
-            {
-                new(
-                    directional:
-                    [
-                        new DirectionalEffect(puffFrontBody, chance: 0.25f),
-                        // new DirectionalEffect(puffBody, chance: 0.55f, isChanceScaledByKinetics: true, pacing: 0.05f),
-                        new DirectionalEffect(spraySparksLight, chance: 0.4f, isChanceScaledByKinetics: true, pacing: 0.05f),
-                        new DirectionalEffect(effectMap["Debris_Armor_Metal"], chance: 0.5f, isChanceScaledByKinetics: true, pacing: 0.1f)
-                    ]
-                )
-            };
-
-            var bodyImpact = new List<EffectSystem>
-            {
-                new(
-                    directional:
-                    [
-                        new DirectionalEffect(puffFrontBody, chance: 0.2f),
-                        // new DirectionalEffect(puffBody, chance: 0.4f, isChanceScaledByKinetics: true, pacing: 0.05f),
-                    ]
-                )
-            };
-
             var impactSystems = new List<EffectSystem>[Enum.GetNames(typeof(MaterialType)).Length];
 
             // Assign impact systems to materials
@@ -450,11 +410,12 @@ namespace HollywoodFX
             impactSystems[(int)MaterialType.GenericHard] = hardGenericImpact;
             impactSystems[(int)MaterialType.MetalNoDecal] = metalImpact;
             impactSystems[(int)MaterialType.None] = hardGenericImpact;
-            impactSystems[(int)MaterialType.BodyArmor] = bodyArmorImpact;
-            impactSystems[(int)MaterialType.Helmet] = helmetImpact;
-            impactSystems[(int)MaterialType.GlassVisor] = helmetImpact;
-            impactSystems[(int)MaterialType.Body] = bodyImpact;
-
+            impactSystems[(int)MaterialType.BodyArmor] = null;
+            impactSystems[(int)MaterialType.Helmet] = null;
+            impactSystems[(int)MaterialType.GlassVisor] = null;
+            impactSystems[(int)MaterialType.Body] = null;
+            impactSystems[(int)MaterialType.HelmetRicochet] = null;
+            
             return impactSystems;
         }
     }

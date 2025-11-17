@@ -28,6 +28,8 @@ internal class RigidbodyEffects : MonoBehaviour
     private Queue<Emission> _active;
     private Effects _eftEffects;
 
+    // public bool Debug;
+
     public void Setup(Effects eftEffects, GameObject prefab, int copyCount, float lifetime, float density)
     {
         _lifetime = lifetime;
@@ -134,9 +136,12 @@ internal class RigidbodyEffects : MonoBehaviour
         }
         else
         {
+            // Suppress effect
+            return;
+            
             // Steal an active emission
-            var emission = _active.Dequeue();
-            effect = emission.Effect;
+            // var emission = _active.Dequeue();
+            // effect = emission.Effect;
         }
 
         effect.transform.position = position;

@@ -26,7 +26,7 @@ public class GameWorldDisposePostfixPatch : ModulePatch
         
         Singleton<DecalPainter>.Release(Singleton<DecalPainter>.Instance);
         Singleton<ImpactController>.Release(Singleton<ImpactController>.Instance);
-        Singleton<BloodEffects>.Release(Singleton<BloodEffects>.Instance);
+        Singleton<BodyImpactEffects>.Release(Singleton<BodyImpactEffects>.Instance);
         Singleton<PlayerDamageRegistry>.Release(Singleton<PlayerDamageRegistry>.Instance);
         Singleton<MaterialRegistry>.Release(Singleton<MaterialRegistry>.Instance);
         

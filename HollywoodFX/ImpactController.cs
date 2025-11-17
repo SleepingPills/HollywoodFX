@@ -1,6 +1,7 @@
 ﻿using EFT;
 using EFT.Ballistics;
 using HollywoodFX.Gore;
+using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ internal class ImpactController
 {
     private readonly BattleAmbience _battleAmbience;
     private readonly ImpactEffects _impactEffects;
-    private readonly GoreEffects _goreEffects;
+    private readonly GoreController _goreController;
 
     public ImpactController(Effects eftEffects)
     {
@@ -23,7 +24,9 @@ internal class ImpactController
         var impactsMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts");
         var impactsTracerPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Impacts Tracer");
 
-        _impactEffects = new ImpactEffects(eftEffects, impactsMainPrefab, impactsTracerPrefab);
+        var impactEffectsMap = EffectBundle.LoadPrefab(eftEffects, impactsMainPrefab, true);
+        
+        _impactEffects = new ImpactEffects(eftEffects, impactEffectsMap, impactsTracerPrefab);
 
         var bloodMainPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Main");
         var bloodSquirtsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Squirts");
@@ -31,7 +34,7 @@ internal class ImpactController
         var bloodBleedoutPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Bleedout");
         var bloodFinishersPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Blood Finishers");
 
-        _goreEffects = new GoreEffects(eftEffects, bloodMainPrefab, bloodSquirtsPrefab, bloodBleedPrefab, bloodBleedoutPrefab, bloodFinishersPrefab);
+        _goreController = new GoreController(eftEffects, impactEffectsMap, bloodMainPrefab, bloodSquirtsPrefab, bloodBleedPrefab, bloodBleedoutPrefab, bloodFinishersPrefab);
     }
 
     public void Emit(ImpactKinetics kinetics)
@@ -48,8 +51,9 @@ internal class ImpactController
         if (kinetics.IsHitPointVisible)
         {
             _impactEffects.Emit(kinetics);
+            
             if (isBodyShot)
-                _goreEffects.Apply(kinetics);
+                _goreController.Apply(kinetics);
         }
 
         if (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value)

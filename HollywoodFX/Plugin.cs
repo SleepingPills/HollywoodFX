@@ -446,7 +446,7 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 2 }
         ));
 
-        BloodFinisherEmission = Config.Bind(goreEmission, "Finisher Emission Rate", 0.4f, new ConfigDescription(
+        BloodFinisherEmission = Config.Bind(goreEmission, "Finisher Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of particles in finisher effects. Reduce if you get stutters. Above 0.5 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 1 }

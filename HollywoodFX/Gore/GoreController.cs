@@ -3,22 +3,23 @@ using Comfort.Common;
 using EFT;
 using EFT.Interactive;
 using HarmonyLib;
+using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
 
 namespace HollywoodFX.Gore;
 
-public class GoreEffects
+public class GoreController
 {
-    private readonly BloodEffects _bloodEffects;
+    private readonly BodyImpactEffects _bodyImpactEffects;
 
-    public GoreEffects(
-        Effects eftEffects, GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleeds, GameObject prefabBleedouts,
-        GameObject prefabFinishers
+    public GoreController(
+        Effects eftEffects, Dictionary<string, EffectBundle> impactEffects,
+        GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleeds, GameObject prefabBleedouts, GameObject prefabFinishers
     )
     {
-        Singleton<BloodEffects>.Create(_bloodEffects = new BloodEffects(
-            eftEffects, prefabMain, prefabSquirts, prefabBleeds, prefabBleedouts, prefabFinishers
+        Singleton<BodyImpactEffects>.Create(_bodyImpactEffects = new BodyImpactEffects(
+            eftEffects, impactEffects, prefabMain, prefabSquirts, prefabBleeds, prefabBleedouts, prefabFinishers
         ));
     }
 
@@ -83,7 +84,7 @@ public class GoreEffects
 
         if (Plugin.GoreEnabled.Value)
         {
-            _bloodEffects.Emit(kinetics, rigidbody);
+            _bodyImpactEffects.Emit(kinetics, rigidbody);
         }
     }
 

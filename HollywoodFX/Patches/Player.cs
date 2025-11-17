@@ -33,11 +33,11 @@ internal class PlayerOnDeadPostfixPatch : ModulePatch
         if (rigidbody == null)
             return;
 
-        var bloodEffects = Singleton<BloodEffects>.Instance;
+        var bloodEffects = Singleton<BodyImpactEffects>.Instance;
 
         if (Time.fixedTime - damage.FrameTime <= 0.3f)
         {
-            var scaledImpulse = Mathf.Min(5f * GoreEffects.CalculateImpactImpulse(damage.Impulse, damage.PenetrationPower), 200f);
+            var scaledImpulse = Mathf.Min(5f * GoreController.CalculateImpactImpulse(damage.Impulse, damage.PenetrationPower), 200f);
             rigidbody.AddForceAtPosition(damage.Direction * scaledImpulse, damage.HitPoint, ForceMode.Impulse);
 
             if (rigidbody.name.Length >= 11)
