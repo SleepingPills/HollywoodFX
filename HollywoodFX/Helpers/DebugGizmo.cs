@@ -90,7 +90,11 @@ public static class DebugGizmos
         var lineRenderer = lineObject.AddComponent<LineRenderer>();
 
         // Modify the color and width of the line
-        lineRenderer.material.color = color;
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"))
+        {
+            color = color
+        };
+
         lineRenderer.startWidth = lineWidth;
         lineRenderer.endWidth = taperLine ? lineWidth / 4f : lineWidth;
 

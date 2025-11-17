@@ -16,7 +16,7 @@ public class BodyImpactEffects
 
     // Attached to rigidbodies
     private readonly RigidbodyEffects _squirts;
-    private readonly RigidbodyEffects _bleeds;
+    // private readonly RigidbodyEffects _bleeds;
 
     // Attached to rigidbodies and played as a final splash in Ragdoll.AmplyImpulse
     private readonly RigidbodyEffects _finishers;
@@ -25,7 +25,7 @@ public class BodyImpactEffects
     private readonly List<EffectSystem> _dustyImpact;
     private readonly EffectSystem _bodyArmorImpact;
     private readonly EffectSystem _helmetImpact;
-    
+
     private float _timestamp;
 
     public BodyImpactEffects(
@@ -62,8 +62,8 @@ public class BodyImpactEffects
         _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _squirts.Setup(eftEffects, prefabSquirts, 10, 2f, Plugin.BloodSquirtEmission.Value);
 
-        _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        _bleeds.Setup(eftEffects, prefabBleeds, 10, 5f, Plugin.BloodBleedEmission.Value);
+        // _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
+        // _bleeds.Setup(eftEffects, prefabBleeds, 10, 5f, Plugin.BloodBleedEmission.Value);
 
         _bleedouts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 10f, Plugin.BloodBleedoutEmission.Value);
@@ -130,6 +130,7 @@ public class BodyImpactEffects
                 var effect = _dustyImpact[i];
                 effect.Emit(kinetics, Plugin.EffectSize.Value);
             }
+
             return;
         }
 
@@ -154,34 +155,26 @@ public class BodyImpactEffects
                         || MemoryExtensions.StartsWith(nameSubset, "Head")
                         || MemoryExtensions.StartsWith(nameSubset, "Neck"))
                     {
-                        _squirts.Emit(rigidbody, kinetics.Position, kinetics.RandNormalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
+                        var normal = kinetics.Normal - bullet.Info.Direction;
+                        normal.Normalize();
+                        
+                        var (camDir, _) = Orientation.GetCamDir(normal);
+                        var normalOffset = Orientation.GetNormOffset(normal, camDir);
+                        
+                        _squirts.Emit(rigidbody, kinetics.Position, normalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
                         _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
                         _timestamp = Time.unscaledTime + 0.1f;
-
+                        
                         // Bail out completely if we emitted a squirt
                         return;
                     }
                 }
             }
-            
-            var bumpTime = false;
-            
-            // Bleeding
-            if (Random.Range(0f, 1f) < 0.2f * chanceBase)
-            {
-                _bleeds.Emit(rigidbody, kinetics.Position, kinetics.Normal, sizeScaleKinetics * Plugin.BloodBleedSize.Value);
-                bumpTime = true;
-            }
-            
+
             // Only run this if the squirt hasn't triggered, to avoid piling too many heavy effects at once
             if (Random.Range(0f, 1f) < chanceBase)
             {
                 _sprays.Emit(kinetics, sizeScaleKinetics * Plugin.BloodSpraySize.Value);
-                bumpTime = true;
-            }
-
-            if (bumpTime)
-            {
                 _timestamp = Time.unscaledTime + 0.1f;
             }
         }
