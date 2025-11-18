@@ -26,7 +26,8 @@ public class BodyImpactEffects
     private readonly EffectSystem _bodyArmorImpact;
     private readonly EffectSystem _helmetImpact;
 
-    private float _timestamp;
+    private float _timestampLocal;
+    private float _timestampOther;
 
     public BodyImpactEffects(
         Effects eftEffects, Dictionary<string, EffectBundle> impactEffects,
@@ -140,42 +141,47 @@ public class BodyImpactEffects
 
         var puffSize = sizeScaleKinetics * Plugin.BloodMistSize.Value;
 
+        // Separate timestamp tracking for the local player and others.
+        // The objective is to ensure that bots (or coop partners) don't hog the pacing. 
+        ref var timestamp = ref bullet.Info.Player.iPlayer.IsYourPlayer ? ref _timestampLocal : ref _timestampOther;
+
         // Apply pacing to the heavier effects
-        if (Time.unscaledTime >= _timestamp)
+        if (Time.unscaledTime >= timestamp)
         {
-            // Squirts
-            if (Random.Range(0f, 1f) < 0.5f * chanceBase)
-            {
-                if (rigidbody.name.Length >= 11 && rigidbody.gameObject.layer != LayerMaskClass.DeadbodyLayer)
-                {
-                    var nameSubset = MemoryExtensions.AsSpan(rigidbody.name, 10);
-
-                    if (MemoryExtensions.StartsWith(nameSubset, "Spine")
-                        || MemoryExtensions.StartsWith(nameSubset, "Pelvis")
-                        || MemoryExtensions.StartsWith(nameSubset, "Head")
-                        || MemoryExtensions.StartsWith(nameSubset, "Neck"))
-                    {
-                        var normal = kinetics.Normal - bullet.Info.Direction;
-                        normal.Normalize();
-                        
-                        var (camDir, _) = Orientation.GetCamDir(normal);
-                        var normalOffset = Orientation.GetNormOffset(normal, camDir);
-                        
-                        _squirts.Emit(rigidbody, kinetics.Position, normalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
-                        _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
-                        _timestamp = Time.unscaledTime + 0.1f;
-                        
-                        // Bail out completely if we emitted a squirt
-                        return;
-                    }
-                }
-            }
-
-            // Only run this if the squirt hasn't triggered, to avoid piling too many heavy effects at once
+            // First roll to decide whether we emit anything at all
             if (Random.Range(0f, 1f) < chanceBase)
             {
+                // Bump the timer
+                timestamp = Time.unscaledTime + 0.5f;
+                
+                // Second roll to decide whether we emit a squirt or a spray
+                if (Random.Range(0f, 1f) < 0.5f)
+                {
+                    if (rigidbody.name.Length >= 11 && rigidbody.gameObject.layer != LayerMaskClass.DeadbodyLayer)
+                    {
+                        var nameSubset = MemoryExtensions.AsSpan(rigidbody.name, 10);
+
+                        if (MemoryExtensions.StartsWith(nameSubset, "Spine")
+                            || MemoryExtensions.StartsWith(nameSubset, "Pelvis")
+                            || MemoryExtensions.StartsWith(nameSubset, "Head")
+                            || MemoryExtensions.StartsWith(nameSubset, "Neck"))
+                        {
+                            var normal = kinetics.Normal - bullet.Info.Direction;
+                            normal.Normalize();
+                        
+                            var (camDir, _) = Orientation.GetCamDir(normal);
+                            var normalOffset = Orientation.GetNormOffset(normal, camDir);
+                        
+                            _squirts.Emit(rigidbody, kinetics.Position, normalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
+                            _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
+                        
+                            // Bail out completely if we emitted a squirt
+                            return;
+                        }
+                    }
+                }
+
                 _sprays.Emit(kinetics, sizeScaleKinetics * Plugin.BloodSpraySize.Value);
-                _timestamp = Time.unscaledTime + 0.1f;
             }
         }
 
