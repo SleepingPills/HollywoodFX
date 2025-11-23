@@ -9,11 +9,11 @@ using BepInEx.Logging;
 using Comfort.Common;
 using EFT.Communications;
 using EFT.UI;
-using HollywoodFX.Concussion;
 using HollywoodFX.Explosion;
 using HollywoodFX.Lighting;
 using HollywoodFX.Muzzle.Patches;
 using HollywoodFX.Patches;
+using HollywoodFX.Render;
 using UnityEngine;
 
 namespace HollywoodFX;
@@ -45,6 +45,8 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> MuzzleEffectSmokeEmission;
     public static ConfigEntry<bool> MuzzleLightShadowEnabled;
 
+    public static ConfigEntry<bool> ScopeDofEnabled;
+    public static ConfigEntry<float> ScopeDofIntensity;
     public static ConfigEntry<float> BattleBlurIntensity;
     public static ConfigEntry<bool> ConcussionEnabled;
     public static ConfigEntry<float> ConcussionDuration;
@@ -348,9 +350,14 @@ public class Plugin : BaseUnityPlugin
         /*
          * Battle Ambience
          */
-        BattleBlurIntensity = Config.Bind(battleAmbience, "Battle Blur Intensity", 1f, new ConfigDescription(
-            "Scales the intensity of battle blur from concussion and suppression effects.",
-            new AcceptableValueRange<float>(0, 10f),
+        ScopeDofEnabled = Config.Bind(battleAmbience, "Enable Scope DoF", false, new ConfigDescription(
+            "Enable the depth of field effect when using magnifying optics.",
+            null,
+            new ConfigurationManagerAttributes { Order = 17 }
+        ));
+        ScopeDofIntensity = Config.Bind(battleAmbience, "Scope DoF Intensity", 1f, new ConfigDescription(
+            "Scales the intensity of the scope depth of field effect.",
+            new AcceptableValueRange<float>(0, 5f),
             new ConfigurationManagerAttributes { Order = 16 }
         ));
         ConcussionEnabled = Config.Bind(battleAmbience, "Enable Concussion FX", true, new ConfigDescription(
@@ -382,6 +389,12 @@ public class Plugin : BaseUnityPlugin
             "Scales the range of concussion effects. Larger numbers will cause concussion from further away.",
             new AcceptableValueRange<float>(0, 10f),
             new ConfigurationManagerAttributes { Order = 10 }
+        ));
+        
+        BattleBlurIntensity = Config.Bind(battleAmbience, "Battle Blur Intensity", 1f, new ConfigDescription(
+            "Scales the intensity of battle blur from concussion and suppression effects.",
+            new AcceptableValueRange<float>(0, 10f),
+            new ConfigurationManagerAttributes { Order = 9 }
         ));
 
         AmbientSimulationRange = Config.Bind(battleAmbience, "Forced Simulation Range", 25f, new ConfigDescription(
@@ -436,7 +449,7 @@ public class Plugin : BaseUnityPlugin
         ));
 
         BloodFinisherEmission = Config.Bind(goreEmission, "Finisher Emission Rate", 0.5f, new ConfigDescription(
-            "Adjusts the quantity of particles in finisher effects. Reduce if you get stutters. Above 0.5 gets quite CPU heavy.",
+            "Adjusts the quantity of particles in finisher effects. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));

@@ -4,7 +4,7 @@ using EFT;
 using HollywoodFX.Patches;
 using SPT.Reflection.Patching;
 
-namespace HollywoodFX.Concussion;
+namespace HollywoodFX.Render;
 
 public class GameWorldInitConcussionPatch : ModulePatch
 {
@@ -19,9 +19,10 @@ public class GameWorldInitConcussionPatch : ModulePatch
     {
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
+
         
-        var concussion = __instance.gameObject.AddComponent<ConcussionController>();
-        concussion.Init();
-        Singleton<ConcussionController>.Create(concussion);
+        var postProcessing = __instance.gameObject.AddComponent<PostProcessing>();
+        postProcessing.Init();
+        Singleton<PostProcessing>.Create(postProcessing);
     }
 }

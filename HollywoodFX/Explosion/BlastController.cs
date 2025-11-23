@@ -1,7 +1,7 @@
 ﻿using Comfort.Common;
 using EFT.UI;
-using HollywoodFX.Concussion;
 using HollywoodFX.Particles;
+using HollywoodFX.Render;
 using Systems.Effects;
 using UnityEngine;
 
@@ -152,11 +152,11 @@ public class BlastController : MonoBehaviour
         {
             _dynamicBlastPool.Emit(position, normal);
             
-            if (!Plugin.ConcussionEnabled.Value || Singleton<ConcussionController>.Instance == null)
+            if (!Plugin.ConcussionEnabled.Value || Singleton<PostProcessing>.Instance == null)
                 return;
 
             var duration = 4f * Plugin.ConcussionDuration.Value;
-            Singleton<ConcussionController>.Instance.Apply(position, duration, 12f * Plugin.ConcussionRange.Value, duration);
+            Singleton<PostProcessing>.Instance.Concussion.Apply(position, duration, 12f * Plugin.ConcussionRange.Value, duration);
         }
     }
 }
