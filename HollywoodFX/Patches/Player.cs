@@ -56,7 +56,9 @@ internal class PlayerOnDeadPostfixPatch : ModulePatch
                     var sizeScale = Mathf.Min(damage.SizeScale, 1f);
 
                     bloodEffects.EmitFinisher(rigidbody, damage.HitPoint, damageHitNormal, sizeScale);
-                    bloodEffects.EmitBleedout(rigidbody, damage.HitPoint, damageHitNormal, sizeScale);
+                    
+                    if (Random.Range(0f, 1f) < 0.35f)
+                        bloodEffects.EmitBleedout(rigidbody, damage.HitPoint, damageHitNormal, sizeScale);
                 }
             }
         }

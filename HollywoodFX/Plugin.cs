@@ -23,7 +23,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "1.8.3";
+    public const string HollywoodFXVersion = "1.8.4";
 
     public static ManualLogSource Log;
 
@@ -599,7 +599,7 @@ public class Plugin : BaseUnityPlugin
         MipBias = Config.Bind(gfx, "Effect Quality Bias", 0f, new ConfigDescription(
             "Positive values force higher quality effect textures at a distance. Numbers above 4 can have *heavy*" +
             "VRAM impact and cause stuttering.",
-            new AcceptableValueRange<float>(0f, 10f),
+            new AcceptableValueRange<float>(-1f, 10f),
             new ConfigurationManagerAttributes { Order = 1 }
         ));
         MipBias.SettingChanged += (_, _) => { Singleton<MaterialRegistry>.Instance?.SetMipBias(MipBias.Value); };
