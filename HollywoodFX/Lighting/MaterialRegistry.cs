@@ -49,7 +49,7 @@ public class MaterialRegistry
     {
         RegisterTextures(material);
         
-        if (material.shader.name != "Global Fog/Alpha Blended Lighted") return;
+        if (!material.shader.name.ToLower().Contains("alpha blended lighted")) return;
 
         var materialId = material.GetInstanceID();
 

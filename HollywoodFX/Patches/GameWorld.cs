@@ -64,6 +64,13 @@ public class GameWorldStartedPostfixPatch : ModulePatch
 
         Singleton<MaterialRegistry>.Instance?.SetMipBias(Plugin.MipBias.Value);
         Plugin.Log.LogInfo($"Updated mipmap bias to {Plugin.MipBias.Value}");
+        
+        var cam = CameraClass.Instance.Camera;
+        
+        if (cam == null || cam.GetComponent<ShadowMapCopy>() != null) return;
+        
+        cam.gameObject.AddComponent<ShadowMapCopy>();
+        Plugin.Log.LogInfo("ShadowMapCopy attached to main camera");
     }
 }
 

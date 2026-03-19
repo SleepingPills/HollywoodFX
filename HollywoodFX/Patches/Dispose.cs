@@ -6,7 +6,6 @@ using HollywoodFX.Gore;
 using HollywoodFX.Lighting;
 using HollywoodFX.Muzzle;
 using HollywoodFX.Muzzle.Patches;
-using HollywoodFX.Particles;
 using SPT.Reflection.Patching;
 
 namespace HollywoodFX.Patches;

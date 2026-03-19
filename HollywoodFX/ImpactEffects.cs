@@ -138,9 +138,6 @@ namespace HollywoodFX
             Plugin.Log.LogInfo("Building lingering puffs");
             var puffLinger = effectMap["Puff_Smoke_Linger"];
 
-            // Plugin.Log.LogInfo("Building body hit puffs");
-            // var puffBody = effectMap["Puff_Smoke_Body"];
-
             Plugin.Log.LogInfo("Building dirt debris");
             var debrisDirtVert = effectMap["Debris_Dirt_Vert"];
 

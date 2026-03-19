@@ -135,6 +135,9 @@ public class BlastController : MonoBehaviour
     // This allows us to use stuff like impact kinets and grenade IExplosiveItem.GetStrength or IExplosiveItem.MaxExplosionDistance
     public void Emit(string id, Vector3 position, Vector3 normal)
     {
+        _flashbangBlastPool.Emit(position, normal);
+        return;
+        
         // ConsoleScreen.Log($"Grenade: {id}");
         
         if (id.StartsWith("grenade_smoke"))

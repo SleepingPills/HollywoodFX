@@ -102,6 +102,7 @@ public class Plugin : BaseUnityPlugin
     private static ConfigEntry<bool> _peenEnabled;
 
     private static ConfigEntry<bool> _loggingEnabled;
+    public static ConfigEntry<int> DebugIdx;
 
     private static MichelinManPatch _michelinManPatch;
 
@@ -638,6 +639,12 @@ public class Plugin : BaseUnityPlugin
         /*
          * Deboog
          */
+        DebugIdx = Config.Bind(debug, "Debug Index", 0, new ConfigDescription(
+            "",
+            new AcceptableValueRange<int>(0, 10),
+            new ConfigurationManagerAttributes { Order = 2 }
+        ));
+
         _loggingEnabled = Config.Bind(debug, "Enable Debug Logging (RESTART)", false, new ConfigDescription(
             "Duh. Requires restarting the game to take effect.",
             null,
