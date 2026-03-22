@@ -53,7 +53,7 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
     private static void SetDecalsProps(Effects eftEffects)
     {
-        var decalsHfxPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Decals");
+        var decalsHfxPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Assets/HollywoodFX/Particles/Prefabs/HFX Decals.prefab");
         Plugin.Log.LogInfo("Instantiating Decal Effects Prefab");
         var decalsHfxInstance = Object.Instantiate(decalsHfxPrefab);
         Plugin.Log.LogInfo("Getting Effects Component");

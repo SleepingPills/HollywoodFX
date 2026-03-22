@@ -190,9 +190,9 @@ internal class MuzzleEffects
 
     public MuzzleEffects(Effects eftEffects, bool forceWorldSim)
     {
-        var muzzleBlastsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Muzzle Blasts");
-
-        var lightPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Muzzle Light");
+        var muzzleBlastsPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Assets/HollywoodFX/Particles/Prefabs/HFX Muzzle Blasts.prefab");
+        var lightPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Assets/HollywoodFX/Particles/Prefabs/Light/Muzzle Light.prefab");
+        
         var lightComponent = lightPrefab.GetComponent<Light>();
         lightComponent.shadows = Plugin.MuzzleLightShadowEnabled.Value ? LightShadows.Hard : LightShadows.None;
 

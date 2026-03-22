@@ -5,37 +5,72 @@ namespace HollywoodFX.Lighting;
 
 public class ShadowMapCopy : MonoBehaviour
 {
-    private CommandBuffer _cmd;
+    private RenderTexture _sceneTex1;
+    private RenderTexture _sceneTex2;
+    
+    private RenderTexture _depthTex1;
+    private RenderTexture _depthTex2;
+
+    private Material _sceneCopyMat;
+    private Material _depthCopyMat;
+    private Material _blurMat;
     
     public void OnEnable()
     {
         var camera = GetComponent<Camera>();
         if (camera == null) return;
+
+        var qw = Screen.width / 16;
+        var qh = Screen.height / 16;
         
-        var allRTs = Resources.FindObjectsOfTypeAll<RenderTexture>();
-        
-        foreach (var rt in allRTs)
+        _sceneTex1 = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32)
         {
-            Plugin.Log.LogInfo($"RT: {rt.name} {rt.width}x{rt.height} format:{rt.format}");
-            
-            if (rt.name != "DSShadowMaskFull") continue;
-            
-            Shader.SetGlobalTexture("_HFXShadowMap", rt);
-            Plugin.Log.LogInfo($"Found BSG shadow mask: {rt.width}x{rt.height}");
-            break;
-        }
+            filterMode = FilterMode.Bilinear
+        };
+        _sceneTex2 = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32)
+        {
+            filterMode = FilterMode.Bilinear
+        };
         
-        var cmd = new CommandBuffer { name = "HFX Shadow Copy" };
-        var shadowCopyId = Shader.PropertyToID("_HFXShadowMapHack");
+        _depthTex1 = new RenderTexture(qw, qh, 0, RenderTextureFormat.RFloat)
+        {
+            filterMode = FilterMode.Bilinear
+        };
+        _depthTex2 = new RenderTexture(qw, qh, 0, RenderTextureFormat.RFloat)
+        {
+            filterMode = FilterMode.Bilinear
+        };
+        
+        _sceneCopyMat = AssetRegistry.AssetBundle.LoadAsset<Material>("Assets/HollywoodFX/Particles/Material/SceneCopyMat.mat");
+        _depthCopyMat = AssetRegistry.AssetBundle.LoadAsset<Material>("Assets/HollywoodFX/Particles/Material/DepthCopyMat.mat");
+        _blurMat = AssetRegistry.AssetBundle.LoadAsset<Material>("Assets/HollywoodFX/Particles/Material/BlurMat.mat");
+        
+        Plugin.Log.LogInfo($"Depth copy material: {_depthCopyMat} Blur material: {_blurMat}");
 
-        // Copy the built-in screen-space shadow texture into a global texture your shaders can read
-        cmd.GetTemporaryRT(shadowCopyId, Screen.width/2, Screen.height/2, 0, FilterMode.Bilinear, RenderTextureFormat.RGB565);
-        cmd.Blit(BuiltinRenderTextureType.CurrentActive, shadowCopyId);
-        cmd.SetGlobalTexture("_HFXShadowMapHack", shadowCopyId);
-
+        var cmd = new CommandBuffer { name = "HFX Scene Copy" };
+        
+        var texelSize = new Vector4(1f / qw, 1f / qh, 0, 0);
+        cmd.SetGlobalVector("_TexelSize", texelSize);
+        
+        cmd.Blit(BuiltinRenderTextureType.CurrentActive, _sceneTex1, _sceneCopyMat);
+        cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
+        cmd.Blit(_sceneTex2, _sceneTex1, _blurMat);
+        cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
+        cmd.Blit(_sceneTex2, _sceneTex1, _blurMat);
+        cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
+        cmd.SetGlobalTexture("_HFXSceneTex", _sceneTex2);
+        
+        cmd.Blit(null, _depthTex1, _depthCopyMat);
+        cmd.Blit(_depthTex1, _depthTex2, _blurMat);
+        cmd.Blit(_depthTex2, _depthTex1, _blurMat);
+        cmd.Blit(_depthTex1, _depthTex2, _blurMat);
+        cmd.Blit(_sceneTex2, _sceneTex1, _blurMat);
+        cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
+        cmd.SetGlobalTexture("_HFXDepthTex", _depthTex2);
+        
         camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, cmd);
         
-        Plugin.Log.LogInfo("Shadow map copy command buffer attached");
+        Plugin.Log.LogInfo("Scene map copy command buffer attached");
     }
     
     // public void Update()
@@ -57,7 +92,7 @@ public class ShadowMapCopy : MonoBehaviour
     //         
     //         _cmd = new CommandBuffer { name = "HFX Shadow Copy" };
     //         _cmd.Blit(null, _shadowRT, _copyMat);
-    //         _cmd.SetGlobalTexture("_HFXShadowMap", _shadowRT);
+    //         _cmd.SetGlobalTexture("_HFXSceneTex", _shadowRT);
     //         
     //         camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _cmd);
     //     }
@@ -68,33 +103,25 @@ public class ShadowMapCopy : MonoBehaviour
     // {
     //     if (_shadowRT != null && _shadowRT.IsCreated())
     //     {
-    //         Shader.SetGlobalTexture("_HFXShadowMap", _shadowRT);
+    //         Shader.SetGlobalTexture("_HFXSceneTex", _shadowRT);
     //     }
     // }
     
     public void OnGUI()
     {
-        var hfxShadowMap = Shader.GetGlobalTexture("_HFXShadowMap");
-        var hfxShadowMapHack = Shader.GetGlobalTexture("_HFXShadowMapHack");
-    
-        if (hfxShadowMap != null)
-        {
-            GUI.DrawTexture(new Rect(32, 32, 512, 512), hfxShadowMap);
-        }
+        GUI.DrawTexture(new Rect(32, 32, _sceneTex2.width * 2, _sceneTex2.height * 2), _sceneTex2);
+        GUI.DrawTexture(new Rect(32, 64 + _sceneTex2.height * 2, _depthTex2.width * 2, _depthTex2.height * 2), _depthTex2);
         
-        if (hfxShadowMapHack != null)
-        {
-            GUI.DrawTexture(new Rect(32, 512+64, 512, 512), hfxShadowMapHack);
-        }
+        
     }
 
-    public void OnDisable()
-    {
-        var camera = GetComponent<Camera>();
-        if (camera == null || _cmd == null) return;
-
-        camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, _cmd);
-        _cmd.Release();
-        _cmd = null;
-    }
+    // public void OnDisable()
+    // {
+    //     var camera = GetComponent<Camera>();
+    //     if (camera == null || _cmd == null) return;
+    //
+    //     camera.RemoveCommandBuffer(CameraEvent.BeforeForwardAlpha, _cmd);
+    //     _cmd.Release();
+    //     _cmd = null;
+    // }
 }

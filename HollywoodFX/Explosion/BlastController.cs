@@ -16,9 +16,9 @@ public class BlastController : MonoBehaviour
     public void Init(Effects eftEffects)
     {
         Plugin.Log.LogInfo("Loading explosion prefabs");
-        var dynamicPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Dynamic");
-        var flashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Flash");
-        var bulletPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("HFX Explosion Bullet");
+        var dynamicPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Assets/HollywoodFX/Particles/Prefabs/HFX Explosion Dynamic.prefab");
+        var flashbangPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Assets/HollywoodFX/Particles/Prefabs/HFX Explosion Flash.prefab");
+        var bulletPrefab = AssetRegistry.AssetBundle.LoadAsset<GameObject>("Assets/HollywoodFX/Particles/Prefabs/HFX Explosion Bullet.prefab");
 
         Plugin.Log.LogInfo("Creating blast pools");
         _dynamicBlastPool = new BlastPool<ConfinedBlast>(eftEffects, dynamicPrefab, BuildDynamicExplosion, 15, 20f);
