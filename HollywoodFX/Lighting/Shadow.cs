@@ -20,8 +20,8 @@ public class ShadowMapCopy : MonoBehaviour
         var camera = GetComponent<Camera>();
         if (camera == null) return;
 
-        var qw = Screen.width / 16;
-        var qh = Screen.height / 16;
+        var qw = Screen.width / 8;
+        var qh = Screen.height / 8;
         
         _sceneTex1 = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32)
         {
@@ -58,14 +58,16 @@ public class ShadowMapCopy : MonoBehaviour
         cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
         cmd.Blit(_sceneTex2, _sceneTex1, _blurMat);
         cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
-        cmd.SetGlobalTexture("_HFXSceneTex", _sceneTex2);
+        cmd.Blit(_sceneTex2, _sceneTex1, _blurMat);
+        cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
+        cmd.SetGlobalTexture("_HFXSceneLightTex", _sceneTex2);
         
         cmd.Blit(null, _depthTex1, _depthCopyMat);
         cmd.Blit(_depthTex1, _depthTex2, _blurMat);
         cmd.Blit(_depthTex2, _depthTex1, _blurMat);
         cmd.Blit(_depthTex1, _depthTex2, _blurMat);
-        cmd.Blit(_sceneTex2, _sceneTex1, _blurMat);
-        cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);
+        // cmd.Blit(_depthTex2, _depthTex1, _blurMat);
+        // cmd.Blit(_depthTex1, _depthTex2, _blurMat);
         cmd.SetGlobalTexture("_HFXDepthTex", _depthTex2);
         
         camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, cmd);
@@ -109,8 +111,8 @@ public class ShadowMapCopy : MonoBehaviour
     
     public void OnGUI()
     {
-        GUI.DrawTexture(new Rect(32, 32, _sceneTex2.width * 2, _sceneTex2.height * 2), _sceneTex2);
-        GUI.DrawTexture(new Rect(32, 64 + _sceneTex2.height * 2, _depthTex2.width * 2, _depthTex2.height * 2), _depthTex2);
+        GUI.DrawTexture(new Rect(32, 32, _sceneTex2.width, _sceneTex2.height), _sceneTex2);
+        GUI.DrawTexture(new Rect(32, 64 + _depthTex2.height, _depthTex2.width, _depthTex2.height), _depthTex2);
         
         
     }
