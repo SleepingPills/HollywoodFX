@@ -62,7 +62,7 @@ internal class BattleAmbience
 
         if (emission.LingerTime <= Time.unscaledTime)
         {
-            var lingerChance = 0.4 * (kinetics.Bullet.Energy / 2500f);
+            var lingerChance = kinetics.Bullet.Energy / 2500f;
 
             var emitted = false;
             
@@ -80,7 +80,7 @@ internal class BattleAmbience
             
             if (emitted)
             {
-                emission.LingerTime = Time.unscaledTime + Random.Range(0.2f, 0.4f);
+                emission.LingerTime = Time.unscaledTime + Random.Range(0.1f, 0.3f);
             }
         }
 
