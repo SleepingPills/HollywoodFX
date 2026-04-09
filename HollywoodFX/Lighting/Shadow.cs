@@ -31,8 +31,8 @@ public class ShadowMapCopy : MonoBehaviour
 
         _sceneTex1 = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear };
         _sceneTex2 = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear };
-        _sceneCurrent = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear };
-        _sceneHistory = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear };
+        _sceneCurrent = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGBHalf) { filterMode = FilterMode.Bilinear };
+        _sceneHistory = new RenderTexture(qw, qh, 0, RenderTextureFormat.ARGBHalf) { filterMode = FilterMode.Bilinear };
 
         _depthTex1 = new RenderTexture(qw, qh, 0, RenderTextureFormat.RFloat) { filterMode = FilterMode.Bilinear };
         _depthTex2 = new RenderTexture(qw, qh, 0, RenderTextureFormat.RFloat) { filterMode = FilterMode.Bilinear };
@@ -66,7 +66,7 @@ public class ShadowMapCopy : MonoBehaviour
 
         var texelSize = new Vector4(1f / qw, 1f / qh, 0, 0);
         cmd.SetGlobalVector("_TexelSize", texelSize);
-        cmd.SetGlobalFloat("_BlendFactor", 0.05f);
+        cmd.SetGlobalFloat("_BlendFactor", 0.01f);
 
         cmd.Blit(BuiltinRenderTextureType.CurrentActive, _sceneTex1, _sceneCopyMat);
         cmd.Blit(_sceneTex1, _sceneTex2, _blurMat);

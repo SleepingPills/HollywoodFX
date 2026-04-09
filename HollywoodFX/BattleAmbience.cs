@@ -16,13 +16,13 @@ internal class BattleAmbience
 {
     private readonly EffectBundle _smoke;
     private readonly EffectBundle _debris;
-    
+
     private readonly EffectBundle _puffFrontLight;
     private readonly EffectBundle _puffFrontHeavy;
-    
+
     private readonly EffectBundle _puffSideLight;
     private readonly EffectBundle _puffSideHeavy;
-    
+
     private readonly Dictionary<int, BattleAmbienceEmission> _emissions = new();
 
     public BattleAmbience(Effects eftEffects, GameObject lingerPrefab, GameObject puffPrefab)
@@ -37,13 +37,13 @@ internal class BattleAmbience
             bundle.ScaleLifetime(Plugin.AmbientParticleLifetime.Value);
             bundle.ScaleLimit(Plugin.AmbientParticleLimit.Value);
         }
-        
+
         _smoke = linger["Smoke"];
         _debris = linger["Debris"];
-        
+
         _puffFrontLight = puff["Puff_Smoke_Front_Light"];
         _puffFrontHeavy = puff["Puff_Smoke_Front_Heavy"];
-        
+
         _puffSideLight = puff["Puff_Smoke_Side_Light"];
         _puffSideHeavy = puff["Puff_Smoke_Side_Heavy"];
     }
@@ -52,9 +52,9 @@ internal class BattleAmbience
     {
         // ReSharper disable once MergeSequentialChecks
         if (kinetics.Bullet.Info == null || kinetics.Bullet.Info.Player == null) return;
-        
+
         var playerId = kinetics.Bullet.Info.Player.iPlayer.Id;
-        
+
         if (!_emissions.TryGetValue(playerId, out var emission))
         {
             _emissions[playerId] = emission = new BattleAmbienceEmission();
@@ -65,7 +65,7 @@ internal class BattleAmbience
             var lingerChance = kinetics.Bullet.Energy / 2500f;
 
             var emitted = false;
-            
+
             if (Random.Range(0f, 1f) < lingerChance)
             {
                 _smoke.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
@@ -77,7 +77,7 @@ internal class BattleAmbience
                 _debris.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
                 emitted = true;
             }
-            
+
             if (emitted)
             {
                 emission.LingerTime = Time.unscaledTime + Random.Range(0.1f, 0.3f);
@@ -85,7 +85,7 @@ internal class BattleAmbience
         }
 
         var sizeScale = baseSizeScale * kinetics.Bullet.SizeScale * Plugin.EffectSize.Value;
-        
+
         if (emission.PuffTime <= Time.unscaledTime)
         {
             // Emit a heavy puff
@@ -97,20 +97,20 @@ internal class BattleAmbience
             {
                 _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
             }
-            
+
             emission.PuffTime = Time.unscaledTime + Random.Range(0.45f, 0.75f);
             emission.PuffCounter = 0;
         }
         else
         {
             if (emission.PuffCounter >= 2) return;
-            
+
             // Emit a light puff and increment counter
             if (kinetics.CamAngle < 160)
-                _puffSideLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);            
+                _puffSideHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
             else
-                _puffFrontLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-                
+                _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
+
             emission.PuffCounter++;
         }
     }

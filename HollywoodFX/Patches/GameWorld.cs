@@ -52,15 +52,15 @@ public class GameWorldStartedPostfixPatch : ModulePatch
 
         Plugin.Log.LogInfo($"Location: {locationId}");
 
-        if (locationId.Contains("factory") || locationId.Contains("laboratory") || locationId.Contains("labyrinth"))
-        {
-            Plugin.Log.LogInfo("Static lighting location detected, applying static lighting");
-            StaticMaterialAmbientLighting.AdjustLighting(locationId);
-        }
-        else
-        {
-            __instance.gameObject.AddComponent<AmbientLightingController>();
-        }
+        // if (locationId.Contains("factory") || locationId.Contains("laboratory") || locationId.Contains("labyrinth"))
+        // {
+        //     Plugin.Log.LogInfo("Static lighting location detected, applying static lighting");
+        //     StaticMaterialAmbientLighting.AdjustLighting(locationId);
+        // }
+        // else
+        // {
+        //     __instance.gameObject.AddComponent<AmbientLightingController>();
+        // }
 
         Singleton<MaterialRegistry>.Instance?.SetMipBias(Plugin.MipBias.Value);
         Plugin.Log.LogInfo($"Updated mipmap bias to {Plugin.MipBias.Value}");
