@@ -31,7 +31,7 @@ public class BodyImpactEffects
 
     public BodyImpactEffects(
         Effects eftEffects, Dictionary<string, EffectBundle> impactEffects,
-        GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleeds, GameObject prefabBleedouts, GameObject prefabFinishers
+        GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleedouts, GameObject prefabFinishers
     )
     {
         var effectMap = EffectBundle.LoadPrefab(eftEffects, prefabMain, false);
@@ -63,9 +63,6 @@ public class BodyImpactEffects
         _squirts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _squirts.Setup(eftEffects, prefabSquirts, 10, 2f, Plugin.BloodSquirtEmission.Value);
 
-        // _bleeds = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
-        // _bleeds.Setup(eftEffects, prefabBleeds, 10, 5f, Plugin.BloodBleedEmission.Value);
-
         _bleedouts = eftEffects.gameObject.AddComponent<RigidbodyEffects>();
         _bleedouts.Setup(eftEffects, prefabBleedouts, 10, 10f, Plugin.BloodBleedoutEmission.Value);
 
@@ -73,7 +70,7 @@ public class BodyImpactEffects
         _finishers.Setup(eftEffects, prefabFinishers, 15, 3.5f, Plugin.BloodFinisherEmission.Value);
 
         // Note: duplicated from ImpactEffects
-        var puffFront = EffectBundle.Merge(impactEffects["Puff_Front"], impactEffects["Puff_Dusty_Front"]);
+        var puffFront = EffectBundle.Merge(impactEffects["Puff_Front"], impactEffects["Puff_Front_Dusty"]);
         var puffGeneric = impactEffects["Puff"];
 
         var sprayDust = impactEffects["Spray_Dust"];
@@ -84,8 +81,8 @@ public class BodyImpactEffects
 
         _dustyImpact =
         [
-            new(directional: [], generic: puffGeneric, forceGeneric: 1f, useOffsetNormals: true),
-            new(directional: [new DirectionalEffect(puffFront)])
+            new EffectSystem(directional: [], generic: puffGeneric, forceGeneric: 1f, useOffsetNormals: true),
+            new EffectSystem(directional: [new DirectionalEffect(puffFront)])
         ];
 
         _bodyArmorImpact = new EffectSystem(
@@ -154,6 +151,8 @@ public class BodyImpactEffects
                 // Bump the timer
                 timestamp = Time.unscaledTime + 0.5f;
                 
+                _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
+                
                 // Second roll to decide whether we emit a squirt or a spray
                 if (Random.Range(0f, 1f) < 0.5f)
                 {
@@ -173,7 +172,6 @@ public class BodyImpactEffects
                             var normalOffset = Orientation.GetNormOffset(normal, camDir);
                         
                             _squirts.Emit(rigidbody, kinetics.Position, normalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
-                            _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
                         
                             // Bail out completely if we emitted a squirt
                             return;

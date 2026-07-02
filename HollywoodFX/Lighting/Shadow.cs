@@ -133,15 +133,15 @@ public class ShadowMapCopy : MonoBehaviour
     //     }
     // }
 
-    public void OnGUI()
-    {
-        GUI.DrawTexture(
-            new Rect(32, 32, _sceneCurrent.width * 8, _sceneCurrent.height * 8), _sceneCurrent
-        );
-        GUI.DrawTexture(
-            new Rect(32, 64 + _sceneTex2.height * 8, _sceneTex2.width * 8, _sceneCurrent.height * 8), _sceneTex2
-        );
-    }
+    // public void OnGUI()
+    // {
+    //     GUI.DrawTexture(
+    //         new Rect(32, 32, _sceneCurrent.width * 8, _sceneCurrent.height * 8), _sceneCurrent
+    //     );
+    //     GUI.DrawTexture(
+    //         new Rect(32, 64 + _sceneTex2.height * 8, _sceneTex2.width * 8, _sceneCurrent.height * 8), _sceneTex2
+    //     );
+    // }
 
     // public void OnDisable()
     // {

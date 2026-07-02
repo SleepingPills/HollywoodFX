@@ -122,7 +122,7 @@ namespace HollywoodFX
             // Define major building blocks for systems
             Plugin.Log.LogInfo("Building frontal puffs");
             var puffFront = effectMap["Puff_Front"];
-            var puffFrontDusty = effectMap["Puff_Dusty_Front"];
+            var puffFrontDusty = effectMap["Puff_Front_Dusty"];
             var puffFrontRock = EffectBundle.Merge(puffFront, puffFrontDusty);
 
             Plugin.Log.LogInfo("Building flash sparks");

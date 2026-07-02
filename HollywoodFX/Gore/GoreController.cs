@@ -15,11 +15,11 @@ public class GoreController
 
     public GoreController(
         Effects eftEffects, Dictionary<string, EffectBundle> impactEffects,
-        GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleeds, GameObject prefabBleedouts, GameObject prefabFinishers
+        GameObject prefabMain, GameObject prefabSquirts, GameObject prefabBleedouts, GameObject prefabFinishers
     )
     {
         Singleton<BodyImpactEffects>.Create(_bodyImpactEffects = new BodyImpactEffects(
-            eftEffects, impactEffects, prefabMain, prefabSquirts, prefabBleeds, prefabBleedouts, prefabFinishers
+            eftEffects, impactEffects, prefabMain, prefabSquirts, prefabBleedouts, prefabFinishers
         ));
     }
 

@@ -7,9 +7,7 @@ namespace HollywoodFX;
 
 internal class BattleAmbienceEmission
 {
-    public float LingerTime;
-    public float PuffTime;
-    public int PuffCounter;
+    public float EmissionTime;
 }
 
 internal class BattleAmbience
@@ -17,10 +15,7 @@ internal class BattleAmbience
     private readonly EffectBundle _smoke;
     private readonly EffectBundle _debris;
 
-    private readonly EffectBundle _puffFrontLight;
     private readonly EffectBundle _puffFrontHeavy;
-
-    private readonly EffectBundle _puffSideLight;
     private readonly EffectBundle _puffSideHeavy;
 
     private readonly Dictionary<int, BattleAmbienceEmission> _emissions = new();
@@ -41,10 +36,7 @@ internal class BattleAmbience
         _smoke = linger["Smoke"];
         _debris = linger["Debris"];
 
-        _puffFrontLight = puff["Puff_Smoke_Front_Light"];
         _puffFrontHeavy = puff["Puff_Smoke_Front_Heavy"];
-
-        _puffSideLight = puff["Puff_Smoke_Side_Light"];
         _puffSideHeavy = puff["Puff_Smoke_Side_Heavy"];
     }
 
@@ -60,58 +52,31 @@ internal class BattleAmbience
             _emissions[playerId] = emission = new BattleAmbienceEmission();
         }
 
-        if (emission.LingerTime <= Time.unscaledTime)
+        if (emission.EmissionTime > Time.unscaledTime) return;
+        
+        var lingerChance = kinetics.Bullet.Energy / 2500f;
+
+        if (Random.Range(0f, 1f) < lingerChance)
         {
-            var lingerChance = kinetics.Bullet.Energy / 2500f;
-
-            var emitted = false;
-
-            if (Random.Range(0f, 1f) < lingerChance)
-            {
-                _smoke.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
-                emitted = true;
-            }
-
-            if (Random.Range(0f, 1f) < lingerChance)
-            {
-                _debris.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
-                emitted = true;
-            }
-
-            if (emitted)
-            {
-                emission.LingerTime = Time.unscaledTime + Random.Range(0.1f, 0.3f);
-            }
+            _smoke.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
         }
 
-        var sizeScale = baseSizeScale * kinetics.Bullet.SizeScale * Plugin.EffectSize.Value;
-
-        if (emission.PuffTime <= Time.unscaledTime)
+        if (Random.Range(0f, 1f) < lingerChance)
         {
-            // Emit a heavy puff
-            if (kinetics.CamAngle < 160)
-            {
-                _puffSideHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-            }
-            else
-            {
-                _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-            }
-
-            emission.PuffTime = Time.unscaledTime + Random.Range(0.45f, 0.75f);
-            emission.PuffCounter = 0;
+            _debris.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
+        }
+            
+        var sizeScale = baseSizeScale * kinetics.Bullet.SizeScale * Plugin.EffectSize.Value;
+            
+        if (kinetics.CamAngle < 160)
+        {
+            _puffSideHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
         }
         else
         {
-            if (emission.PuffCounter >= 2) return;
-
-            // Emit a light puff and increment counter
-            if (kinetics.CamAngle < 160)
-                _puffSideHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-            else
-                _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
-
-            emission.PuffCounter++;
+            _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
         }
+
+        emission.EmissionTime = Time.unscaledTime + Random.Range(0.1f, 0.3f);
     }
 }

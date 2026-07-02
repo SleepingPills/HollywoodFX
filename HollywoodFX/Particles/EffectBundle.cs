@@ -49,8 +49,8 @@ public class Emitter
                 continue;
 
             var system = emitter.ParticleSystem;
-
-            var count = Random.Range(emitter.MinCount, emitter.MaxCount);
+            
+            var count = emitter.MinCount == emitter.MaxCount ? emitter.MaxCount : Random.Range(emitter.MinCount, emitter.MaxCount);
 
             system.Emit(count);
         }
@@ -115,8 +115,17 @@ public class Emitter
             {
                 var burst = emission.GetBurst(i);
 
+                var minCount = (int) burst.count.constant;
+                var maxCount = (int) burst.count.constant;
+
+                if (burst.count.mode == ParticleSystemCurveMode.TwoConstants)
+                {
+                    minCount = burst.minCount;
+                    maxCount =  burst.maxCount;
+                }
+                
                 _emitters.Add(
-                    new SubEmitter { ParticleSystem = subSystem, MinCount = burst.minCount, MaxCount = burst.maxCount, Chance = burst.probability }
+                    new SubEmitter { ParticleSystem = subSystem, MinCount = minCount, MaxCount = maxCount, Chance = burst.probability }
                 );
             }
         }
