@@ -151,7 +151,8 @@ public class BodyImpactEffects
                 // Bump the timer
                 timestamp = Time.unscaledTime + 0.5f;
                 
-                _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
+                // TODO: Put this back once I remake the mists
+                // _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
                 
                 // Second roll to decide whether we emit a squirt or a spray
                 if (Random.Range(0f, 1f) < 0.5f)

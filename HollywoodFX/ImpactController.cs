@@ -56,6 +56,6 @@ internal class ImpactController
         }
 
         if (kinetics.IsHitPointVisible || kinetics.DistanceToImpact < Plugin.AmbientSimulationRange.Value)
-            _battleAmbience.Emit(kinetics, isBodyShot ? 0.375f : 0.75f);
+            _battleAmbience.Emit(kinetics, isBodyShot ? 0.3f : 0.6f);
     }
 }
