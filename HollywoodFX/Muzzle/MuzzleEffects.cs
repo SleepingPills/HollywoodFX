@@ -130,7 +130,7 @@ internal class MuzzleBlast(
             // Only emit the smoke if it's not directly facing the camera
             if (notFrontFacing)
                 forwardSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke,
-                    (int)(Random.Range(7f, 10f) * emissionSmoke * frontFacingFactor));
+                    (int)(Random.Range(8f, 16f) * emissionSmoke * frontFacingFactor));
 
             var scaleSmokeMisc = scaleSmoke * 0.5f;
 
@@ -159,14 +159,15 @@ internal class MuzzleBlast(
             }
         }
 
+        if (!notFrontFacing) return;
+        
         var smokeLingerDeltaTime = Time.unscaledTime - state.TimeSmokeEmitted;
-
         var smokeLingerRoll = Random.Range(0f, 1f) < 0.5 * chanceSmoke;
         var smokeLingerPacing = smokeLingerDeltaTime >= state.TimeSmokeThreshold;
 
-        if (!(smokeLingerRoll && smokeLingerPacing && notFrontFacing)) return;
+        if (!(smokeLingerRoll && smokeLingerPacing)) return;
 
-        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke, (int)(Random.Range(10, 15) * emissionSmoke * frontFacingFactor));
+        lingerSmoke.EmitDirect(state.Fireport.position, fireportDir, scaleSmoke);
         state.TimeSmokeEmitted = Time.unscaledTime;
         // The next smoke emission can happen in a random time between 250 and 500ms;
         state.TimeSmokeThreshold = Random.Range(0.25f, 0.5f);

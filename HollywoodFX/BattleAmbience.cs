@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using EFT.UI;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -9,12 +8,13 @@ namespace HollywoodFX;
 internal class BattleAmbienceEmission
 {
     public float EmissionTime;
-    public float HeavyChance = 0.5f;
+    public float PuffHeavyChance = 0.75f;
+    public float LingerChance = 1f;
 }
 
 internal class BattleAmbience
 {
-    private readonly EffectBundle _smoke;
+    private readonly EffectBundle _haze;
     private readonly EffectBundle _debris;
 
     private readonly EffectBundle _puffFrontLight;
@@ -37,7 +37,7 @@ internal class BattleAmbience
             bundle.ScaleLimit(Plugin.AmbientParticleLimit.Value);
         }
 
-        _smoke = linger["Smoke"];
+        _haze = linger["Smoke"];
         _debris = linger["Debris"];
 
         _puffFrontLight = puff["Puff_Smoke_Front_Light"];
@@ -60,29 +60,41 @@ internal class BattleAmbience
 
         var elapsed = Time.unscaledTime - emission.EmissionTime;
         
-        if (elapsed < 0) return;
-        
-        var lingerChance = kinetics.Bullet.Energy / 2500f;
-
-        if (Random.Range(0f, 1f) < lingerChance)
+        switch (elapsed)
         {
-            _smoke.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
+            case < 0:
+                return;
+            case > 2.5f:
+            {
+                // If we haven't fired for more than 2.5 seconds, reset the heavy chance to default 
+                emission.PuffHeavyChance = 0.75f;
+            
+                // If we haven't fired for more than 7.5 seconds, also reset the haze chance
+                if (elapsed > 7.5f)
+                {
+                    emission.LingerChance = 1f;
+                }
+
+                break;
+            }
         }
+        
+        var bulletChanceScale = kinetics.Bullet.Energy / 2500f;
 
-        if (Random.Range(0f, 1f) < lingerChance)
+        if (Random.Range(0f, 1f) < emission.LingerChance * bulletChanceScale)
         {
+            _haze.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
             _debris.EmitDirect(kinetics.Position, kinetics.Normal, 1f);
+            emission.LingerChance = Mathf.Max(emission.LingerChance / 3f, 0.05f);
+        }
+        else
+        {
+            emission.LingerChance = Mathf.Min(emission.LingerChance + 0.05f, 1f);
         }
             
         var sizeScale = baseSizeScale * kinetics.Bullet.SizeScale * Plugin.EffectSize.Value;
-
-        // If we haven't fired for more than 2.5 seconds, reset the heavy chance to default 
-        if (elapsed > 2.5f)
-        {
-            emission.HeavyChance = 0.5f;
-        }
         
-        if (Random.Range(0f, 1f) < emission.HeavyChance)
+        if (Random.Range(0f, 1f) < emission.PuffHeavyChance)
         {
             if (kinetics.CamAngle < 160)
             {
@@ -93,7 +105,7 @@ internal class BattleAmbience
                 _puffFrontHeavy.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
             }
             
-            emission.HeavyChance = Mathf.Max(emission.HeavyChance / 2f, 0.05f);
+            emission.PuffHeavyChance = Mathf.Max(emission.PuffHeavyChance / 3f, 0.05f);
         }
         else
         {
@@ -106,7 +118,7 @@ internal class BattleAmbience
                 _puffFrontLight.EmitDirect(kinetics.Position, kinetics.Normal, sizeScale);
             }
             
-            emission.HeavyChance = Mathf.Min(emission.HeavyChance + 0.1f, 1f);
+            emission.PuffHeavyChance = Mathf.Min(emission.PuffHeavyChance + 0.1f, 1f);
         }
         
         emission.EmissionTime = Time.unscaledTime + Random.Range(0.1f, 0.3f);

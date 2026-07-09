@@ -4,19 +4,16 @@ using EFT.Ballistics;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
-using MemoryExtensions = System.MemoryExtensions;
 
 namespace HollywoodFX.Gore;
 
 public class BodyImpactEffects
 {
-    private readonly EffectBundle _mists;
     private readonly EffectSystem[] _puffs;
     private readonly EffectSystem _sprays;
 
     // Attached to rigidbodies
     private readonly RigidbodyEffects _squirts;
-    // private readonly RigidbodyEffects _bleeds;
 
     // Attached to rigidbodies and played as a final splash in Ragdoll.AmplyImpulse
     private readonly RigidbodyEffects _finishers;
@@ -35,10 +32,7 @@ public class BodyImpactEffects
     )
     {
         var effectMap = EffectBundle.LoadPrefab(eftEffects, prefabMain, false);
-
-        _mists = effectMap["Mist_Blood"];
-        _mists.ScaleDensity(Plugin.BloodMistEmission.Value);
-
+        
         Plugin.Log.LogInfo("Building blood puffs");
         _puffs =
         [
@@ -151,33 +145,19 @@ public class BodyImpactEffects
                 // Bump the timer
                 timestamp = Time.unscaledTime + 0.5f;
                 
-                // TODO: Put this back once I remake the mists
-                // _mists.EmitDirect(kinetics.Position, kinetics.Normal, puffSize);
-                
                 // Second roll to decide whether we emit a squirt or a spray
-                if (Random.Range(0f, 1f) < 0.5f)
+                if (Random.Range(0f, 1f) < 0.5f && rigidbody.gameObject.layer != LayerMaskClass.DeadbodyLayer)
                 {
-                    if (rigidbody.name.Length >= 11 && rigidbody.gameObject.layer != LayerMaskClass.DeadbodyLayer)
-                    {
-                        var nameSubset = MemoryExtensions.AsSpan(rigidbody.name, 10);
-
-                        if (MemoryExtensions.StartsWith(nameSubset, "Spine")
-                            || MemoryExtensions.StartsWith(nameSubset, "Pelvis")
-                            || MemoryExtensions.StartsWith(nameSubset, "Head")
-                            || MemoryExtensions.StartsWith(nameSubset, "Neck"))
-                        {
-                            var normal = kinetics.Normal - bullet.Info.Direction;
-                            normal.Normalize();
-                        
-                            var (camDir, _) = Orientation.GetCamDir(normal);
-                            var normalOffset = Orientation.GetNormOffset(normal, camDir);
-                        
-                            _squirts.Emit(rigidbody, kinetics.Position, normalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
-                        
-                            // Bail out completely if we emitted a squirt
-                            return;
-                        }
-                    }
+                    var normal = kinetics.Normal - bullet.Info.Direction;
+                    normal.Normalize();
+                
+                    var (camDir, _) = Orientation.GetCamDir(normal);
+                    var normalOffset = Orientation.GetNormOffset(normal, camDir);
+                
+                    _squirts.Emit(rigidbody, kinetics.Position, normalOffset, sizeScaleKinetics * Plugin.BloodSquirtSize.Value);
+                    
+                    // Bail out completely if we emitted a squirt
+                    return;
                 }
 
                 _sprays.Emit(kinetics, sizeScaleKinetics * Plugin.BloodSpraySize.Value);
