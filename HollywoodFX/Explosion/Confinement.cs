@@ -37,8 +37,8 @@ public class Grid
         var size = 2 * _radius + 1;
         var cellCount = size * size * size;
 
-        _samples = new(cellCount);
-        Entries = new(cellCount);
+        _samples = new List<Sample>(cellCount);
+        Entries = new List<Vector3Int>(cellCount);
         _cells = new Cell[size, size, size];
 
         _rounding = rounding;
@@ -81,6 +81,7 @@ public class Grid
     public void Clear()
     {
         // Clear out all the occupied cells
+        // ReSharper disable once ForCanBeConvertedToForeach
         for (var i = 0; i < Entries.Count; i++)
         {
             var coords = Entries[i];
@@ -130,42 +131,26 @@ public class Grid
 
 public class Confinement
 {
-    public readonly Grid Up;
-    public readonly Grid Ring;
     public readonly Grid Confined;
 
     public Vector3 Normal = Vector3.up;
     public float Proximity = 1f;
 
-    public readonly int UpNorm;
-    public readonly int RingNorm;
     public readonly int ConfinedNorm;
     
     private readonly RadialRaycastBatch _proximityBatch;
     private readonly RadialRaycastBatch _raycastBatch;
     
-    private readonly float _thresholdNear;
-    private readonly float _thresholdFar;
-
     public Confinement(LayerMask layerMask, float radius, float spacing)
     {
-        Up = new Grid(radius, 3);
-        Ring = new Grid(radius, 2);
         Confined = new Grid(radius, 1.5f);
 
         _proximityBatch = new RadialRaycastBatch(CalculateRayCountForSphere(2f, 0.7f), layerMask, radius);
         _raycastBatch = new RadialRaycastBatch(CalculateRayCountForHemisphere(radius, spacing), layerMask, radius);
         
-        _thresholdNear = radius * 0.75f;
-        _thresholdFar = radius * 0.9f;
-        
         Simulate();
         
-        UpNorm = Up.Entries.Count;
-        RingNorm = Ring.Entries.Count;
         ConfinedNorm = Confined.Entries.Count;
-        
-        Plugin.Log.LogInfo($"Confinement sim Up: {UpNorm} Ring: {RingNorm} Confined: {ConfinedNorm}");
         
         Clear();
     }
@@ -222,7 +207,7 @@ public class Confinement
 
         var origin = _raycastBatch.Origin;
 
-        Confined.Origin = Ring.Origin = Up.Origin = origin;
+        Confined.Origin = origin;
 
         for (var i = 0; i < _raycastBatch.RayCount; i++)
         {
@@ -231,28 +216,12 @@ public class Confinement
 
             var coords = result.collider == null ? origin + command.distance * command.direction : result.point;
 
-            var distance = Vector3.Distance(origin, coords);
-            var angle = Vector3.Angle(Normal, coords - origin);
-
-            if (distance >= _thresholdFar && angle <= 60)
-            {
-                Up.Add(coords);
-            }
-            if (distance >= _thresholdNear && angle is >= 60 and <= 80)
-            {
-                Confined.Add(coords);
-            }
-            if (angle > 80)
-            {
-                Ring.Add(coords);
-            }
+            Confined.Add(coords);
         }
     }
 
     public void Clear()
     {
-        Up.Clear();
-        Ring.Clear();
         Confined.Clear();
     }
 
@@ -265,21 +234,7 @@ public class Confinement
             var command = _raycastBatch.Commands[i];
             var coords = command.distance * command.direction;
 
-            var angle = Vector3.Angle(Vector3.up, command.direction);
-
-            if (angle <= 60)
-            {
-                Up.Add(coords);
-            }
-            switch (angle)
-            {
-                case >= 60 and <= 80:
-                    Confined.Add(coords);
-                    break;
-                case > 80:
-                    Ring.Add(coords);
-                    break;
-            }
+            Confined.Add(coords);
         }
     }
 

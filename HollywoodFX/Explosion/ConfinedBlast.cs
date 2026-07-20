@@ -14,17 +14,10 @@ public class ConfinedBlast(
     float radius,
     float spacing,
     EffectBundle[] misc,
-    EffectBundle splashUp,
     EffectBundle splashGeneric,
-    EffectBundle splashFront,
     EffectBundle splashDust,
-    EffectBundle trailMain,
     EffectBundle trailSparks,
-    EffectBundle dust,
-    EffectBundle dustRing,
-    EffectBundle sparks,
-    EffectBundle debrisRock,
-    EffectBundle debrisGeneric
+    EffectBundle dust
 ) : IBlast
 {
     private bool _emitting;
@@ -58,13 +51,8 @@ public class ConfinedBlast(
             yield return _waitEmit;
             _confinement.CompleteMain();
             
-            var camera = CameraClass.Instance.Camera;
-            var backward = -camera.transform.forward;
-
             EmitSplash(origin, _confinement.Normal);
-            UpEffects(origin);
-            ConfinedEffects(origin, backward);
-            RingEffects(origin, backward);
+            ConfinedEffects(origin);
 
             // ConsoleScreen.Log($"Long Range cells: {_confinement.Up.Entries.Count} cells");
             // ConsoleScreen.Log($"Ring Grid cells: {_confinement.Ring.Entries.Count} cells");
@@ -85,153 +73,53 @@ public class ConfinedBlast(
             _emitting = false;
         }
     }
-
-    private void UpEffects(Vector3 origin)
-    {
-        var count = Random.Range(10, 15);
-        var samples = _confinement.Up.Pick(count);
-
-        var debris = new DebrisEmitter(debrisGeneric);
-        var rocks = new DebrisEmitter(debrisRock, 20f, 40f, maxCount: 1);
-
-        for (var i = 0; i < samples.Count; i++)
-        {
-            var sample = samples[i];
-
-            debris.Emit(sample, origin, i);
-            rocks.Emit(sample, origin, i);
-        }
-
-        // Note: ensure that the max trail count is <= effect count
-        var trailCount = Random.Range(3, 5);
-        trailMain.Shuffle(trailCount);
-        var trailEmitter = new TrailEmitter(trailMain, trailCount);
-        trailEmitter.Emit(samples, origin);
-    }
-
-    private void ConfinedEffects(Vector3 origin, Vector3 backward)
+    
+    private void ConfinedEffects(Vector3 origin)
     {
         var confinementScaling = 0.35f + 0.65f * Mathf.InverseLerp(0, _confinement.ConfinedNorm, _confinement.Confined.Entries.Count);
-
-        var dustEmitter = new DustEmitter(dust, 1.5f * confinementScaling, 0.75f, 50f, 60f);
-
-        var minCount = (int)Mathf.InverseLerp(2, 1, confinementScaling);
-        var maxCount = 2 * minCount;
         
-        var debris = new DebrisEmitter(debrisGeneric, minCount: minCount, maxCount: maxCount);
-        var rocks = new DebrisEmitter(debrisRock, 20f, 40f, minCount: minCount, maxCount: maxCount);
+        var samples = _confinement.Confined.Pick(Random.Range(7, 10));
 
-        var samples = _confinement.Confined.Pick(Random.Range(15, 25));
-        
+        var dustEmitter = new DustEmitter(dust, 0.5f * confinementScaling, 0.75f, 50f, 60f);
+        // ReSharper disable once ForCanBeConvertedToForeach
         for (var i = 0; i < samples.Count; i++)
         {
             var sample = samples[i];
             var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
-
             dustEmitter.Emit(sample, origin, lengthScale);
-            
-            debris.Emit(sample, origin, i);
-            rocks.Emit(sample, origin, i);
         }
 
         // Note: ensure that the max trail count is <= effect count
-        var trailCount = Random.Range(1, 4);
+        var trailCount  = Random.Range(4, 6);
         trailSparks.Shuffle(trailCount);
-        var trailEmitter = new TrailEmitter(trailSparks, trailCount);
-        trailEmitter.Emit(samples, origin);
-        
-        samples = _confinement.Confined.Pick(Random.Range(5, 9));
-        var splashEmitter = new SplashEmitter(splashDust, 1f);
-        splashEmitter.Emit(samples, origin, backward);
+        var trailSparksEmitter = new TrailEmitter(trailSparks, trailCount);
+        trailSparksEmitter.Emit(samples, origin);
     }
-
-    private void RingEffects(Vector3 origin, Vector3 backward)
-    {
-        var samples = _confinement.Ring.Pick();
-
-        var confinementScaling = 0.35f + 0.65f * Mathf.InverseLerp(0, _confinement.RingNorm, _confinement.Ring.Entries.Count);
-
-        var dustEmitter = new DustEmitter(dustRing, 2f * confinementScaling, 0.5f, 30f, 45f);
-        var sparksEmitter = new SparksEmitter(sparks);
-
-        for (var i = 0; i < samples.Count; i++)
-        {
-            var sample = samples[i];
-
-            var lengthScale = Mathf.InverseLerp(0f, radius, sample.Magnitude);
-
-            dustEmitter.Emit(sample, origin, lengthScale);
-            sparksEmitter.Emit(sample, origin, lengthScale, i);
-        }
-        
-        samples = _confinement.Ring.Pick(Random.Range(4, 7));
-        var splashEmitter = new SplashEmitter(splashDust, 1.35f);
-        splashEmitter.Emit(samples, origin, backward);
-    }
-
+    
     private void EmitSplash(Vector3 origin, Vector3 normal)
     {
         var camDir = Orientation.GetCamDir(_confinement.Normal);
-        
-        if (camDir.Item1.IsSet(CamDir.Front))
-            splashFront.Emit(origin, _confinement.Normal, 1f);
 
+        splashDust.Emit(origin, normal, 1f);
+
+        if (camDir.Item1.IsSet(CamDir.Front))
+            return;
+        
         // Don't emit the vertical splash in very confined spaces or directly head on
         if (!(_confinement.Proximity >= 0.4f) || !camDir.Item1.IsSet(CamDir.Angled)) return;
 
         var adjNormal = Orientation.GetNormOffset(normal, camDir.Item1);
-        var worldDir = Orientation.GetWorldDir(adjNormal);
-        
-        if (worldDir.IsSet(WorldDir.Up) && Random.Range(0f, 1f) <= 0.5f)
-        {
-            // Emit the up facing splash
-            splashUp.Emit(origin, adjNormal, 1f);
-        }
-        else
-        {
-            // Emit a generic splash
-            splashGeneric.Emit(origin, adjNormal, 1f);
-        }
-        
-        splashDust.Emit(origin, normal, 1f);
+
+        splashGeneric.Emit(origin, adjNormal, 1f);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void MiscEffects(Vector3 origin, Vector3 normal)
     {
+        // ReSharper disable once ForCanBeConvertedToForeach
         for (var i = 0; i < misc.Length; i++)
-            misc[i].Emit(origin, normal, 1f);
-    }
-}
-
-public readonly struct SplashEmitter(EffectBundle effect, float size)
-{
-    private const float RandomDegrees = 2.5f;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(List<Sample> samples, Vector3 origin, Vector3 backward)
-    {
-        for (var i = 0; i < samples.Count; i++)
         {
-            var sample = samples[i];
-            
-            if (Vector3.Angle(sample.Direction, -1 * backward) < 45f)
-                continue;
-            
-            var direction = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
-            
-            var pick = effect.Emitters[i % effect.Emitters.Length].Main;
-
-            var baseSize = new Vector3(1.5f, 4.5f);
-
-            var emitParams = new ParticleSystem.EmitParams
-            {
-                position = origin,
-                velocity = direction * 0.01f,
-                startSize3D = size * Random.Range(0.5f, 1.25f) * baseSize,
-            };
-
-            pick.Emit(emitParams, 1);
+            misc[i].Emit(origin, normal, 1f);
         }
     }
 }
@@ -258,67 +146,6 @@ public readonly struct TrailEmitter(EffectBundle effect, int count)
     }
 }
 
-public readonly struct DebrisEmitter(EffectBundle effect, float minSpeed = 50f, float maxSpeed = 80f, int minCount = 1, int maxCount = 3)
-{
-    private const float RandomDegrees = 2.5f;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(Sample sample, Vector3 origin, int pickSeed)
-    {
-        var count = minCount == maxCount ? minCount : Random.Range(minCount, maxCount);
-        count = (int)(count * Plugin.ExplosionDensityDebris.Value);
-
-        for (var j = 0; j < count; j++)
-        {
-            var pick = effect.Emitters[(pickSeed + j) % effect.Emitters.Length].Main;
-
-            // Add a bit of randomness to the direction
-            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
-
-            var baseSpeed = Random.Range(minSpeed, maxSpeed);
-
-            var emitParams = new ParticleSystem.EmitParams
-            {
-                position = origin,
-                velocity = directionRandom * baseSpeed,
-            };
-
-            pick.Emit(emitParams, 1);
-        }
-    }
-}
-
-public readonly struct SparksEmitter(EffectBundle effect)
-{
-    private const float RandomDegrees = 2.5f;
-    private const float MinSpeed = 50f;
-    private const float MaxSpeed = 80f;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Emit(Sample sample, Vector3 origin, float lengthScale, int pickSeed)
-    {
-        var count = (int)(Random.Range(3, 7) * Plugin.ExplosionDensitySparks.Value);
-
-        for (var j = 0; j < count; j++)
-        {
-            var pick = effect.Emitters[(pickSeed + j) % effect.Emitters.Length].Main;
-
-            // Add a bit of randomness to the direction
-            var directionRandom = VectorMath.AddRandomRotation(sample.Direction, RandomDegrees);
-
-            var baseSpeed = Random.Range(MinSpeed, MaxSpeed);
-
-            var emitParams = new ParticleSystem.EmitParams
-            {
-                position = origin,
-                velocity = directionRandom * (baseSpeed * lengthScale),
-            };
-
-            pick.Emit(emitParams, 1);
-        }
-    }
-}
-
 public readonly struct DustEmitter(EffectBundle effect, float puffPerDistance, float puffSpread, float minSpeed, float maxSpeed)
 {
     private readonly float _puffSpreadInv = 1 - puffSpread;
@@ -335,7 +162,7 @@ public readonly struct DustEmitter(EffectBundle effect, float puffPerDistance, f
         for (var j = 0; j < count; j++)
         {
             var pick = effect.Emitters[Random.Range(0, effect.Emitters.Length)].Main;
-            // Scaler as a function of the puff sequence. We start with the slowest puff travelling the shortest distance and end with the fastest.
+            // Scaler as a function of the puff sequence. We start with the slowest puff traveling the shortest distance and end with the fastest.
             // NB: apply an sqrt to account for the nonlinear damping effect. 50% speed travels less than 50% of the distance of 100% speed.
             var seqScale = Mathf.Sqrt(_puffSpreadInv + puffSpread * Mathf.InverseLerp(0f, seqScaleNorm, j));
             // Add a bit of randomness to the direction
