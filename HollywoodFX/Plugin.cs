@@ -23,7 +23,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "2.0.0";
+    public const string HollywoodFXVersion = "2.0.1";
 
     public static ManualLogSource Log;
 

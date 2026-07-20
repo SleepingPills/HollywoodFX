@@ -89,6 +89,7 @@ public class BlastController : MonoBehaviour
         [
             mainEffects["Fireball"],
             mainEffects["Shockwave"],
+            mainEffects["Glow"],
             ScaleDensity(mainEffects["Sparks_Generic"]),
             mainEffects["Splash_Dust_Light"]
         ];
