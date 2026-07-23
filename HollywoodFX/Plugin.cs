@@ -23,7 +23,8 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string HollywoodFXVersion = "2.0.1";
+    public const string MajorMinorVersion = "2.0";
+    public const string HollywoodFXVersion = $"{MajorMinorVersion}.0";
 
     public static ManualLogSource Log;
 
@@ -62,9 +63,6 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> AmbientParticleLifetime;
 
     public static ConfigEntry<bool> GoreEnabled;
-
-    public static ConfigEntry<float> BloodMistSize;
-    public static ConfigEntry<float> BloodMistEmission;
     
     public static ConfigEntry<float> BloodSpraySize;
     public static ConfigEntry<float> BloodSprayEmission;
@@ -142,6 +140,37 @@ public class Plugin : BaseUnityPlugin
 
         SetupConfig(visceralCombatDetected);
 
+        // Versioning
+        var key = new ConfigDefinition("99. Internal", "ConfigVersion");
+        var description = new ConfigDescription(
+            "Do not modify.",
+            null,
+            new ConfigurationManagerAttributes { Order = 0, IsAdvanced = true }
+        );
+        
+        // Stub entry that will get whatever value is there without accidentally hiding it by a default
+        var versionConfig = Config.Bind(key, "", description);
+
+        if (versionConfig is not { Value: MajorMinorVersion })
+        {
+            Config.Clear();
+            File.WriteAllText(Config.ConfigFilePath, "");
+            Config.Reload();
+
+            SetupConfig(visceralCombatDetected);
+        
+            Log.LogInfo($"Configuration reset for version {MajorMinorVersion}.");
+        }
+        else
+        {
+            // We have to remove the stub entry so that we can replace it with the real one below
+            Config.Remove(key);
+        }
+        
+        versionConfig = Config.Bind(key, MajorMinorVersion, description);
+        versionConfig.Value = MajorMinorVersion;
+
+        // Patches
         new GameWorldDisposePostfixPatch().Enable();
 
         new GameWorldAwakePrefixPatch().Enable();
@@ -232,7 +261,7 @@ public class Plugin : BaseUnityPlugin
         const string explosions = "02. Explosion FX";
         const string muzzleEffects = "03. Muzzle Blast Effects";
         const string battleAmbience = "04. Ambient Battle Effects (RESTART)";
-        const string goreEmission = "05. Gore Emission v1 (RESTART)";
+        const string goreEmission = "05. Gore Emission (RESTART)";
         const string goreSize = "06. Gore Size";
         const string goreDecals = "07. Gore Decals";
         const string ragdoll = "08. Ragdoll Effects (DISABLED BY VISCERAL COMBAT)";
@@ -240,7 +269,7 @@ public class Plugin : BaseUnityPlugin
         const string gfx = "10. Graphics";
         const string whimsy = "11. Whimsy";
         const string debug = "12. Debug";
-
+        
         /*
          * General
          */
@@ -253,7 +282,7 @@ public class Plugin : BaseUnityPlugin
         /*
          * Impacts
          */
-        EffectSize = Config.Bind(impacts, "Impact Effect Size v1", 0.75f, new ConfigDescription(
+        EffectSize = Config.Bind(impacts, "Impact Effect Size", 0.75f, new ConfigDescription(
             "Scales the size of impact effects.",
             new AcceptableValueRange<float>(0.1f, 5f),
             new ConfigurationManagerAttributes { Order = 2 }
@@ -431,12 +460,6 @@ public class Plugin : BaseUnityPlugin
             new ConfigurationManagerAttributes { Order = 5 }
         ));
 
-        BloodMistEmission = Config.Bind(goreEmission, "Blood Mist Emission Rate", 1f, new ConfigDescription(
-            "Adjusts the quantity of mists & puffs of blood.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 4 }
-        ));
-
         BloodSprayEmission = Config.Bind(goreEmission, "Blood Spray Emission Rate", 0.5f, new ConfigDescription(
             "Adjusts the quantity of fine blood spray particles. Reduce if you get stutters. Above 1 gets quite CPU heavy.",
             new AcceptableValueRange<float>(0f, 5f),
@@ -464,12 +487,6 @@ public class Plugin : BaseUnityPlugin
         /*
          * Gore Size
          */
-        BloodMistSize = Config.Bind(goreSize, "Mist Size", 1f, new ConfigDescription(
-            "Adjusts the size of blood mists/puffs.",
-            new AcceptableValueRange<float>(0f, 5f),
-            new ConfigurationManagerAttributes { Order = 4 }
-        ));
-
         BloodSpraySize = Config.Bind(goreSize, "Spray Size", 1f, new ConfigDescription(
             "Adjusts the size of fine blood sprays.",
             new AcceptableValueRange<float>(0f, 5f),

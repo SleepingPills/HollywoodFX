@@ -130,8 +130,6 @@ public class BodyImpactEffects
         var chanceScaleArmor = kinetics.Material != MaterialType.Body ? 0.5f : 1f;
         var chanceBase = chanceScaleArmor * Mathf.Min(bullet.ChanceScale, 1f);
 
-        var puffSize = sizeScaleKinetics * Plugin.BloodMistSize.Value;
-
         // Separate timestamp tracking for the local player and others.
         // The objective is to ensure that bots (or coop partners) don't hog the pacing. 
         ref var timestamp = ref bullet.Info.Player.iPlayer.IsYourPlayer ? ref _timestampLocal : ref _timestampOther;
@@ -168,7 +166,7 @@ public class BodyImpactEffects
         {
             for (var i = 0; i < _puffs.Length; i++)
             {
-                _puffs[i].Emit(kinetics, puffSize);
+                _puffs[i].Emit(kinetics, sizeScaleKinetics);
             }
         }
         else
