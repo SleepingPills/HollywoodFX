@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
+using EFT.CameraControl;
 using UnityEngine;
 
 namespace HollywoodFX.Render;
@@ -22,7 +23,7 @@ public class ConcussionController
 
     public ConcussionController(DepthOfField depthOfField)
     {
-        var camera = CameraClass.Instance?.Camera;
+        var camera = CameraManager.Instance?.Camera;
 
         if (camera == null)
         {
@@ -51,7 +52,7 @@ public class ConcussionController
     
     public void Apply(Vector3 position, float t, float distanceNorm, float maxTime)
     {
-        var camera = CameraClass.Instance.Camera;
+        var camera = CameraManager.Instance.Camera;
         
         if (camera == null)
             return;

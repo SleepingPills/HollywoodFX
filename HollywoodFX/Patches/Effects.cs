@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Reflection;
 using Comfort.Common;
-using DeferredDecals;
-using EFT;
-using EFT.Ballistics;
-using HarmonyLib;
 using HollywoodFX.Decal;
 using HollywoodFX.Muzzle;
 using HollywoodFX.Muzzle.Patches;
@@ -61,21 +57,12 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
         if (Plugin.WoundDecalsEnabled.Value)
         {
-            var texDecalsOrigTraverse = Traverse.Create(eftEffects.TexDecals);
-
-            texDecalsOrigTraverse.Field("_renderTexDimension").SetValue(PowOfTwoDimensions._1024);
-
-            var bloodDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_bloodDecalTexture").GetValue();
-            var vestDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_vestDecalTexture").GetValue();
-            var backDecalsHfx = Traverse.Create(decalsHfxEffects.TexDecals).Field("_backDecalTexture").GetValue();
-            if (bloodDecalsHfx != null)
-            {
-                Plugin.Log.LogInfo("Overriding blood decal textures");
-                texDecalsOrigTraverse.Field("_bloodDecalTexture").SetValue(bloodDecalsHfx);
-                texDecalsOrigTraverse.Field("_vestDecalTexture").SetValue(vestDecalsHfx);
-                texDecalsOrigTraverse.Field("_backDecalTexture").SetValue(backDecalsHfx);
-                texDecalsOrigTraverse.Field("_decalSize").SetValue(new Vector2(0.1f, 0.115f) * Plugin.WoundDecalsSize.Value);
-            }
+            Plugin.Log.LogInfo("Overriding blood decal textures");
+            eftEffects.TexDecals._renderTexDimension = PowOfTwoDimensions._1024;
+            eftEffects.TexDecals._bloodDecalTexture = decalsHfxEffects.TexDecals._bloodDecalTexture;
+            eftEffects.TexDecals._vestDecalTexture = decalsHfxEffects.TexDecals._vestDecalTexture;
+            eftEffects.TexDecals._backDecalTexture = decalsHfxEffects.TexDecals._backDecalTexture;
+            eftEffects.TexDecals._decalSize = new Vector2(0.1f, 0.115f) * Plugin.WoundDecalsSize.Value;
         }
 
         if (Plugin.BloodSplatterDecalsEnabled.Value)
@@ -84,8 +71,8 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
             if (decalRenderer == null) return;
 
-            var bleedingDecalOrig = Traverse.Create(decalRenderer).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
-            var bleedingDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_bleedingDecal").GetValue<DeferredDecalRenderer.SingleDecal>();
+            var bleedingDecalOrig = decalRenderer._bleedingDecal;
+            var bleedingDecalNew = decalsHfxEffects.DeferredDecals._bleedingDecal;
 
             if (bleedingDecalOrig == null || bleedingDecalNew == null) return;
 
@@ -95,8 +82,8 @@ public class EffectsAwakePrefixPatch : ModulePatch
             bleedingDecalOrig.TileSheetColumns = bleedingDecalNew.TileSheetColumns;
             bleedingDecalOrig.DecalSize = new Vector2(0.125f, 0.175f) * Plugin.BloodSplatterDecalsSize.Value;
 
-            var splatterDecalOrig = Traverse.Create(decalRenderer).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
-            var splatterDecalNew = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_environmentBlood").GetValue<DeferredDecalRenderer.SingleDecal>();
+            var splatterDecalOrig = decalRenderer._environmentBlood;
+            var splatterDecalNew = decalsHfxEffects.DeferredDecals._environmentBlood;
 
             if (splatterDecalOrig == null || splatterDecalNew == null) return;
 
@@ -107,10 +94,9 @@ public class EffectsAwakePrefixPatch : ModulePatch
             splatterDecalOrig.DecalSize = 1.5f * splatterDecalOrig.DecalSize * Plugin.BloodSplatterDecalsSize.Value;
         }
 
-        var impactDecals = Traverse.Create(decalsHfxEffects.DeferredDecals).Field("_decals").GetValue<DeferredDecalRenderer.SingleDecal[]>();
+        var impactDecals = decalsHfxEffects.DeferredDecals._decals;
         Decals.TracerScorchMark = impactDecals[0];
         Plugin.Log.LogInfo($"Extracted decal: {Decals.TracerScorchMark} > {Decals.TracerScorchMark.DecalMaterial.name}");
-
         Plugin.Log.LogInfo("Decal overrides complete");
     }
 
@@ -127,23 +113,18 @@ public class EffectsAwakePrefixPatch : ModulePatch
 
         var newDecalLimit = Plugin.MiscMaxDecalCount.Value;
 
-        var decalRendererTraverse = Traverse.Create(decalRenderer);
-
-        var maxStaticDecalsValue = decalRendererTraverse.Field("_maxDecals").GetValue<int>();
-        Plugin.Log.LogWarning($"Current static decals limit is: {maxStaticDecalsValue}");
-        if (maxStaticDecalsValue != newDecalLimit)
+        Plugin.Log.LogWarning($"Current static decals limit is: {decalRenderer._maxDecals}");
+        if (decalRenderer._maxDecals != newDecalLimit)
         {
             Plugin.Log.LogWarning($"Setting max static decals to {newDecalLimit}");
-            decalRendererTraverse.Field("_maxDecals").SetValue(newDecalLimit);
+            decalRenderer._maxDecals = newDecalLimit;
         }
 
-        var maxDynamicDecalsValue = decalRendererTraverse.Field("_maxDynamicDecals").GetValue<int>();
-        Plugin.Log.LogWarning($"Current dynamic decals limit is: {maxDynamicDecalsValue}");
-        if (maxDynamicDecalsValue != newDecalLimit)
-        {
-            Plugin.Log.LogWarning($"Setting max dynamic decals to {newDecalLimit}");
-            decalRendererTraverse.Field("_maxDynamicDecals").SetValue(newDecalLimit);
-        }
+        Plugin.Log.LogWarning($"Current dynamic decals limit is: {decalRenderer._maxDynamicDecals}");
+        if (decalRenderer._maxDynamicDecals == newDecalLimit) return;
+        
+        Plugin.Log.LogWarning($"Setting max dynamic decals to {newDecalLimit}");
+        decalRenderer._maxDynamicDecals = newDecalLimit;
     }
 
     private static void WipeDefaultParticles(Effects effects)

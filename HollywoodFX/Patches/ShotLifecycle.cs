@@ -12,7 +12,7 @@ namespace HollywoodFX.Patches;
 
 public class ShotDelegateWrapperPatch : ModulePatch
 {
-    public static GDelegate64 OriginalShotDelegate;
+    public static ShotDelegate OriginalShotDelegate;
     
     protected override MethodBase GetTargetMethod()
     {
@@ -29,10 +29,10 @@ public class ShotDelegateWrapperPatch : ModulePatch
         var ballistics = __instance.gameObject.GetComponent<BallisticsCalculator>();
         
         Plugin.Log.LogInfo("Getting the shot delegate field from BallisticsCalculator");
-        var shotDelegateField = Traverse.Create(ballistics).Field("gdelegate64_0");
-        OriginalShotDelegate = shotDelegateField.GetValue<GDelegate64>();
+        var shotDelegateField = Traverse.Create(ballistics).Field("_shotDelegate");
+        OriginalShotDelegate = shotDelegateField.GetValue<ShotDelegate>();
         Plugin.Log.LogInfo($"Original shot delegate retrieved: {OriginalShotDelegate.Method}");
-        shotDelegateField.SetValue(new GDelegate64(OnShot));
+        shotDelegateField.SetValue(new ShotDelegate(OnShot));
         Plugin.Log.LogInfo("Replaced the shot delegate with internal HFX override");
     }
     
@@ -41,7 +41,7 @@ public class ShotDelegateWrapperPatch : ModulePatch
      * Furthermore, Fika now overrides the ShotDelegate method and doesn't call the base class, which means we have to hook in before ShotDelegate
      * is called at all.
      */
-    private static void OnShot(EftBulletClass shotResult)
+    private static void OnShot(Shot shotResult)
     {
         var bullet = ImpactStatic.Kinetics.Bullet;
 
@@ -49,7 +49,7 @@ public class ShotDelegateWrapperPatch : ModulePatch
         
         var hitCollider = bullet.Info.HitCollider;
 
-        if (hitCollider != null && bullet.HitColliderRoot.gameObject.layer == LayerMaskClass.PlayerLayer)
+        if (hitCollider != null && bullet.HitColliderRoot.gameObject.layer == LayersMaskController.PlayerLayer)
         {
             Singleton<PlayerDamageRegistry>.Instance.RegisterDamage(ImpactStatic.Kinetics.Bullet, hitCollider, bullet.HitColliderRoot);            
         }

@@ -14,12 +14,12 @@ public class ShellOnBouncePrefixPatch : ModulePatch
     }
 
     [PatchPrefix]
-    public static bool Prefix(Shell __instance, Collider collider, ref Vector3 ___vector3_2, ECaliber ____caliber)
+    public static bool Prefix(Shell __instance, Collider collider, ref Vector3 ____rotationVector, ECaliber ____caliber)
     {
         // Only does some debug crap and can be safely ignored
         // base.OnBounce(collider);
 
-        ___vector3_2 = 5f * __instance.VelocitySqrMagnitude * new Vector3(
+        ____rotationVector = 5f * __instance.VelocitySqrMagnitude * new Vector3(
             EFTHardSettings.Instance.Shells.ReboundRotationX.Random(true),
             EFTHardSettings.Instance.Shells.ReboundRotationY.Random(true),
             EFTHardSettings.Instance.Shells.ReboundRotationZ.Random(true)

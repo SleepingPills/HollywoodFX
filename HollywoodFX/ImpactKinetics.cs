@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EFT.Ballistics;
+using EFT.CameraControl;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -14,10 +15,10 @@ public class BulletKinetics
     public float SizeScale = 1f;
     public float ChanceScale = 1f;
     public bool Penetrated;
-    public EftBulletClass Info;
+    public Shot Info;
     public Transform HitColliderRoot;
     
-    public void Update(EftBulletClass bulletInfo)
+    public void Update(Shot bulletInfo)
     {
         Impulse = 3.6f;
         Energy = 1620f;
@@ -83,7 +84,7 @@ public class ImpactKinetics
         Normal = normal;
         IsHitPointVisible = isHitPointVisible;
     
-        DistanceToImpact = Vector3.Distance(CameraClass.Instance.Camera.transform.position, Position);
+        DistanceToImpact = Vector3.Distance(CameraManager.Instance.Camera.transform.position, Position);
 
         // Render things closer than 3 meters, so that impacts near the player add to the ambience
         if (DistanceToImpact <= 3f)

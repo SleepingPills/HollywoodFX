@@ -14,7 +14,7 @@ class TextureDecalsPainterVisCheckPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(TextureDecalsPainter).GetMethod(nameof(TextureDecalsPainter.method_5));
+        return typeof(TextureDecalsPainter).GetMethod(nameof(TextureDecalsPainter.IsCorrectRenderer));
     }
 
     [PatchPrefix]

@@ -10,15 +10,15 @@ public class DecalPainter
 {
     private readonly DeferredDecalRenderer _renderer;
 
-    private readonly Dictionary<Material, DeferredDecalRenderer.DeferredDecalMeshDataClass> _dictionary0;
-    private readonly Dictionary<Camera, DeferredDecalRenderer.DeferredDecalBufferClass> _dictionary2;
+    private readonly Dictionary<Material, DeferredDecalRenderer.ManagedMesh> _meshesDict;
+    private readonly Dictionary<Camera, DeferredDecalRenderer.CameraData> _cameras;
     
     public DecalPainter(DeferredDecalRenderer renderer)
     {
         _renderer = renderer;
         var traverse = Traverse.Create(_renderer);
-        _dictionary0 = traverse.Field("dictionary_0").GetValue<Dictionary<Material, DeferredDecalRenderer.DeferredDecalMeshDataClass>>();
-        _dictionary2 = traverse.Field("dictionary_2").GetValue<Dictionary<Camera, DeferredDecalRenderer.DeferredDecalBufferClass>>();
+        _meshesDict = traverse.Field("_meshesDict").GetValue<Dictionary<Material, DeferredDecalRenderer.ManagedMesh>>();
+        _cameras = traverse.Field("_cameras").GetValue<Dictionary<Camera, DeferredDecalRenderer.CameraData>>();
     }
 
     public void DrawDecal(
@@ -28,12 +28,12 @@ public class DecalPainter
         BallisticCollider hitCollider,
         float projectorHeight=0.1f)
     {
-        if (!_dictionary0.ContainsKey(decal.DecalMaterial))
+        if (!_meshesDict.ContainsKey(decal.DecalMaterial))
         {
-            foreach (var keyValuePair in _dictionary2)
+            foreach (var keyValuePair in _cameras)
                 keyValuePair.Value.IsStaticBufferDirty = true;
-            _renderer.method_7(decal);
+            _renderer.CreateDecalMesh(decal);
         }
-        _renderer.method_6(position, normal, _dictionary0[decal.DecalMaterial], decal, projectorHeight);
+        _renderer.AddCubeToMesh(position, normal, _meshesDict[decal.DecalMaterial], decal, projectorHeight);
     }
 }

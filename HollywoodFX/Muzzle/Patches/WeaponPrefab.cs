@@ -20,7 +20,7 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
     }
 
     [PatchPostfix]
-    private static void Postfix(WeaponPrefab __instance, Weapon weapon, IPlayer ___iplayer_0)
+    private static void Postfix(WeaponPrefab __instance, Weapon weapon, IPlayer ____player)
     {
         if (GameWorldAwakePrefixPatch.IsHideout)
             return;
@@ -30,17 +30,17 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
         if (cache is null || Singleton<MuzzleStatic>.Instance is null || Singleton<LocalPlayerMuzzleEffects>.Instance is null)
             return;
         
-        if (__instance.ObjectInHands is not WeaponManagerClass weaponManagerClass)
+        if (__instance.ObjectInHands is not Firearms weaponManagerClass)
             return;
         
-        if (___iplayer_0 == null)
+        if (____player == null)
             return;
         
-        var firearmsEffectsId = weaponManagerClass.FirearmsEffects_0.transform.GetInstanceID();
+        var firearmsEffectsId = weaponManagerClass.FirearmsEffects.transform.GetInstanceID();
         
         if (!cache.TryGetValue(firearmsEffectsId, out var muzzleManager))
         {
-            muzzleManager = Traverse.Create(weaponManagerClass.FirearmsEffects_0).Field("_muzzleManager").GetValue<MuzzleManager>();
+            muzzleManager = Traverse.Create(weaponManagerClass.FirearmsEffects).Field("_muzzleManager").GetValue<MuzzleManager>();
             
             if (muzzleManager is null)
                 return;
@@ -48,9 +48,9 @@ internal class WeaponPrefabInitHotObjectsPostfixPatch : ModulePatch
             cache[firearmsEffectsId] = muzzleManager;
         }
         
-        var muzzleState = Singleton<MuzzleStatic>.Instance.UpdateMuzzleState(muzzleManager, weapon, ___iplayer_0);
+        var muzzleState = Singleton<MuzzleStatic>.Instance.UpdateMuzzleState(muzzleManager, weapon, ____player);
 
-        if (!___iplayer_0.IsYourPlayer || muzzleState == null) return;
+        if (!____player.IsYourPlayer || muzzleState == null) return;
         
         Singleton<LocalPlayerMuzzleEffects>.Instance.UpdateParents(muzzleState);
     }

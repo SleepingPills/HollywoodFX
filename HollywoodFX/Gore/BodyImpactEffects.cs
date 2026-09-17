@@ -144,7 +144,7 @@ public class BodyImpactEffects
                 timestamp = Time.unscaledTime + 0.5f;
                 
                 // Second roll to decide whether we emit a squirt or a spray
-                if (Random.Range(0f, 1f) < 0.5f && rigidbody.gameObject.layer != LayerMaskClass.DeadbodyLayer)
+                if (Random.Range(0f, 1f) < 0.5f && rigidbody.gameObject.layer != LayersMaskController.DeadbodyLayer)
                 {
                     var normal = kinetics.Normal - bullet.Info.Direction;
                     normal.Normalize();

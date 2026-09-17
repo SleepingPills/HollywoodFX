@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using EFT.CameraControl;
+using UnityEngine;
 
 namespace HollywoodFX.Render;
 
@@ -7,7 +8,7 @@ namespace HollywoodFX.Render;
 // dofFocusPoint: 0.15f (move this to -2f when suppressed)
 // dofBokehFactor: 0f
 
-// For concussion we increase the bokeh factor to the default
+// For concussion, we increase the bokeh factor to the default
 
 // Default DoF bokeh factor is 157
 public class DepthOfField
@@ -21,7 +22,7 @@ public class DepthOfField
 
     public DepthOfField()
     {
-        var camera = CameraClass.Instance?.Camera;
+        var camera = CameraManager.Instance?.Camera;
 
         if (camera == null)
         {

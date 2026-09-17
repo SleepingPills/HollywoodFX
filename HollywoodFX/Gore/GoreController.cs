@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Comfort.Common;
 using EFT;
+using EFT.Ballistics;
 using EFT.Interactive;
 using HarmonyLib;
 using HollywoodFX.Particles;
@@ -41,7 +42,7 @@ public class GoreController
         if (rigidbody == null)
             return;
 
-        if (rigidbody.gameObject.layer == LayerMaskClass.DeadbodyLayer)
+        if (rigidbody.gameObject.layer == LayersMaskController.DeadbodyLayer)
         {
             Player player = null;
 
@@ -72,7 +73,7 @@ public class GoreController
                 if (player != null || hitColliderRoot.TryGetComponent(out player))
                 {
                     var playerTraverse = Traverse.Create(player);
-                    var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<BodyRendererDataStruct>>();
+                    var preAllocatedRenderersList = playerTraverse.Field("_preAllocatedRenderersList").GetValue<List<BodyRenderer>>();
                     var playerBody = playerTraverse.Field("_playerBody").GetValue<PlayerBody>();
 
                     preAllocatedRenderersList.Clear();
@@ -94,7 +95,7 @@ public class GoreController
         return 5f * impulse * penetrationFactor * Plugin.RagdollForceMultiplier.Value;
     }
 
-    private static void ApplyRagdollImpulse(ImpactKinetics kinetics, EftBulletClass bulletInfo, Transform root, Rigidbody rigidbody, bool applyUpthrust=true)
+    private static void ApplyRagdollImpulse(ImpactKinetics kinetics, Shot bulletInfo, Transform root, Rigidbody rigidbody, bool applyUpthrust=true)
     {
         var impactImpulse = CalculateImpactImpulse(kinetics.Bullet.Impulse, kinetics.Bullet.Info.PenetrationPower);
         impactImpulse = Mathf.Clamp(impactImpulse, 25f, 75f);

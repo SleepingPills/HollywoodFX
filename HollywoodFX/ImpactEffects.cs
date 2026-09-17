@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Comfort.Common;
 using EFT.Ballistics;
+using EFT.InventoryLogic;
 using HollywoodFX.Particles;
 using HollywoodFX.Render;
 using Systems.Effects;
@@ -58,7 +59,7 @@ namespace HollywoodFX
                 Singleton<PostProcessing>.Instance.Concussion.Apply(kinetics.DistanceToImpact, duration, distanceNorm, 2f * duration);
             }
 
-            if (Plugin.TracerImpactsEnabled.Value && kinetics.Bullet.Info.Ammo is AmmoItemClass { Tracer: true } ammo)
+            if (Plugin.TracerImpactsEnabled.Value && kinetics.Bullet.Info.Ammo is Ammo { Tracer: true } ammo)
                 _tracerImpacts.Emit(kinetics, ammo);
             else
             {

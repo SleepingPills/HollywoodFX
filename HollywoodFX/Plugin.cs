@@ -23,7 +23,7 @@ namespace HollywoodFX;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public class Plugin : BaseUnityPlugin
 {
-    public const string MajorMinorVersion = "2.0";
+    public const string MajorMinorVersion = "3.0";
     public const string HollywoodFXVersion = $"{MajorMinorVersion}.0";
 
     public static ManualLogSource Log;
@@ -685,7 +685,7 @@ public class Plugin : BaseUnityPlugin
 
     public static void ErrorPlayerFeedback(string message)
     {
-        NotificationManagerClass.DisplayWarningNotification(message, ENotificationDurationType.Long);
+        NotificationManager.DisplayWarningNotification(message, ENotificationDurationType.Long);
         Singleton<GUISounds>.Instance.PlayUISound(EUISoundType.ErrorMessage);
     }
 

@@ -22,7 +22,7 @@ public class ConfinedBlast(
 {
     private bool _emitting;
     private readonly WaitForSeconds _waitEmit = new(0.115f);
-    private readonly Confinement _confinement = new(LayerMasksDataAbstractClass.HitMask, radius, spacing);
+    private readonly Confinement _confinement = new(EFT.Ballistics.BallisticsCalculatorConstants.HitMask, radius, spacing);
 
     public void Emit(Vector3 origin, Vector3 _)
     {

@@ -10,7 +10,7 @@ internal class CurrentShot
 {
     public bool Handled = true;
 
-    public AmmoItemClass Ammo;
+    public Ammo Ammo;
     public bool Silenced;
 }
 
@@ -33,9 +33,9 @@ internal class MuzzleStatic
     public readonly CurrentShot CurrentShot = new();
     private readonly Dictionary<int, MuzzleState> _muzzleStates = new();
 
-    private static readonly FieldInfo JetField = typeof(MuzzleManager).GetField("muzzleJet_0", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo FumeField = typeof(MuzzleManager).GetField("muzzleFume_0", BindingFlags.NonPublic | BindingFlags.Instance);
-    private static readonly FieldInfo SmokeField = typeof(MuzzleManager).GetField("muzzleSmoke_0", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo JetField = typeof(MuzzleManager).GetField("__muzzleJets", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo FumeField = typeof(MuzzleManager).GetField("_muzzleFumes", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo SmokeField = typeof(MuzzleManager).GetField("_muzzleSmokes", BindingFlags.NonPublic | BindingFlags.Instance);
 
     public bool TryGetMuzzleState(MuzzleManager manager, out MuzzleState state)
     {
@@ -43,7 +43,7 @@ internal class MuzzleStatic
         return _muzzleStates.TryGetValue(managerId, out state);
     }
 
-    public void UpdateCurrentShot(AmmoItemClass ammo, bool silenced)
+    public void UpdateCurrentShot(Ammo ammo, bool silenced)
     {
         CurrentShot.Handled = false;
         CurrentShot.Ammo = ammo;

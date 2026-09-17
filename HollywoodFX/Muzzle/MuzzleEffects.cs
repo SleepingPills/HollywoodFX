@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using EFT.CameraControl;
+using EFT.InventoryLogic;
 using HollywoodFX.Particles;
 using Systems.Effects;
 using UnityEngine;
@@ -29,7 +31,7 @@ internal class MuzzleBlast(
     float proximityContrib = 1f
 )
 {
-    public void Emit(MuzzleState state, AmmoItemClass ammo, float sqrCameraDistance)
+    public void Emit(MuzzleState state, Ammo ammo, float sqrCameraDistance)
     {
         // Kinetics
         var mass = Mathf.Max(ammo.BulletMassGram, 1f) * ammo.ProjectileCount / 1000;
@@ -40,7 +42,7 @@ internal class MuzzleBlast(
         // Viewport
         var fireportDir = -1 * state.Fireport.up;
         var isThirdPerson = sqrCameraDistance > 0.5f;
-        var camera = CameraClass.Instance.Camera;
+        var camera = CameraManager.Instance.Camera;
         var camAngle = Vector3.Angle(camera.transform.forward, fireportDir);
 
         // Core scale factors
@@ -332,10 +334,10 @@ internal class MuzzleEffects
 
             var blast = state.Weapon switch
             {
-                AssaultRifleItemClass or MarksmanRifleItemClass or SniperRifleItemClass => bundle.Rifle,
-                PistolItemClass or RevolverItemClass => bundle.Handgun,
-                SmgItemClass => bundle.Smg,
-                ShotgunItemClass => bundle.Shotgun,
+                AssaultRifle or MarksmanRifle or SniperRifle => bundle.Rifle,
+                Pistol or Revolver => bundle.Handgun,
+                Smg => bundle.Smg,
+                Shotgun => bundle.Shotgun,
                 _ => bundle.Rifle
             };
 
